@@ -1,9 +1,7 @@
 import Image from 'next/image';
-
-import NearLogo from '/public/near.svg';
-import NextLogo from '/public/next.svg';
 import styles from '@/styles/app.module.css';
 import { Cards } from '@/components/cards';
+import MentalaLogo from '/public/mentala.png';
 
 export default function Home() {
   return (
@@ -13,19 +11,11 @@ export default function Home() {
       <div className={styles.center}>
         <Image
           className={styles.logo}
-          src={NearLogo}
-          alt="NEAR Logo"
-          width={110 * 1.5}
-          height={28 * 1.5}
-          priority
-        />
-        <h3 className="ms-2 me-3 text-dark"> + </h3>
-        <Image
-          className={styles.logo}
-          src={NextLogo}
-          alt="Next.js Logo"
-          width={300 * .58}
-          height={61 * .58}
+          src={MentalaLogo}
+          alt="Mentala Logo"
+          // adjust width and height according to logo
+          width={512}
+          height={512}
           priority
         />
       </div>
