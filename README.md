@@ -1,5 +1,4 @@
 ## Exclusive Fan Club Platform on NEAR Blockchain
-
 We are developing a premium, token-gated platform for an artist to connect with their 1000 most dedicated fans. This platform will offer exclusive music, video content, and access to private events, all secured by blockchain technology.
 
 #### Technology Stack:
