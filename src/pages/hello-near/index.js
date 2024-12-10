@@ -6,7 +6,7 @@ import { HelloNearContract } from '../../config';
 import { Cards } from '@/components/cards';
 
 // Contract that the app will interact with
-const CONTRACT = HelloNearContract;
+const CONTRACT = HelloNearContract; // replace with your contract name
 
 export default function HelloNear() {
   const { signedAccountId, wallet } = useContext(NearContext);
@@ -18,7 +18,7 @@ export default function HelloNear() {
 
   useEffect(() => {
     if (!wallet) return;
-
+    // call read-only method from the contract
     wallet.viewMethod({ contractId: CONTRACT, method: 'get_greeting' }).then(
       greeting => setGreeting(greeting)
     );
@@ -30,6 +30,7 @@ export default function HelloNear() {
 
   const saveGreeting = async () => {
     setShowSpinner(true);
+    // call function to modify the contract's state
     await wallet.callMethod({ contractId: CONTRACT, method: 'set_greeting', args: { greeting: newGreeting } });
     const greeting = await wallet.viewMethod({ contractId: CONTRACT, method: 'get_greeting' });
     setGreeting(greeting);

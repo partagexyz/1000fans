@@ -10,6 +10,7 @@ export const Navigation = () => {
   const [action, setAction] = useState(() => { });
   const [label, setLabel] = useState('Loading...');
 
+ // login/logout button using the signIn and signOut methods from the wallet selector
   useEffect(() => {
     if (!wallet) return;
 

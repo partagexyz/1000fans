@@ -1,45 +1,38 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Exclusive Fan Club Platform on NEAR Blockchain
 
-## Getting Started
+We are developing a premium, token-gated platform for an artist to connect with their 1000 most dedicated fans. This platform will offer exclusive music, video content, and access to private events, all secured by blockchain technology.
 
-First, run the development server:
+#### Technology Stack:
+- Blockchain: NEAR Blockchain
+- Frontend: JavaScript with the latest Next.js framework
+- Development Start: Utilize the NEAR boilerplate with npx create-near-app@latest
+- Smart Contract: An NFT minter contract, limited to 1000 tokens, to be deployed on NEAR's mainnet post-testnet validation.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+#### Platform Features:
+- Homepage: Designed to engage and excite potential members with details about exclusive perks and artist insights.
+- Navigation Bar: Includes a prominent wallet connect/disconnect button for user authentication.
+- Sidebar: Features categories like Music, Videos, and Events, each marked with a lock icon to denote exclusivity until membership is verified.
+- Footer: Links to the artist's social media platforms for broader community engagement.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### Membership Verification:
+Upon wallet connection, the platform checks for the presence of the valid membership token:
+- Valid Token: Unlocks content by removing the lock icon from sidebar categories.
+- Invalid Token: Redirects users to a membership purchase page.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+#### Content Access:
+- Music Catalog: Styled like a Spotify playlist, displaying tracks with artist names, song titles, and icons. Music playback is integrated with an overlay player, similar to Spotify, Mixcloud, or SoundCloud.
+- Video Catalog: Mimics a YouTube channel interface with video previews, sortable by various filters for user convenience. Clicking a video card directs to a private YouTube page for exclusive viewing.
+- Event Catalog: Features a calendar view and a carousel of upcoming events. Clicking an event card leads to a private Eventbrite page for ticket purchases.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+#### Development Goals:
+- Security: Ensuring that all transactions and content access are secure and only accessible to token holders.
+- User Experience: A Netflix-like UI/UX to ensure ease of navigation and enjoyment of premium content.
+- Scalability: Preparing the platform for potential expansion while maintaining performance and security.
 
-## Learn More about NEAR
+#### Next Steps:
+- Complete development and testing on NEAR testnet.
+- Deploy smart contract on mainnet.
+- Beta testing with a select group before full launch to the 1000 fans.
 
-To learn more about NEAR, take a look at the following resources:
-
-- [NEAR Documentation](https://docs.near.org) - learn about NEAR.
-- [Frontend Docs](https://docs.near.org/build/web3-apps/quickstart) - learn about this example.
-
-You can check out [the NEAR repository](https://github.com/near) - your feedback and contributions are welcome!
-
-## Learn More about Next.js
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+#### Contribute:
+We welcome developers passionate about music, blockchain, and creating unique fan experiences to join this project. Let's innovate the way fans connect with artists in a secure, exclusive digital space.
