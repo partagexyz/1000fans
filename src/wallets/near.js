@@ -1,3 +1,4 @@
+// Contains wallet connection logic. Integrate membership token checks.
 import { createContext } from 'react';
 
 // near api js
