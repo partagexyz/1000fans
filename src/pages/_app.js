@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
+import Head from 'next/head'; // metadata
 
 import '@/styles/globals.css';
 import { Navigation } from '@/components/navigation';
-
 import { Wallet, NearContext } from '@/wallets/near';
 import { NetworkId } from '@/config';
 
@@ -20,12 +20,22 @@ const wallet = new Wallet({
 export default function MyApp({ Component, pageProps }) {
   const [signedAccountId, setSignedAccountId] = useState('');
 
-  useEffect(() => { wallet.startUp(setSignedAccountId) }, []);
+  useEffect(() => { 
+    wallet.startUp(setSignedAccountId) 
+  }, []);
 
   return (
-    <NearContext.Provider value={{ wallet, signedAccountId }}>
-      <Navigation />
-      <Component {...pageProps} />
-    </NearContext.Provider>
+    <>
+      <Head>
+        <title>Mentala Fans</title>
+        <meta name="description" content="Exclusive content club for Mentala fans" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Add any other meta tags here */}
+      </Head>
+      <NearContext.Provider value={{ wallet, signedAccountId }}>
+        <Navigation />
+        <Component {...pageProps} />
+      </NearContext.Provider>
+    </>
   );
 }

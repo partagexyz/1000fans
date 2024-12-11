@@ -1,41 +1,40 @@
-import Link from 'next/link';
 import styles from '@/styles/app.module.css';
 
-export const Cards = () => {
+export const Cards = ({ handleCardClick }) => {
   return (
     <div className={styles.grid}>
-      <Link
-        href="/music"
+      <div
         className={styles.card}
-        rel="noopener noreferrer"
+        onClick={() => handleCardClick('/music')}
+        style={{ cursor: 'pointer' }}
       >
         <h2>
           Music Collection <span>-&gt;</span>
         </h2>
         <p>Explore our exclusive collection of songs and playlists.</p>
-      </Link>
+      </div>
 
-      <Link
-        href="/videos"
+      <div
         className={styles.card}
-        rel="noopener noreferrer"
+        onClick={() => handleCardClick('/videos')}
+        style={{ cursor: 'pointer' }}
       >
         <h2>
           Exclusive Videos <span>-&gt;</span>
         </h2>
         <p>Watch behind-the-scenes and unreleased video content.</p>
-      </Link>
+      </div>
 
-      <Link
-        href="/events"
+      <div
         className={styles.card}
-        rel="noopener noreferrer"
+        onClick={() => handleCardClick('/events')}
+        style={{ cursor: 'pointer' }}
       >
         <h2>
-          Events <span>-&gt;</span>
+          Private Events <span>-&gt;</span>
         </h2>
         <p>Join private events and meet-and-greets with your favorite artists.</p>
-      </Link>
+      </div>
     </div>
   );
 };

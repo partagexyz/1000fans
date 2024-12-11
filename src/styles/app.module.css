@@ -111,6 +111,11 @@
   position: relative;
 }
 
+.navbar .navbar-brand {
+  font-weight: bold;
+  color: white !important; /* !important overrides any other color settings */
+}
+
 /* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
