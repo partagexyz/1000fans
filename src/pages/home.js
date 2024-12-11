@@ -8,52 +8,27 @@ import { NearContext } from '@/wallets/near';
 import { useRouter } from 'next/router';
 
 export default function Home() {
-  const { wallet } = useContext(NearContext);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { signedAccountId, wallet } = useContext(NearContext);
   const router = useRouter();
 
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      if (wallet && wallet.selector) {
-        const walletSelector = wallet.selector;
-        const currentState = walletSelector.store.getState();
-        const isSignedIn = currentState.accounts.find(account => account.active) !== undefined;
-        setIsLoggedIn(isSignedIn);
-      }
-    };
-
-    checkLoginStatus();
-
-    if (wallet && wallet.selector) {
-      const walletSelector = wallet.selector;
-      const unsubscribe = walletSelector.store.observable.subscribe((state) => {
-        const isSignedIn = state.accounts.find(account => account.active) !== undefined;
-        setIsLoggedIn(isSignedIn);
-      });
-  
-      return () => unsubscribe(); //cleanup subscription
-    }
-  }, [wallet]);
-
   const handleCardClick = (path) => {
-    if (isLoggedIn) {
-      router.push(path);
+    if (signedAccountId) {
+      router.push(path); // redirect when logged in
     } else {
-      wallet.signIn();
+      wallet.signIn(); // trigger login when not logged in
     }
   };
 
   return (
     <main className={styles.main}>
-      <div className={styles.description}> </div>
+      <div className={styles.description}></div>
 
       <div className={styles.center}>
         <Image
           className={styles.logo}
           src={MentalaLogo}
           alt="Mentala Logo"
-          // adjust width and height according to logo
-          width={512}
+          width={512} // adjust width and height according to logo size
           height={512}
           priority
         />

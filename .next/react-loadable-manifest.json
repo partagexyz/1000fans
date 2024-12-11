@@ -1,128 +1,128 @@
 {
   "../node_modules/@near-wallet-selector/ethereum-wallets/index.js -> @wagmi/core": {
-    "id": "../node_modules/@near-wallet-selector/ethereum-wallets/index.js -> @wagmi/core",
+    "id": 1172,
     "files": [
-      "static/chunks/node_modules_near-wallet-selector_ethereum-wallets_node_modules_wagmi_core_dist_esm_exports_i-bfb44b.js"
+      "static/chunks/172.195e82cc3e0790f9.js"
     ]
   },
   "../node_modules/@near-wallet-selector/ethereum-wallets/node_modules/viem/_esm/actions/public/call.js -> ../../utils/ccip.js": {
-    "id": "../node_modules/@near-wallet-selector/ethereum-wallets/node_modules/viem/_esm/actions/public/call.js -> ../../utils/ccip.js",
-    "files": []
+    "id": 46,
+    "files": [
+      "static/chunks/46.0950f23e695f1f5d.js"
+    ]
   },
   "../node_modules/@near-wallet-selector/ethereum-wallets/node_modules/viem/_esm/utils/rpc/webSocket.js -> isows": {
-    "id": "../node_modules/@near-wallet-selector/ethereum-wallets/node_modules/viem/_esm/utils/rpc/webSocket.js -> isows",
+    "id": 18789,
     "files": [
-      "static/chunks/node_modules_near-wallet-selector_ethereum-wallets_node_modules_isows__esm_native_js.js"
+      "static/chunks/789.98195f4834ec0d47.js"
     ]
   },
   "../node_modules/@near-wallet-selector/ethereum-wallets/node_modules/viem/_esm/utils/signature/recoverPublicKey.js -> @noble/curves/secp256k1": {
-    "id": "../node_modules/@near-wallet-selector/ethereum-wallets/node_modules/viem/_esm/utils/signature/recoverPublicKey.js -> @noble/curves/secp256k1",
+    "id": null,
     "files": []
   },
   "../node_modules/@wagmi/connectors/dist/esm/coinbaseWallet.js -> @coinbase/wallet-sdk": {
-    "id": "../node_modules/@wagmi/connectors/dist/esm/coinbaseWallet.js -> @coinbase/wallet-sdk",
-    "files": [
-      "static/chunks/node_modules_coinbase_wallet-sdk_dist_index_js.js"
-    ]
+    "id": null,
+    "files": []
   },
   "../node_modules/@wagmi/connectors/dist/esm/coinbaseWallet.js -> cbw-sdk": {
-    "id": "../node_modules/@wagmi/connectors/dist/esm/coinbaseWallet.js -> cbw-sdk",
-    "files": [
-      "static/chunks/node_modules_cbw-sdk_dist_index_js.js"
-    ]
+    "id": null,
+    "files": []
   },
   "../node_modules/@wagmi/connectors/dist/esm/metaMask.js -> @metamask/sdk": {
-    "id": "../node_modules/@wagmi/connectors/dist/esm/metaMask.js -> @metamask/sdk",
-    "files": [
-      "static/chunks/node_modules_metamask_sdk_dist_browser_es_metamask-sdk_js.js"
-    ]
+    "id": null,
+    "files": []
   },
   "../node_modules/@wagmi/connectors/dist/esm/safe.js -> @safe-global/safe-apps-provider": {
-    "id": "../node_modules/@wagmi/connectors/dist/esm/safe.js -> @safe-global/safe-apps-provider",
-    "files": [
-      "static/chunks/node_modules_safe-global_safe-apps-provider_dist_index_js.js"
-    ]
+    "id": null,
+    "files": []
   },
   "../node_modules/@wagmi/connectors/dist/esm/safe.js -> @safe-global/safe-apps-sdk": {
-    "id": "../node_modules/@wagmi/connectors/dist/esm/safe.js -> @safe-global/safe-apps-sdk",
-    "files": [
-      "static/chunks/node_modules_safe-global_safe-apps-sdk_dist_esm_index_js.js"
-    ]
+    "id": null,
+    "files": []
   },
   "../node_modules/@wagmi/connectors/dist/esm/walletConnect.js -> @walletconnect/ethereum-provider": {
-    "id": "../node_modules/@wagmi/connectors/dist/esm/walletConnect.js -> @walletconnect/ethereum-provider",
+    "id": 62653,
     "files": []
   },
   "../node_modules/@walletconnect/ethereum-provider/dist/index.es.js -> @walletconnect/modal": {
-    "id": "../node_modules/@walletconnect/ethereum-provider/dist/index.es.js -> @walletconnect/modal",
+    "id": 59343,
     "files": [
-      "static/chunks/node_modules_walletconnect_modal_dist_index_js.js"
+      "static/chunks/343.92e58cbc6baa9e80.js"
     ]
   },
   "../node_modules/@walletconnect/modal/dist/index.js -> @walletconnect/modal-ui": {
-    "id": "../node_modules/@walletconnect/modal/dist/index.js -> @walletconnect/modal-ui",
+    "id": 41391,
     "files": [
-      "static/chunks/node_modules_walletconnect_modal-ui_dist_index_js.js"
+      "static/chunks/391.056ae26f53f69702.js"
     ]
   },
   "../node_modules/@web3modal/base/dist/esm/adapters/evm/wagmi/client.js -> @web3modal/siwe": {
-    "id": "../node_modules/@web3modal/base/dist/esm/adapters/evm/wagmi/client.js -> @web3modal/siwe",
+    "id": 23884,
     "files": [
-      "static/chunks/node_modules_web3modal_siwe_dist_esm_exports_index_js.js"
+      "static/chunks/3c4bf7bb.4ba8c5b228d97ec8.js",
+      "static/chunks/884.e7dadf93e56d0730.js"
     ]
   },
   "../node_modules/@web3modal/base/dist/esm/src/client.js -> @web3modal/scaffold-ui/w3m-modal": {
-    "id": "../node_modules/@web3modal/base/dist/esm/src/client.js -> @web3modal/scaffold-ui/w3m-modal",
+    "id": 78874,
     "files": [
-      "static/chunks/node_modules_web3modal_scaffold-ui_dist_esm_exports_w3m-modal_js.js"
+      "static/chunks/874.852eb0bf37658518.js"
     ]
   },
   "../node_modules/@web3modal/base/dist/esm/src/client.js -> @web3modal/siwe": {
-    "id": "../node_modules/@web3modal/base/dist/esm/src/client.js -> @web3modal/siwe",
+    "id": 23884,
     "files": [
-      "static/chunks/node_modules_web3modal_siwe_dist_esm_exports_index_js.js"
+      "static/chunks/3c4bf7bb.4ba8c5b228d97ec8.js",
+      "static/chunks/884.e7dadf93e56d0730.js"
     ]
   },
   "../node_modules/@web3modal/base/dist/esm/src/client.js -> @web3modal/ui": {
-    "id": "../node_modules/@web3modal/base/dist/esm/src/client.js -> @web3modal/ui",
+    "id": 51844,
     "files": []
   },
   "../node_modules/@web3modal/scaffold-ui/dist/esm/src/modal/w3m-modal/index.js -> @web3modal/siwe": {
-    "id": "../node_modules/@web3modal/scaffold-ui/dist/esm/src/modal/w3m-modal/index.js -> @web3modal/siwe",
+    "id": 23884,
     "files": [
-      "static/chunks/node_modules_web3modal_siwe_dist_esm_exports_index_js.js"
+      "static/chunks/3c4bf7bb.4ba8c5b228d97ec8.js",
+      "static/chunks/884.e7dadf93e56d0730.js"
     ]
   },
   "../node_modules/@web3modal/scaffold-ui/dist/esm/src/partials/w3m-header/index.js -> @web3modal/siwe": {
-    "id": "../node_modules/@web3modal/scaffold-ui/dist/esm/src/partials/w3m-header/index.js -> @web3modal/siwe",
+    "id": 23884,
     "files": [
-      "static/chunks/node_modules_web3modal_siwe_dist_esm_exports_index_js.js"
+      "static/chunks/3c4bf7bb.4ba8c5b228d97ec8.js",
+      "static/chunks/884.e7dadf93e56d0730.js"
     ]
   },
   "../node_modules/@web3modal/scaffold-ui/dist/esm/src/utils/NetworkUtil.js -> @web3modal/siwe": {
-    "id": "../node_modules/@web3modal/scaffold-ui/dist/esm/src/utils/NetworkUtil.js -> @web3modal/siwe",
+    "id": 23884,
     "files": [
-      "static/chunks/node_modules_web3modal_siwe_dist_esm_exports_index_js.js"
+      "static/chunks/3c4bf7bb.4ba8c5b228d97ec8.js",
+      "static/chunks/884.e7dadf93e56d0730.js"
     ]
   },
   "../node_modules/@web3modal/scaffold-ui/dist/esm/src/views/w3m-connecting-wc-view/index.js -> @web3modal/siwe": {
-    "id": "../node_modules/@web3modal/scaffold-ui/dist/esm/src/views/w3m-connecting-wc-view/index.js -> @web3modal/siwe",
+    "id": 23884,
     "files": [
-      "static/chunks/node_modules_web3modal_siwe_dist_esm_exports_index_js.js"
+      "static/chunks/3c4bf7bb.4ba8c5b228d97ec8.js",
+      "static/chunks/884.e7dadf93e56d0730.js"
     ]
   },
   "../node_modules/viem/_esm/actions/public/call.js -> ../../utils/ccip.js": {
-    "id": "../node_modules/viem/_esm/actions/public/call.js -> ../../utils/ccip.js",
-    "files": []
-  },
-  "../node_modules/viem/_esm/utils/rpc/webSocket.js -> isows": {
-    "id": "../node_modules/viem/_esm/utils/rpc/webSocket.js -> isows",
+    "id": 10422,
     "files": [
-      "static/chunks/node_modules_isows__esm_native_js.js"
+      "static/chunks/422.c2603fec58056fff.js"
     ]
   },
-  "../node_modules/viem/_esm/utils/signature/recoverPublicKey.js -> @noble/curves/secp256k1": {
-    "id": "../node_modules/viem/_esm/utils/signature/recoverPublicKey.js -> @noble/curves/secp256k1",
+  "../node_modules/viem/_esm/utils/rpc/webSocket.js -> isows": {
+    "id": null,
     "files": []
+  },
+  "../node_modules/viem/_esm/utils/signature/recoverPublicKey.js -> @noble/curves/secp256k1": {
+    "id": 28967,
+    "files": [
+      "static/chunks/967.a48fbf90d983143b.js"
+    ]
   }
 }
