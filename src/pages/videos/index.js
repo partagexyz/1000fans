@@ -1,5 +1,6 @@
 // simplified version of a youtube-like channel page
 import styles from '@/styles/videos.module.css';
+import Image from 'next/image';
 
 export default function Videos() {
     const videos = [
@@ -15,7 +16,7 @@ export default function Videos() {
             <div className={styles.grid}>
                 {videos.map(video => (
                     <div key={video.id} className={styles.card}>
-                        <img src={video.thumbnail} alt={video.title} className={styles.thumbnail} />
+                        <Image src={video.thumbnail} alt={video.title} className={styles.thumbnail} />
                         <p>{video.title}</p>
                     </div>
                 ))}
