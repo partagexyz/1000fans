@@ -1,10 +1,10 @@
 // simplified version of a spotify-like playlist page
 import styles from '@/styles/music.module.css';
-import Player from '@/components/audioPlayer'
+import Player from '@/components/player'
 
 export default function Music() {
     const tracks = [
-        // test files from a google drive storage. to be replaced with server-hoster files or API calls to a host service
+        // test files to be replaced with server-hosted files or API calls to a third-party
         { 
             id: 1, 
             title: 'Track One', 

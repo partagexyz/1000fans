@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import ReactPlayer from 'react-player';
 import Image from 'next/image';
-import styles from '../styles/audioPlayer.module.css';
+import styles from '../styles/player.module.css';
 
 const Player = ({ url }) => {
     const [playing, setPlaying] = useState(false);
@@ -11,6 +11,8 @@ const Player = ({ url }) => {
     const [volume, setVolume] = useState(1.0);
 
     const currentTrack = url[trackIndex];
+
+    const isVideo = currentTrack.url.endsWith('.mp4');
 
     // toggle play/pause
     const toggle = () => {
@@ -35,8 +37,30 @@ const Player = ({ url }) => {
     };
 
     return (
-        <div className={styles['audio-player']}>
-            <div className={styles.buttons} style={{ width: '300px', justifyContent: 'start' }}>
+        <div className={isVideo ? styles['video-player'] : styles['audio-player']}>
+            {isVideo ? 
+                <div className={styles.videoContainer}>
+                    <ReactPlayer 
+                        url={currentTrack.url}
+                        playing={playing}
+                        volume={volume}
+                        onEnded={toNextTrack}
+                        width="100%"
+                        height="360px"
+                        controls
+                    />
+                </div>
+            :
+                <ReactPlayer 
+                    url={currentTrack.url}
+                    playing={playing}
+                    volume={volume}
+                    onEnded={toNextTrack}
+                    width="0px"
+                    height="0px"
+                />
+            }
+            <div className={styles.info}>
                 <Image
                     className={styles.cover}
                     src={JSON.parse(currentTrack.metadata).image}
@@ -49,14 +73,6 @@ const Player = ({ url }) => {
                     <div className={styles.songArtist}>{currentTrack.artist}</div>
                 </div>
             </div>
-            <ReactPlayer 
-                url={currentTrack.url}
-                playing={playing}
-                volume={volume}
-                onEnded={toNextTrack}
-                width="0px"
-                height="0px"
-            />
             <div>
                 <div className={styles.buttons}>
                     <button className={styles.forback} onClick={toPrevTrack}>Prev</button>

@@ -31,7 +31,7 @@ export const Navigation = () => {
         <Link href="/" passHref legacyBehavior>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Image priority src={MentalaLogo} alt="Mentala Logo" width="51" height="51" className="d-inline-block align-text-top" />
-            <span className={`${styles['navbar-brand']} mb-0 h1 ms-2`}>MENTALA FANS</span>
+            <span className={`${styles['navbar-brand']} mb-0 h1 ms-2`}>FANS CLUB</span>
           </div>
         </Link>
         <div className='navbar-nav pt-1'>

@@ -1,26 +1,34 @@
 // simplified version of a youtube-like channel page
 import styles from '@/styles/videos.module.css';
-import Image from 'next/image';
+import Player from '@/components/player';
 
 export default function Videos() {
     const videos = [
-        // dummy data to be replaced later with server fetched data or API call to private youtube channel
-        { id: 1, title: 'Video One', thumbnail: '/video1.png' },
-        { id: 2, title: 'Video Two', thumbnail: '/video2.png' },
-        { id: 3, title: 'Video Three', thumbnail: '/video3.png' },
+        // test files to be replaced with server-hosted files or API calls to a third-party
+        { 
+            id: 1, 
+            title: 'Video One', 
+            url: '/videos/video1.mp4', // Path to video in public/videos
+            metadata: JSON.stringify({title: 'Video One', image: '/videos/thumbnail1.png'}),
+        },
+        { 
+            id: 2, 
+            title: 'Video Two', 
+            url: '/videos/video2.mp4',
+            metadata: JSON.stringify({title: 'Video Two', image: '/videos/thumbnail2.png'}), 
+        },
+        { 
+            id: 3, 
+            title: 'Video Three', 
+            url: '/videos/video3.mp4',
+            metadata: JSON.stringify({title: 'Video Three', image: '/videos/thumbnail3.png'}), 
+        },
     ];
 
     return (
         <div className={styles.videoGrid}>
             <h1>Exclusive Videos</h1>
-            <div className={styles.grid}>
-                {videos.map(video => (
-                    <div key={video.id} className={styles.card}>
-                        <Image src={video.thumbnail} alt={video.title} className={styles.thumbnail} />
-                        <p>{video.title}</p>
-                    </div>
-                ))}
-            </div>
+            <Player url={videos} />
         </div>
     );
 }

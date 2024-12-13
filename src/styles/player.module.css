@@ -1,3 +1,4 @@
+/* General styles for both audio and video players */
 .volume {
     width:100px;
   }
@@ -58,6 +59,45 @@
     color: white;
 }
 
-.songAlbum {
+.songArtist {
     font-size: 12px;
+}
+
+/* Styles specific to the audio player */
+.audio-player {
+    width: 100%;
+}
+
+/* Styles for video player layout */
+.video-player {
+    width: 100%;
+}
+
+.videoContainer {
+    width: 100%;
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+.videoContainer > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.info {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+/* Adjustments for when playing video */
+.video-player .info {
+    margin-top: 20px; /* More space after video for info */
+}
+
+.video-player .cover {
+    margin-right: 10px; /* Space between video and cover image */
 }
