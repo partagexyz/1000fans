@@ -1,7 +1,8 @@
 [package]
-name = "non-fungible-token"
+name = "athousandfans"
+description = "A smart contract to mint and check ownership of 1000 fans tokens"
 version = "1.1.0"
-authors = ["Near Inc <hello@near.org>"]
+authors = ["jcarbonnell.near"]
 edition = "2018"
 
 [lib]

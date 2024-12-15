@@ -1,3 +1,4 @@
+// mint and manage 100 fans tokens
 /*!
 Non-Fungible Token implementation with JSON serialization.
 NOTES:
@@ -37,6 +38,7 @@ use std::collections::HashMap;
 pub struct Contract {
     tokens: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
+    minted_count: u64, // keep track of minted tokens
 }
 
 const DATA_IMAGE_SVG_NEAR_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 288 288'%3E%3Cg id='l' data-name='l'%3E%3Cpath d='M187.58,79.81l-30.1,44.69a3.2,3.2,0,0,0,4.75,4.2L191.86,103a1.2,1.2,0,0,1,2,.91v80.46a1.2,1.2,0,0,1-2.12.77L102.18,77.93A15.35,15.35,0,0,0,90.47,72.5H87.34A15.34,15.34,0,0,0,72,87.84V201.16A15.34,15.34,0,0,0,87.34,216.5h0a15.35,15.35,0,0,0,13.08-7.31l30.1-44.69a3.2,3.2,0,0,0-4.75-4.2L96.14,186a1.2,1.2,0,0,1-2-.91V104.61a1.2,1.2,0,0,1,2.12-.77l89.55,107.23a15.35,15.35,0,0,0,11.71,5.43h3.13A15.34,15.34,0,0,0,216,201.16V87.84A15.34,15.34,0,0,0,200.66,72.5h0A15.35,15.35,0,0,0,187.58,79.81Z'/%3E%3C/g%3E%3C/svg%3E";
@@ -61,9 +63,9 @@ impl Contract {
             owner_id,
             NFTContractMetadata {
                 spec: NFT_METADATA_SPEC.to_string(),
-                name: "Example NEAR non-fungible token".to_string(),
-                symbol: "EXAMPLE".to_string(),
-                icon: Some(DATA_IMAGE_SVG_NEAR_ICON.to_string()),
+                name: "1000fans".to_string(),
+                symbol: "1000F".to_string(),
+                icon: None,
                 base_uri: None,
                 reference: None,
                 reference_hash: None,
@@ -84,6 +86,7 @@ impl Contract {
                 Some(StorageKey::Approval),
             ),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
+            minted_count: 0, // Initialize minted_count to zero
         }
     }
 
@@ -94,19 +97,27 @@ impl Contract {
     /// `StorageKey::TokenMetadata` was provided at initialization.
     ///
     #[payable]
+    #[handle_result]
     pub fn nft_mint(
         &mut self,
         token_id: TokenId,
         token_owner_id: AccountId,
         token_metadata: TokenMetadata,
-    ) -> Token {
-        assert_eq!(
-            env::predecessor_account_id(),
-            self.tokens.owner_id,
-            "Unauthorized"
-        );
-        self.tokens
-            .internal_mint(token_id, token_owner_id, Some(token_metadata))
+    ) -> Result<Token, String> {
+        if env::predecessor_account_id() != self.tokens.owner_id {
+            return Err("Unauthorized".to_string());
+        }
+        if self.minted_count >= 1000 {
+            return Err("Cannot mint more than 1000 tokens".to_string());
+        }
+        self.minted_count += 1; // Increment the counter after checking
+    
+        Ok(self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata)))
+    }
+
+    // check if an account owns a token
+    pub fn owns_token(&self, account_id:AccountId) -> bool {
+        self.tokens.nft_tokens_for_owner(account_id, None, Some(1)).len() > 0
     }
 }
 
@@ -295,7 +306,9 @@ mod tests {
             .build());
 
         let token_id = "0".to_string();
-        let token = contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+        let token_result = contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+        let token = token_result.expect("Failed to mint token");
+        
         assert_eq!(token.token_id, token_id);
         assert_eq!(token.owner_id, accounts(0));
         assert_eq!(token.metadata.unwrap(), sample_token_metadata());
@@ -444,5 +457,41 @@ mod tests {
             .attached_deposit(ZERO_NEAR)
             .build());
         assert!(!contract.nft_is_approved(token_id.clone(), accounts(1), Some(1)));
+    }
+
+    #[test]
+    fn test_mint_limit() {
+        let mut context = get_context(accounts(0));
+        testing_env!(context.build());
+        let mut contract = Contract::new_default_meta(accounts(0).into());
+    
+        for i in 0..1000 {
+            testing_env!(context
+                .storage_usage(env::storage_usage())
+                .attached_deposit(MINT_STORAGE_COST)
+                .predecessor_account_id(accounts(0))
+                .build());
+            let token_id = i.to_string();
+            contract.nft_mint(token_id, accounts(0), sample_token_metadata()).unwrap();
+        }
+    
+        // Attempt to mint one more token
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(MINT_STORAGE_COST)
+            .predecessor_account_id(accounts(0))
+            .build());
+        println!("Before mint attempt, minted_count = {}", contract.minted_count);
+        let result = contract.nft_mint("1001".to_string(), accounts(0), sample_token_metadata());
+    
+        // Check if minting failed due to limit
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Cannot mint more than 1000 tokens");
+    
+        println!("After mint attempt: minted_count = {}", contract.minted_count);
+        assert_eq!(contract.minted_count, 1000);
+    
+        // Check if no new token was actually minted
+        assert_eq!(contract.nft_total_supply(), U128::from(1000));
     }
 }
