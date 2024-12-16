@@ -7,8 +7,6 @@ const CONTRACT = 'partage-lock.testnet';
 
 export default function Shop() {
   const { signedAccountId, wallet } = useContext(NearContext);
-  const [tokenId, setTokenId] = useState('');
-  const [tokenMetadata, setTokenMetadata] = useState({ title: '', description: '' });
   const [ownsToken, setOwnsToken] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,9 +23,11 @@ export default function Shop() {
     try {
       const result = await wallet.ownsToken(signedAccountId, CONTRACT);
       setOwnsToken(result);
+      setIsLoading(false); // reset loading state
     } catch (error) {
       console.error('Error checking token ownership:', error);
       setError('Failed to check token ownership');
+      setIsLoading(false); // reset loading state
     }
   };
 
@@ -40,9 +40,11 @@ export default function Shop() {
         contractId: CONTRACT,
         method: 'nft_mint',
         args: { 
-          token_id: tokenId, 
           token_owner_id: signedAccountId,
-          metadata: tokenMetadata,
+          token_metadata: {
+            title: "Exlusive Fans Token",
+            description: "Your exclusive fans token to access exclusive content from the fans club",
+          },
         },
         deposit: '100000000000000000000000', // 0.1 NEAR in yoctoNEAR for storage cost - adjust this based on your contract's requirements
       });
@@ -50,13 +52,14 @@ export default function Shop() {
       await checkTokenOwnership(); //refresh ownership status
     } catch (error) {
       console.error('Error minting fans token:', error);
-      setError('Failed to mint fans token. check token ID or try again later');
+      setError('Failed to mint fans token. Try again later');
+    } finally {
+    setIsLoading(false); // ensure isLoading is set back to false
     }
-    setIsLoading(false);
   };
 
-  const transferNFT = async (tokenId, receiverId) => {
-    if (!wallet) return;
+  const transferNFT = async () => {
+    if (!wallet || !ownsToken) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -64,10 +67,9 @@ export default function Shop() {
         contractId: CONTRACT,
         method: 'nft_transfer',
         args: { 
-          token_id: tokenId, 
           receiver_id: receiverId,
           approval_id: null, // optional approval ID
-          memo: 'Transfer fans token from shop',
+          memo: 'Transfer fans token from the shop',
         },
         deposit: '1', // minimal deposit required for transfer
       });
@@ -95,26 +97,8 @@ export default function Shop() {
             {!ownsToken ? (
               <div className={styles.shopSection}>
                 <h2>Claim your Fans Token</h2>
-                <input
-                  type="text"
-                  placeholder="Token ID"
-                  value={tokenId}
-                  onChange={(e) => setTokenId(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Token Title"
-                  value={tokenMetadata.title}
-                  onChange={(e) => setTokenMetadata({ ...tokenMetadata, title: e.target.value })}
-                />
-                <input
-                  type="text"
-                  placeholder="Token Description"
-                  value={tokenMetadata.description}
-                  onChange={(e) => setTokenMetadata({ ...tokenMetadata, description: e.target.value })}
-                />
                 <button onClick={mintNFT} disabled={isLoading}>
-                  {isLoading ? 'Minting...' : 'Claim your Fans Token'}
+                  {isLoading ? 'Minting...' : 'Claim'}
                 </button>
               </div>
             ) : (
@@ -122,18 +106,12 @@ export default function Shop() {
                 <h2>Transfer your Fans Token</h2>
                 <input
                   type="text"
-                  placeholder="Token ID"
-                  value={tokenId}
-                  onChange={(e) => setTokenId(e.target.value)} // store token ID in state
-                />
-                <input
-                  type="text"
                   placeholder="Receiver ID"
                   value={receiverId}
                   onChange={(e) => setReceiverId(e.target.value)} // store receiver ID in state
                 />
-                <button onClick={transferNFT} disabled={isLoading}>
-                  {isLoading ? 'Transferring...' : 'Transfer Fans Token'}
+                <button onClick={transferNFT} disabled={isLoading || !receiverId}>
+                  {isLoading ? 'Transferring...' : 'Transfer'}
                 </button>
               </div>
             )}

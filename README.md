@@ -27,15 +27,16 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - **Scalability**: Preparing the platform for potential expansion while maintaining performance and security.
 
 #### Next Steps:
-- Build the frontend with Javascript, HTML and CSS.
-- Write the smart contract with Rust.
-- Deploy and test the smart contract on testnet.
-- Implement a "token check" in the wallet login.
+~~- Build the frontend with Javascript, HTML and CSS.~~
+~~- Write the smart contract with Rust.~~
+~~- Deploy and test the smart contract on testnet.~~
+~~- Implement a "token check" in the wallet login.~~
 - Implement a shop to allow fans to buy a fans token.
-- Improve the platform's design.
+- Update the smart contract. (max 1 token per account, token count to automatically set the token ID, min 1 year holding before transfer, receive payment to sell token...)
+- Update the platform's design.
 - Test the platform with a closed group of users on testnet.
-- Finalize the smart contract and the platform. (max 1 token per account, min 1 year holding before transfer)
-- Deploy the smart contract on mainnet, and the platform in production mode on a remote server.
+- Finalize the platform + smart contract on user feedback.
+- Deploy the smart contract on mainnet + the platform on public domain.
 - Launch to 1000 fans. 
 
 #### Contribute:
