@@ -10,10 +10,25 @@ import { useRouter } from 'next/router';
 export default function Home() {
   const { signedAccountId, wallet } = useContext(NearContext);
   const router = useRouter();
+  const [isMember, setIsMember] = useState(false);
+
+  useEffect(() => {
+    const checkMembership = async () => {
+      if (signedAccountId && wallet) {
+        const ownsToken = await wallet.ownsToken(signedAccountId, 'partage-lock.testnet');
+        setIsMember(ownsToken);
+      }
+    };
+    checkMembership();
+  }, [signedAccountId, wallet]);
 
   const handleCardClick = (path) => {
     if (signedAccountId) {
-      router.push(path); // redirect when logged in
+      if (isMember) {
+        router.push(path); // redirect when logged in and owns token
+      } else {
+        alert('You need to be a member to access this content');
+      }
     } else {
       wallet.signIn(); // trigger login when not logged in
     }

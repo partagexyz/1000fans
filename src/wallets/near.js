@@ -202,6 +202,26 @@ export class Wallet {
     });
     return keys.keys;
   };
+
+  /**
+   * Check if an account owns a token from the specified contract
+   * @param {string} accountId - The account ID to check for token ownership
+   * @param {string} contractId - The contract ID where the token might be owned
+   * @returns {Promise<boolean>} - true if account owns a token, false otherwise
+   */
+  ownsToken = async (accountId, contractId) => {
+    try {
+      const result = await this.viewMethod({
+        contractId: contractId,
+        method: 'owns_token',
+        args: { account_id: accountId },
+      });
+      return result; // should be true or false from the contract
+    } catch (error) {
+      console.error('Failed to check token ownership:', error);
+      return false; // Assume no ownership if there's an error
+    }
+  };
 }
 
 /**
