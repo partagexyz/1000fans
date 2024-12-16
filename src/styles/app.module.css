@@ -116,6 +116,42 @@
   color: white !important; /* !important overrides any other color settings */
 }
 
+.nav-link {
+  color: white;
+  text-decoration: none;
+}
+
+.nav-link-shop:hover {
+  color: #e0e0e0; /* A lighter shade for hover effect */
+}
+
+.navbar-nav {
+  display: flex;
+  align-items: center; /* Vertically align items */
+}
+
+.nav-link-shop {
+  margin-right: 15px; /* Adjust as needed */
+  color: white;
+  text-decoration: none;
+}
+
+.nav-link-shop {
+  padding: 0.375rem 0.75rem; /* Similar to btn padding in Bootstrap */
+}
+
+.shop-container {
+  display: flex;
+  flex-direction: column; /* This will stack the elements vertically */
+  align-items: center; /* Center items horizontally if needed */
+  gap: 20px; /* Space between sections */
+}
+
+.shop-section {
+  width: 100%; /* Full width for better responsiveness */
+  max-width: 400px; /* Optional: Set a max-width if you want to limit the width */
+}
+
 /* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   .card:hover {

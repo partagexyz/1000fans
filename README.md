@@ -29,10 +29,12 @@ Upon wallet connection, the platform checks for the presence of the valid member
 #### Next Steps:
 - Build the frontend with Javascript, HTML and CSS.
 - Write the smart contract with Rust.
+- Deploy and test the smart contract on testnet.
 - Implement a "token check" in the wallet login.
-- Deploy the smart contract on testnet, and test the platform.
-- Beta testing with a closed group of users on testnet.
-- Finalize the platform's design.
+- Implement a shop to allow fans to buy a fans token.
+- Improve the platform's design.
+- Test the platform with a closed group of users on testnet.
+- Finalize the smart contract and the platform. (max 1 token per account, min 1 year holding before transfer)
 - Deploy the smart contract on mainnet, and the platform in production mode on a remote server.
 - Launch to 1000 fans. 
 

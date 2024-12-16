@@ -34,7 +34,10 @@ export const Navigation = () => {
             <span className={`${styles['navbar-brand']} mb-0 h1 ms-2`}>FANS CLUB</span>
           </div>
         </Link>
-        <div className='navbar-nav pt-1'>
+        <div className={`${styles['navbar-nav']} pt-1`}>
+          <Link href="/shop" passHref legacyBehavior>
+            <a className={`${styles['nav-link']} ${styles['nav-link-shop']}`}>Shop</a>
+          </Link>
           <button className="btn btn-secondary" onClick={action} > {label} </button>
         </div>
       </div>

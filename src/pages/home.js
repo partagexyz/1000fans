@@ -27,7 +27,7 @@ export default function Home() {
       if (isMember) {
         router.push(path); // redirect when logged in and owns token
       } else {
-        alert('You need to be a member to access this content');
+        alert('You need to a fans token to access this page. Visit the shop to get one!');
       }
     } else {
       wallet.signIn(); // trigger login when not logged in
