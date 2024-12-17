@@ -75,7 +75,6 @@ impl Contract {
     #[handle_result]
     pub fn nft_mint(
         &mut self,
-        token_id: TokenId,
         token_owner_id: AccountId,
         token_metadata: TokenMetadata,
     ) -> Result<Token, String> {
@@ -89,6 +88,8 @@ impl Contract {
         if self.owns_token(token_owner_id.clone()) {
             return Err("Account already owns a token".to_string());
         }
+        // Generate the token ID based on the minted count
+        let token_id = format!("fan{:03}", self.minted_count);
 
         self.minted_count += 1; // Increment the counter after checking
     
@@ -279,7 +280,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mint_rules() {
+    fn test_mint() {
         let mut context = get_context(accounts(0));
         testing_env!(context.build());
         let mut contract = Contract::new_default_meta(accounts(0).into());
@@ -294,7 +295,7 @@ mod tests {
             let token_id = format!("token{}", i);
             let account_id = AccountId::new_unvalidated(format!("owner{}", i)); // Convert String to AccountId
             
-            let result = contract.nft_mint(token_id.clone(), account_id.clone(), sample_token_metadata());
+            let result = contract.nft_mint(account_id.clone(), sample_token_metadata());
             
             if result.is_err() {
                 println!("Failed to mint token {} for account {}. Error: {:?}", token_id, account_id, result.unwrap_err());
@@ -310,7 +311,7 @@ mod tests {
             .attached_deposit(MINT_STORAGE_COST)
             .predecessor_account_id(accounts(0))
             .build());
-        let result = contract.nft_mint("token1000".to_string(), AccountId::new_unvalidated("owner1000".to_string()), sample_token_metadata());
+        let result = contract.nft_mint(AccountId::new_unvalidated("owner1000".to_string()), sample_token_metadata());
         assert!(result.is_err(), "Shouldn't be able to mint the 1001st token");
         assert_eq!(result.unwrap_err(), "Cannot mint more than 1000 tokens", "Error message should match");
     
@@ -330,8 +331,8 @@ mod tests {
             .attached_deposit(MINT_STORAGE_COST)
             .predecessor_account_id(accounts(0))
             .build());
-        let token_id = "0".to_string();
-        contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+        let result = contract.nft_mint(accounts(0), sample_token_metadata()).unwrap();
+        let token_id = result.token_id; // Capture the auto-generated token ID
 
         testing_env!(context
             .storage_usage(env::storage_usage())
@@ -367,8 +368,8 @@ mod tests {
             .attached_deposit(MINT_STORAGE_COST)
             .predecessor_account_id(accounts(0))
             .build());
-        let token_id = "0".to_string();
-        contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+        let result = contract.nft_mint(accounts(0), sample_token_metadata()).unwrap();
+        let token_id = result.token_id; // Capture the auto-generated token ID
 
         // alice approves bob
         testing_env!(context
@@ -398,9 +399,9 @@ mod tests {
             .attached_deposit(MINT_STORAGE_COST)
             .predecessor_account_id(accounts(0))
             .build());
-        let token_id = "0".to_string();
-        contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
-
+        let result = contract.nft_mint(accounts(0), sample_token_metadata()).unwrap();
+        let token_id = result.token_id; // Capture the auto-generated token ID
+        
         // alice approves bob
         testing_env!(context
             .storage_usage(env::storage_usage())
@@ -436,8 +437,8 @@ mod tests {
             .attached_deposit(MINT_STORAGE_COST)
             .predecessor_account_id(accounts(0))
             .build());
-        let token_id = "0".to_string();
-        contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+        let result = contract.nft_mint(accounts(0), sample_token_metadata()).unwrap();
+        let token_id = result.token_id; // Capture the auto-generated token ID
 
         // alice approves bob
         testing_env!(context
