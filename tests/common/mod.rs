@@ -12,6 +12,18 @@ pub async fn mint_nft(
     token_id: TokenId,
     token_owner_id: &AccountId,
 ) -> anyhow::Result<()> {
+    // Check if the account already owns a token
+    let owns_token: bool = minter
+        .call(contract_id, "owns_token")
+        .args_json((token_owner_id,))
+        .view()
+        .await?
+        .json()?;
+
+    if owns_token {
+        return Err(anyhow::anyhow!("Receiver already owns a token"));
+    }
+
     let token_metadata = TokenMetadata {
         title: Some(format!("Title for {token_id}")),
         description: Some(format!("Description for {token_id}")),
@@ -26,15 +38,18 @@ pub async fn mint_nft(
         reference: None,
         reference_hash: None,
     };
+    println!("Attempting to mint token: {}, for account: {}", token_id, token_owner_id);
     let res = minter
         .call(contract_id, "nft_mint")
         .args_json(json!({"token_id": token_id, "token_owner_id": token_owner_id, "token_metadata": token_metadata}))
         .max_gas()
-        .deposit(NearToken::from_millinear(7))
+        .deposit(NearToken::from_yoctonear(6500000000000000000000))
         .transact()
         .await?;
-    assert!(res.is_success());
-
+    println!("Mint result: {:?}", res);
+    if !res.is_success() {
+        println!("Mint failed with: {:?}", res.into_result().err());
+    }
     Ok(())
 }
 

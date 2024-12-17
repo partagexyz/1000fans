@@ -28,32 +28,17 @@ async fn test_enum_total_supply(
     let nft_contract = worker.dev_deploy(&nft_wasm).await?;
     common::init_nft_contract(&nft_contract).await?;
 
-    common::mint_nft(
-        &nft_contract.as_account(),
-        nft_contract.id(),
-        "id-0".into(),
-        nft_contract.id(),
-    )
-    .await?;
+    let mut accounts = Vec::new();
+    for i in 0..1000 {
+        let account = worker.dev_create_account().await?;
+        accounts.push(account);
 
-    common::mint_nft(
-        &nft_contract.as_account(),
-        nft_contract.id(),
-        "id-1".into(),
-        nft_contract.id(),
-    )
-    .await?;
+        common::mint_nft(&nft_contract.as_account(), nft_contract.id(), format!("id-{}", i).into(), accounts[i].id()).await?;
+    }
 
-    common::mint_nft(
-        &nft_contract.as_account(),
-        nft_contract.id(),
-        "id-2".into(),
-        nft_contract.id(),
-    )
-    .await?;
-
+    // check total supply
     let total_supply: U128 = nft_contract.call("nft_total_supply").view().await?.json()?;
-    assert_eq!(total_supply, U128::from(3));
+    assert_eq!(total_supply, U128::from(1000));
 
     Ok(())
 }

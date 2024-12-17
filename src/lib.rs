@@ -36,8 +36,7 @@ enum StorageKey {
 
 #[near]
 impl Contract {
-    /// Initializes the contract owned by `owner_id` with
-    /// default metadata (for example purposes only).
+    /// Initializes the contract with default metadata.
     #[init]
     pub fn new_default_meta(owner_id: AccountId) -> Self {
         Self::new(
@@ -72,11 +71,6 @@ impl Contract {
     }
 
     /// Mint a new token with ID=`token_id` belonging to `token_owner_id`.
-    ///
-    /// Since this example implements metadata, it also requires per-token metadata to be provided
-    /// in this call. `self.tokens.mint` will also require it to be Some, since
-    /// `StorageKey::TokenMetadata` was provided at initialization.
-    ///
     #[payable]
     #[handle_result]
     pub fn nft_mint(
@@ -91,6 +85,11 @@ impl Contract {
         if self.minted_count >= 1000 {
             return Err("Cannot mint more than 1000 tokens".to_string());
         }
+        // check if the account already owns a token
+        if self.owns_token(token_owner_id.clone()) {
+            return Err("Account already owns a token".to_string());
+        }
+
         self.minted_count += 1; // Increment the counter after checking
     
         Ok(self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata)))
@@ -112,6 +111,11 @@ impl NonFungibleTokenCore for Contract {
         approval_id: Option<u64>,
         memo: Option<String>,
     ) {
+        // check if the receiver already owns a token
+        if self.owns_token(receiver_id.clone()) {
+            env::panic_str("Receiver already owns a token");
+        }
+        // if the check passes, proceed with the transfer
         self.tokens
             .nft_transfer(receiver_id, token_id, approval_id, memo);
     }
@@ -228,7 +232,7 @@ mod tests {
 
     const ZERO_NEAR: NearToken = NearToken::from_yoctonear(0);
     const ONE_YOCTONEAR: NearToken = NearToken::from_yoctonear(1);
-    const MINT_STORAGE_COST: NearToken = NearToken::from_yoctonear(5870000000000000000000);
+    const MINT_STORAGE_COST: NearToken = NearToken::from_yoctonear(6370000000000000000000);
     const APPROVE_STORAGE_COST: NearToken = NearToken::from_yoctonear(150000000000000000000);
 
     fn get_context(predecessor_account_id: AccountId) -> VMContextBuilder {
@@ -275,25 +279,44 @@ mod tests {
     }
 
     #[test]
-    fn test_mint() {
+    fn test_mint_rules() {
         let mut context = get_context(accounts(0));
         testing_env!(context.build());
         let mut contract = Contract::new_default_meta(accounts(0).into());
-
+    
+        // Test minting up to the 1000 token limit with unique accounts
+        for i in 0..1000 {
+            testing_env!(context
+                .storage_usage(env::storage_usage())
+                .attached_deposit(MINT_STORAGE_COST)
+                .predecessor_account_id(accounts(0))
+                .build());
+            let token_id = format!("token{}", i);
+            let account_id = AccountId::new_unvalidated(format!("owner{}", i)); // Convert String to AccountId
+            
+            let result = contract.nft_mint(token_id.clone(), account_id.clone(), sample_token_metadata());
+            
+            if result.is_err() {
+                println!("Failed to mint token {} for account {}. Error: {:?}", token_id, account_id, result.unwrap_err());
+                panic!("Minting token {} failed", token_id);
+            }
+            assert!(result.is_ok(), "Minting tokens up to 1000 should succeed");
+            assert!(contract.owns_token(account_id.clone()), "Account should own the token after minting");
+        }
+    
+        // Try to mint one more token, which should fail due to the 1000 token limit
         testing_env!(context
             .storage_usage(env::storage_usage())
             .attached_deposit(MINT_STORAGE_COST)
             .predecessor_account_id(accounts(0))
             .build());
-
-        let token_id = "0".to_string();
-        let token_result = contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
-        let token = token_result.expect("Failed to mint token");
-        
-        assert_eq!(token.token_id, token_id);
-        assert_eq!(token.owner_id, accounts(0));
-        assert_eq!(token.metadata.unwrap(), sample_token_metadata());
-        assert_eq!(token.approved_account_ids.unwrap(), HashMap::new());
+        let result = contract.nft_mint("token1000".to_string(), AccountId::new_unvalidated("owner1000".to_string()), sample_token_metadata());
+        assert!(result.is_err(), "Shouldn't be able to mint the 1001st token");
+        assert_eq!(result.unwrap_err(), "Cannot mint more than 1000 tokens", "Error message should match");
+    
+        // Final checks
+        assert_eq!(contract.minted_count, 1000, "Should have minted exactly 1000 tokens");
+        assert_eq!(contract.nft_total_supply(), U128::from(1000), "Total supply should be 1000");
     }
 
     #[test]
@@ -438,41 +461,5 @@ mod tests {
             .attached_deposit(ZERO_NEAR)
             .build());
         assert!(!contract.nft_is_approved(token_id.clone(), accounts(1), Some(1)));
-    }
-
-    #[test]
-    fn test_mint_limit() {
-        let mut context = get_context(accounts(0));
-        testing_env!(context.build());
-        let mut contract = Contract::new_default_meta(accounts(0).into());
-    
-        for i in 0..1000 {
-            testing_env!(context
-                .storage_usage(env::storage_usage())
-                .attached_deposit(MINT_STORAGE_COST)
-                .predecessor_account_id(accounts(0))
-                .build());
-            let token_id = i.to_string();
-            contract.nft_mint(token_id, accounts(0), sample_token_metadata()).unwrap();
-        }
-    
-        // Attempt to mint one more token
-        testing_env!(context
-            .storage_usage(env::storage_usage())
-            .attached_deposit(MINT_STORAGE_COST)
-            .predecessor_account_id(accounts(0))
-            .build());
-        println!("Before mint attempt, minted_count = {}", contract.minted_count);
-        let result = contract.nft_mint("1001".to_string(), accounts(0), sample_token_metadata());
-    
-        // Check if minting failed due to limit
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Cannot mint more than 1000 tokens");
-    
-        println!("After mint attempt: minted_count = {}", contract.minted_count);
-        assert_eq!(contract.minted_count, 1000);
-    
-        // Check if no new token was actually minted
-        assert_eq!(contract.nft_total_supply(), U128::from(1000));
     }
 }

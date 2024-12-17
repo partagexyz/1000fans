@@ -1,4 +1,6 @@
-Non-fungible Token (NFT) Example 👋 
+# 1000 Fans Token Minter Contract
+
+A smart contract to mint and check ownership of 1000 fans tokens. Token ID is generated automatically from fan000 to fan999. Max one token per account. Min one year before transfering the token to another account. 
 
 [![](https://img.shields.io/badge/⋈%20Examples-Basics-green)](https://docs.near.org/tutorials/welcome)
 [![](https://img.shields.io/badge/Contract-Rust-red)](contract-rs)
