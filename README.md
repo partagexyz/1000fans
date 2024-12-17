@@ -2,18 +2,8 @@
 
 A smart contract to mint and check ownership of 1000 fans tokens. Token ID is generated automatically from fan000 to fan999. Max one token per account. Min one year before transfering the token to another account. 
 
-[![](https://img.shields.io/badge/⋈%20Examples-Basics-green)](https://docs.near.org/tutorials/welcome)
-[![](https://img.shields.io/badge/Contract-Rust-red)](contract-rs)
+It is made to serve the backend of the [fans-club](https://github.com/partagexyz/fans-club) app. 
 
-This repository contains an example implementation of a [non-fungible token] contract in Rust which uses [near-contract-standards] and workspaces-rs tests.
-
-  [non-fungible token]: https://nomicon.io/Standards/NonFungibleToken/README.html
-  [near-contract-standards]: https://github.com/near/near-sdk-rs/tree/master/near-contract-standards
-  [near-workspaces-rs]: https://github.com/near/near-workspaces-rs
-
->**Note**: If you'd like to learn how to create an NFT contract from scratch that explores every aspect of the [NEP-171](https://github.com/near/NEPs/blob/master/neps/nep-0171.md) standard including an NFT marketplace, check out the NFT [Zero to Hero Tutorial](https://docs.near.org/tutorials/nfts/introduction).
-
-<br />
 
 ## How to Build Locally?
 

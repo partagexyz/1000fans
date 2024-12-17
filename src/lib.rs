@@ -76,7 +76,7 @@ impl Contract {
     pub fn nft_mint(
         &mut self,
         token_owner_id: AccountId,
-        token_metadata: TokenMetadata,
+        mut token_metadata: TokenMetadata,
     ) -> Result<Token, String> {
         if env::predecessor_account_id() != self.tokens.owner_id {
             return Err("Unauthorized".to_string());
@@ -90,10 +90,16 @@ impl Contract {
         }
         // Generate the token ID based on the minted count
         let token_id = format!("fan{:03}", self.minted_count);
+        // capture the curretn timestamp
+        let mint_timestamp = env::block_timestamp();
 
-        self.minted_count += 1; // Increment the counter after checking
+        // Store the timestamp in the issued_at field of the metadata
+        token_metadata.issued_at = Some(mint_timestamp.to_string());
+
+        let token = self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata));
+        self.minted_count += 1;
     
-        Ok(self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata)))
+        Ok(token)
     }
 
     // check if an account owns a token
@@ -116,6 +122,21 @@ impl NonFungibleTokenCore for Contract {
         if self.owns_token(receiver_id.clone()) {
             env::panic_str("Receiver already owns a token");
         }
+
+        let token = self.tokens.nft_token(token_id.clone()).unwrap_or_else(|| {
+            env::panic_str("Token not found");
+        });
+        
+        let mint_timestamp = token.metadata
+            .as_ref()
+            .and_then(|m| m.issued_at.as_ref())
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or_else(|| env::panic_str("No issued_at timestamp found"));
+    
+        if env::block_timestamp() - mint_timestamp < 31_536_000_000_000_000 {
+            env::panic_str("Transfer not allowed until one year after mint");
+        }
+
         // if the check passes, proceed with the transfer
         self.tokens
             .nft_transfer(receiver_id, token_id, approval_id, memo);
@@ -252,7 +273,7 @@ mod tests {
             media: None,
             media_hash: None,
             copies: Some(1u64),
-            issued_at: None,
+            issued_at: None, // will be set in nft_mint
             expires_at: None,
             starts_at: None,
             updated_at: None,
@@ -292,17 +313,26 @@ mod tests {
                 .attached_deposit(MINT_STORAGE_COST)
                 .predecessor_account_id(accounts(0))
                 .build());
-            let token_id = format!("token{}", i);
             let account_id = AccountId::new_unvalidated(format!("owner{}", i)); // Convert String to AccountId
             
             let result = contract.nft_mint(account_id.clone(), sample_token_metadata());
             
             if result.is_err() {
-                println!("Failed to mint token {} for account {}. Error: {:?}", token_id, account_id, result.unwrap_err());
-                panic!("Minting token {} failed", token_id);
+                println!("Failed to mint token for account {}. Error: {:?}", account_id, result.unwrap_err());
+                panic!("Minting token failed");
             }
             assert!(result.is_ok(), "Minting tokens up to 1000 should succeed");
             assert!(contract.owns_token(account_id.clone()), "Account should own the token after minting");
+        
+            // Check the token metadata for issued_at
+            if let Some(token) = contract.nft_token(format!("fan{:03}", i)) {
+                assert!(token.metadata.is_some(), "Token should have metadata");
+                if let Some(metadata) = token.metadata {
+                    assert!(metadata.issued_at.is_some(), "issued_at should contain timestamp");
+                }
+            } else {
+                panic!("Token not found after minting");
+            }
         }
     
         // Try to mint one more token, which should fail due to the 1000 token limit
@@ -334,13 +364,34 @@ mod tests {
         let result = contract.nft_mint(accounts(0), sample_token_metadata()).unwrap();
         let token_id = result.token_id; // Capture the auto-generated token ID
 
+        // Test immediate transfer failure (before one year)
+        let mut context = get_context(accounts(0));
         testing_env!(context
             .storage_usage(env::storage_usage())
             .attached_deposit(ONE_YOCTONEAR)
             .predecessor_account_id(accounts(0))
             .build());
-        contract.nft_transfer(accounts(1), token_id.clone(), None, None);
+        let transfer_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            contract.nft_transfer(accounts(1), token_id.clone(), None, None);
+        }));
+        assert!(transfer_result.is_err(), "Transfer should fail due to time lock");
 
+        // Simulate one year passing by setting a future timestamp
+        let future_timestamp = env::block_timestamp() + 31_536_000_000_000_000; // One year in nanoseconds
+        testing_env!(context
+            .block_timestamp(future_timestamp)
+            .attached_deposit(ONE_YOCTONEAR)
+            .predecessor_account_id(accounts(0))
+            .build());
+    
+        // Now, transfer should succeed
+        let transfer_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            contract.nft_transfer(accounts(1), token_id.clone(), None, None);
+        }));
+        
+        assert!(transfer_result.is_ok(), "Transfer should succeed after one year");    
+        
+        // Verify transfer details
         testing_env!(context
             .storage_usage(env::storage_usage())
             .account_balance(env::account_balance())
@@ -350,11 +401,20 @@ mod tests {
         if let Some(token) = contract.nft_token(token_id.clone()) {
             assert_eq!(token.token_id, token_id);
             assert_eq!(token.owner_id, accounts(1));
-            assert_eq!(token.metadata.unwrap(), sample_token_metadata());
-            assert_eq!(token.approved_account_ids.unwrap(), HashMap::new());
+            assert!(token.metadata.is_some(), "Token should have metadata");
+            if let Some(metadata) = token.metadata {
+                assert!(metadata.issued_at.is_some(), "Token should have an issued_at timestamp");
+            }
         } else {
             panic!("token not correctly created, or not found by nft_token");
         }
+
+        // Test that transferring to an account that already has a token fails
+        let transfer_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            contract.nft_mint(accounts(2), sample_token_metadata()).unwrap(); // Mint another token
+            contract.nft_transfer(accounts(2), token_id.clone(), None, None); // Try to transfer to an account with a token
+        }));
+        assert!(transfer_result.is_err(), "Transfer should fail if receiver already owns a token");
     }
 
     #[test]
