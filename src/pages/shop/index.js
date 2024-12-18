@@ -48,7 +48,7 @@ export default function Shop() {
         },
         deposit: '100000000000000000000000', // 0.1 NEAR in yoctoNEAR for storage cost - adjust this based on your contract's requirements
       });
-      alert('Fans Token on its way to your wallet!');
+      alert('Fans Token minted to your wallet!');
       await checkTokenOwnership(); //refresh ownership status
     } catch (error) {
       console.error('Error minting fans token:', error);
@@ -69,7 +69,7 @@ export default function Shop() {
         args: { 
           receiver_id: receiverId,
           approval_id: null, // optional approval ID
-          memo: 'Transfer fans token from the shop',
+          memo: 'Transfer fans token from the shop interface',
         },
         deposit: '1', // minimal deposit required for transfer
       });
@@ -98,7 +98,7 @@ export default function Shop() {
               <div className={styles.shopSection}>
                 <h2>Claim your Fans Token</h2>
                 <button onClick={mintNFT} disabled={isLoading}>
-                  {isLoading ? 'Minting...' : 'Claim'}
+                  {isLoading ? 'Minting...' : 'Claim your fans token'}
                 </button>
               </div>
             ) : (
@@ -111,7 +111,7 @@ export default function Shop() {
                   onChange={(e) => setReceiverId(e.target.value)} // store receiver ID in state
                 />
                 <button onClick={transferNFT} disabled={isLoading || !receiverId}>
-                  {isLoading ? 'Transferring...' : 'Transfer'}
+                  {isLoading ? 'Transferring...' : 'Transfer Your Fans Token'}
                 </button>
               </div>
             )}
