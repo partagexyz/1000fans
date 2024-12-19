@@ -78,9 +78,11 @@ impl Contract {
         token_owner_id: AccountId,
         mut token_metadata: TokenMetadata,
     ) -> Result<Token, String> {
+        {/* // uncomment this block to restrict minting to the contract owner
         if env::predecessor_account_id() != self.tokens.owner_id {
             return Err("Unauthorized".to_string());
         }
+        */}
         if self.minted_count >= 1000 {
             return Err("Cannot mint more than 1000 tokens".to_string());
         }
@@ -248,7 +250,6 @@ impl NonFungibleTokenMetadataProvider for Contract {
 mod tests {
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::{testing_env, NearToken};
-    use std::collections::HashMap;
 
     use super::*;
 
