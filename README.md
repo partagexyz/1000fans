@@ -31,8 +31,9 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - ~~Write the smart contract with Rust.~~
 - ~~Deploy and test the smart contract on testnet.~~
 - ~~Implement a "token check" in the wallet login.~~
-- Implement a shop to allow fans to mint and transfer a fans token.~~(route users based on wallet connect? and token ownership? action buttons and input fields on the shop UI~~ Add a field for price before clicking on transfer in the shop UI and pass it to the contract when calling nft_transfer)
-- Update the smart contract. ~~(max 1 token per account, token count to automatically set the token ID, min 1 year holding before transfer~~, modify the contract's nft_mint to accept minting from anyone, not just the owner, implement a payment logic in the transfer method for users to sell their fans tokens at a custom price)
+- Implement a shop to allow fans to mint and transfer a fans token.~~(route users based on wallet connect? and token ownership? action buttons and input fields on the shop UI~~ )
+- Update the smart contract. ~~(max 1 token per account, token count to automatically set the token ID, min 1 year holding before transfer, modify the contract's nft_mint to accept minting from anyone, not just the owner. ~~)
+- Add a paiement system for mint (buy) and transfer (sell) in the smart contract and update the shop frontend.
 - Update the platform's design.
 - Test the platform with a closed group of users on testnet.
 - Finalize the platform + smart contract on user feedback.

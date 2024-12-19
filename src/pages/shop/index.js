@@ -11,6 +11,7 @@ export default function Shop() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [receiverId, setReceiverId] = useState('');
+  const [tokenId, setTokenId] = useState('');
 
   useEffect(() => {
     if (signedAccountId && wallet) {
@@ -21,8 +22,22 @@ export default function Shop() {
   const checkTokenOwnership = async () => {
     if (!wallet) return;
     try {
-      const result = await wallet.ownsToken(signedAccountId, CONTRACT);
-      setOwnsToken(result);
+      const tokenInfo = await wallet.viewMethod({
+        contractId: CONTRACT,
+        method: 'nft_tokens_for_owner',
+        args: { 
+          account_id: signedAccountId, 
+          from_index: null, 
+          limit: 1 
+        },
+      });
+      const ownsToken = tokenInfo.length > 0;
+      setOwnsToken(ownsToken);
+      if (ownsToken) {
+        setTokenId(tokenInfo[0].token_id);
+      } else {
+        setTokenId('');
+      }
       setIsLoading(false); // reset loading state
     } catch (error) {
       console.error('Error checking token ownership:', error);
@@ -59,7 +74,7 @@ export default function Shop() {
   };
 
   const transferNFT = async () => {
-    if (!wallet || !ownsToken) return;
+    if (!wallet || !ownsToken || !tokenId) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -68,6 +83,7 @@ export default function Shop() {
         method: 'nft_transfer',
         args: { 
           receiver_id: receiverId,
+          token_id: tokenId,
           approval_id: null, // optional approval ID
           memo: 'Transfer fans token from the shop interface',
         },
