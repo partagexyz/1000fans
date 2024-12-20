@@ -31,13 +31,13 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - ~~Write the smart contract with Rust.~~
 - ~~Deploy and test the smart contract on testnet.~~
 - ~~Implement a "token check" in the wallet login.~~
-- Implement a shop to allow fans to mint and transfer a fans token.~~(route users based on wallet connect? and token ownership? action buttons and input fields on the shop UI~~ ) Can anyone mint and transfer their own tokens? so far only the contract owner can, what are the access keys issues?
-- Update the smart contract. ~~(max 1 token per account, token count to automatically set the token ID, min 1 year holding before transfer, modify the contract's nft_mint to accept minting from anyone, not just the owner. ~~)
-- Update the platform's design.
-- Add a paiement system for mint (buy) and transfer (sell) in the smart contract and update the shop frontend? add a tokenBurn function? 
-- redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan001. re-test all access-keys etc. 
+- ~~Implement a shop to allow the mint and transfer of fans token. (route users based on wallet connect? and token ownership? action buttons and input fields on the shop UI~~)
+- ~~ Update the smart contract: max 1 token per account, token count to automatically set the token ID: fan000, fan001, ..., fan999~~ 
+- ~~redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan000. re-test all access-keys etc. ~~
+- Add a paiement system for mint (buy) and transfer (sell) in the smart contract and update the shop frontend? nldr: so far the smart contract functions can be called by the contract's owner only (mint, transfer). in the future it could be good to allow any other account to mint it's own token and transfer it to anyone of their choice (min 1 year holding before transfer).
 - Test the platform with a closed group of users on testnet.
-- Finalize the platform + smart contract on user feedback.
+- Update the platform's design and UI/UX on user feedback.
+- Create a series of 1000 images for 1000 fans tokens.
 - Deploy the smart contract on mainnet + the platform on public domain.
 - Launch to 1000 fans. 
 

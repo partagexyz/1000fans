@@ -3,7 +3,7 @@ import { NearContext } from '@/wallets/near';
 import styles from '@/styles/app.module.css';
 
 // Contract address
-const CONTRACT = 'partage-lock.testnet';
+const CONTRACT = '1000fans.testnet';
 
 export default function Shop() {
   const { signedAccountId, wallet } = useContext(NearContext);
@@ -34,6 +34,7 @@ export default function Shop() {
       const ownsToken = tokenInfo.length > 0;
       setOwnsToken(ownsToken);
       if (ownsToken) {
+        // set the token_id if a token is owned
         setTokenId(tokenInfo[0].token_id);
       } else {
         setTokenId('');
@@ -93,7 +94,7 @@ export default function Shop() {
       await checkTokenOwnership(); //refresh ownership status
     } catch (error) {
       console.error('Error transferring fans token:', error);
-      setError('Failed to transfer fans token. Check receiver ID or try again later');
+      setError('Failed to transfer your fans token. Check receiver ID or try again later');
     }
     setIsLoading(false);
   }
@@ -102,7 +103,7 @@ export default function Shop() {
     <main className={styles.main}>
       <div className={styles.center}>
         {signedAccountId ? (
-          <h1>Do you own a fans token? {ownsToken ? 'Yes' : 'No'}</h1>
+          <h1>Do you own a fans token? {ownsToken ? `Yes: ${tokenId}` : 'No'}</h1>
         ) : (
           <h1>Please login to check your fans token</h1>
         )}
