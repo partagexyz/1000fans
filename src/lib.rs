@@ -108,6 +108,20 @@ impl Contract {
     pub fn owns_token(&self, account_id:AccountId) -> bool {
         self.tokens.nft_tokens_for_owner(account_id, None, Some(1)).len() > 0
     }
+
+    // burn token function
+    #[payable]
+    pub fn nft_burn(&mut self, token_id: TokenId) {
+        let token = self.tokens.nft_token(token_id.clone()).unwrap_or_else(|| {
+            env::panic_str("Token not found");
+        });
+
+        // check if the caller is the owner of the token
+        require!(env::predecessor_account_id() == token.owner_id, "Only the owner can burn this token");
+
+        // remove the token from the owner's list
+        self.tokens.owner_by_id.remove(&token_id);
+    }
 }
 
 #[near]
@@ -119,7 +133,7 @@ impl NonFungibleTokenCore for Contract {
         token_id: TokenId,
         approval_id: Option<u64>,
         memo: Option<String>,
-    ) {
+    ) { 
         // check if the receiver already owns a token
         if self.owns_token(receiver_id.clone()) {
             env::panic_str("Receiver already owns a token");
@@ -128,12 +142,12 @@ impl NonFungibleTokenCore for Contract {
         let token = self.tokens.nft_token(token_id.clone()).unwrap_or_else(|| {
             env::panic_str("Token not found");
         });
-        
+        //Uncomment this to allow token transfer before 1 year 
         let mint_timestamp = token.metadata
             .as_ref()
             .and_then(|m| m.issued_at.as_ref())
             .and_then(|s| s.parse::<u64>().ok())
-            .unwrap_or_else(|| env::panic_str("No issued_at timestamp found"));
+            .unwrap_or(0);
     
         if env::block_timestamp() - mint_timestamp < 31_536_000_000_000_000 {
             env::panic_str("Transfer not allowed until one year after mint");
