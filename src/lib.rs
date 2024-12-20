@@ -112,15 +112,39 @@ impl Contract {
     // burn token function
     #[payable]
     pub fn nft_burn(&mut self, token_id: TokenId) {
-        let token = self.tokens.nft_token(token_id.clone()).unwrap_or_else(|| {
-            env::panic_str("Token not found");
-        });
-
-        // check if the caller is the owner of the token
+        let token = self.tokens.nft_token(token_id.clone()).expect("Token not found");
+    
+        // Check if the caller is the owner of the token
         require!(env::predecessor_account_id() == token.owner_id, "Only the owner can burn this token");
-
-        // remove the token from the owner's list
-        self.tokens.owner_by_id.remove(&token_id);
+    
+        // Remove token from owner
+        if let Some(owner) = self.tokens.owner_by_id.remove(&token_id) {
+            // Handle tokens_per_owner
+            if let Some(mut tokens_per_owner) = self.tokens.tokens_per_owner.as_mut() {
+                if let Some(mut tokens) = tokens_per_owner.get(&owner) {
+                    tokens.remove(&token_id);
+                    if tokens.is_empty() {
+                        tokens_per_owner.remove(&owner);
+                    } else {
+                        tokens_per_owner.insert(&owner, &tokens);
+                    }
+                }
+            }
+        }
+    
+        // Remove token metadata
+        self.tokens.token_metadata_by_id.as_mut().expect("Metadata should exist").remove(&token_id);
+    
+        // Handle approvals if any
+        if let Some(approvals) = self.tokens.approvals_by_id.as_ref().expect("Approvals should exist").get(&token_id) {
+            for account_id in approvals.keys() {
+                self.tokens.nft_revoke(token_id.clone(), account_id.clone());
+            }
+            self.tokens.approvals_by_id.as_mut().expect("Approvals should exist").remove(&token_id);
+        }
+    
+        // Optionally, decrease minted_count
+        self.minted_count = self.minted_count.saturating_sub(1);
     }
 }
 
@@ -142,6 +166,7 @@ impl NonFungibleTokenCore for Contract {
         let token = self.tokens.nft_token(token_id.clone()).unwrap_or_else(|| {
             env::panic_str("Token not found");
         });
+        {/*
         //Uncomment this to allow token transfer before 1 year 
         let mint_timestamp = token.metadata
             .as_ref()
@@ -152,6 +177,7 @@ impl NonFungibleTokenCore for Contract {
         if env::block_timestamp() - mint_timestamp < 31_536_000_000_000_000 {
             env::panic_str("Transfer not allowed until one year after mint");
         }
+        */}
 
         // if the check passes, proceed with the transfer
         self.tokens
