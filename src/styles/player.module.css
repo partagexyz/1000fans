@@ -51,7 +51,9 @@
 }
 
 .cover {
-    height: 80px;
+    /* audio files */
+    width: 512px;
+    height: 512px;
 }
 
 .songTitle {
@@ -69,8 +71,10 @@
 }
 
 /* Styles for video player layout */
-.video-player {
-    width: 100%;
+.video-player .cover {
+    width: 911px;
+    height: 512px;
+    margin: 0 auto;
 }
 
 .videoContainer {
@@ -89,8 +93,21 @@
 
 .info {
     display: flex;
+    flex-direction: column;
     align-items: center;
+    margin-top: 20px 0;
+}
+
+.infoText {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-top: 10px;
+}
+
+.songTitle {
+    margin-right: 10px;
 }
 
 /* Adjustments for when playing video */

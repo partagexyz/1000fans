@@ -1,6 +1,13 @@
 // simplified version of a spotify-like playlist page
+import dynamic from 'next/dynamic';
 import styles from '@/styles/music.module.css';
-import Player from '@/components/player'
+import Image from 'next/image';
+import { useState } from 'react';
+
+// dynamically import the player to make it client-side only
+const Player = dynamic(() => import('@/components/player'), { 
+    ssr: false, // this ensures the component is not rendered on server 
+});
 
 export default function Music() {
     const tracks = [
@@ -31,10 +38,47 @@ export default function Music() {
         },
     ];
 
+    const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+    const [playOnLoad, setPlayOnLoad] = useState(false);
+
+    // This function will be passed to the Player to update the track index
+    const changeTrack = (index) => {
+        setCurrentTrackIndex(index);
+        setPlayOnLoad(true);
+    };
+
     return (
         <div className={styles.playlist}>
             <h1>Music Collection</h1>
-            <Player url={tracks} />
+            <Player 
+                url={tracks} 
+                changeTrack={changeTrack} 
+                trackIndex={currentTrackIndex} 
+                playOnLoad={playOnLoad} 
+            />
+            <ul className={styles.trackList}>
+                {tracks.map((track, index) => (
+                    <li key={track.id} className={styles.track}>
+                        <Image
+                            src={JSON.parse(track.metadata).image}
+                            alt={`Cover for ${track.title}`}
+                            width={40} 
+                            height={40}
+                            className={styles.trackIcon} 
+                        />
+                        <span className={styles.trackInfo}>
+                            {track.title} - {track.artist}
+                        </span>
+                        <span className={styles.trackDuration}>{track.duration}</span>
+                        <button 
+                            className={styles.playButton} 
+                            onClick={() => changeTrack(index)}
+                        >
+                            Play
+                        </button>
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }

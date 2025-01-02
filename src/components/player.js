@@ -1,20 +1,41 @@
 // audio player component
-'use client'
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 import Image from 'next/image';
 import styles from '../styles/player.module.css';
 
-const Player = ({ url }) => {
+const Player = ({ url, changeTrack, trackIndex, playOnLoad }) => {
     const [playing, setPlaying] = useState(false);
-    const [trackIndex, setTrackIndex] = useState(0);
+    const [trackIndexState, setTrackIndex] = useState(trackIndex);
     const [volume, setVolume] = useState(1.0);
+    const [progress, setProgress] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const playerRef = useRef(null);
 
-    const currentTrack = url[trackIndex];
-
+    const currentTrack = url[trackIndexState];
     const isVideo = currentTrack.url.endsWith('.mp4');
 
-    // toggle play/pause
+    // Handle progress
+    const handleProgress = (state) => {
+        setProgress(state.progress);
+    };
+
+    // Handle seeking
+    const handleSeekChange = (e) => {
+        setProgress(parseFloat(e.target.value));
+    };
+
+    // Seek to new position
+    const handleSeekMouseUp = (e) => {
+        playerRef.current.seekTo(parseFloat(e.target.value));
+    };
+
+    // Update duration when media is loaded
+    const handleDuration = (duration) => {
+        setDuration(duration);
+    };
+
+    // play/pause toggle
     const toggle = () => {
         setPlaying(!playing);
     };
@@ -36,25 +57,50 @@ const Player = ({ url }) => {
         setVolume(value / 100);
     };
 
+    // playlist button click
+    const playTrack = (index) => {
+        setTrackIndex(index);
+        setPlaying(true);
+    };
+
+    const handleTrackChange = (index) => {
+        changeTrack(index);
+        playTrack(index);
+    };
+
+    useEffect(() => {
+        setTrackIndex(trackIndex);
+        if (playOnLoad) {
+            setPlaying(true);
+            changeTrack(trackIndex);
+        }
+    }, [trackIndex, playOnLoad, changeTrack]);
+
     return (
         <div className={isVideo ? styles['video-player'] : styles['audio-player']}>
             {isVideo ? 
                 <div className={styles.videoContainer}>
                     <ReactPlayer 
+                        ref={playerRef}
                         url={currentTrack.url}
                         playing={playing}
                         volume={volume}
+                        onProgress={handleProgress}
+                        onDuration={handleDuration}
                         onEnded={toNextTrack}
-                        width="100%"
-                        height="360px"
+                        width="911px"
+                        height="512px"
                         controls
                     />
                 </div>
             :
                 <ReactPlayer 
+                    ref={playerRef}
                     url={currentTrack.url}
                     playing={playing}
                     volume={volume}
+                    onProgress={handleProgress}
+                    onDuration={handleDuration}
                     onEnded={toNextTrack}
                     width="0px"
                     height="0px"
@@ -65,10 +111,10 @@ const Player = ({ url }) => {
                     className={styles.cover}
                     src={JSON.parse(currentTrack.metadata).image}
                     alt={`Cover for ${currentTrack.title}`}
-                    width={100} 
-                    height={100}
+                    width={isVideo ? 911 : 512} 
+                    height={512}
                 />
-                <div>
+                <div className={styles.infoText}>
                     <div className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</div>
                     <div className={styles.songArtist}>{currentTrack.artist}</div>
                 </div>
@@ -81,22 +127,21 @@ const Player = ({ url }) => {
                     </button>
                     <button className={styles.forback} onClick={toNextTrack}>Next</button>
                 </div>
-                {/* optional: progress bar */}
                 <div className={styles.buttons}>
-                    <div>0:00</div>
+                    <div>{formatTime(isNaN(duration) || isNaN(progress) ? 0 : progress * duration)}</div>
                     <input 
                         type="range" 
-                        min="0" 
-                        max="1" 
-                        step="0.01" 
-                        value={volume}
-                        onChange={(e) => onVolume(e.target.value * 100)}
+                        min={0}
+                        max={1}
+                        step="any" 
+                        value={progress}
+                        onChange={handleSeekChange}
+                        onMouseUp={handleSeekMouseUp}
                         className={styles.progress}
                     />
-                    <div>1:00</div> 
+                    <div>{formatTime(duration)}</div> 
                 </div>
             </div>
-            {/* optional: volume element */}
             <div className={styles.soundDiv}>
             <label htmlFor="volume">Volume</label>
                 <input 
@@ -112,5 +157,11 @@ const Player = ({ url }) => {
         </div>
     );
 };
+
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+}
 
 export default Player;

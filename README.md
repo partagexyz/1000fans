@@ -34,6 +34,7 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - ~~Implement a shop to allow the mint and transfer of fans token. (route users based on wallet connect? and token ownership? action buttons and input fields on the shop UI.~~)
 - ~~Update the smart contract: max 1 token per account, token count to automatically set the token ID: fan000, fan001, ..., fan999.~~ 
 - ~~Redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan000. re-test all access-keys etc.~~
+- Improve platform's design.
 - Add a paiement system for mint (buy) and transfer (sell)? nldr: so far the smart contract functions can be called by the contract's owner only (mint, transfer). in the future it could be good to allow any other account to mint it's own token and transfer it to anyone of their choice (min 1 year holding before transfer).
 - Test the platform with a closed group of users on testnet.
 - Update the platform's design and UI/UX on user feedback.
