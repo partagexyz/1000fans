@@ -84,7 +84,7 @@ const Player = ({ url, changeTrack, trackIndex, playOnLoad }) => {
                         ref={playerRef}
                         url={currentTrack.url}
                         playing={playing}
-                        volume={volume}
+                        //volume={volume}
                         onProgress={handleProgress}
                         onDuration={handleDuration}
                         onEnded={toNextTrack}
@@ -107,54 +107,59 @@ const Player = ({ url, changeTrack, trackIndex, playOnLoad }) => {
                 />
             }
             <div className={styles.info}>
-                <Image
-                    className={styles.cover}
-                    src={JSON.parse(currentTrack.metadata).image}
-                    alt={`Cover for ${currentTrack.title}`}
-                    width={isVideo ? 911 : 512} 
-                    height={512}
-                />
+                {!isVideo && (
+                    <Image
+                        className={styles.cover}
+                        src={JSON.parse(currentTrack.metadata).image}
+                        alt={`Cover for ${currentTrack.title}`}
+                        width={isVideo ? 911 : 512} 
+                        height={512}
+                    />
+                )}
                 <div className={styles.infoText}>
                     <div className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</div>
-                    <div className={styles.songArtist}>{currentTrack.artist}</div>
+                    {/* Conditionally render artist only if it exists, since videos might not have this */}
+                    {currentTrack.artist && <div className={styles.songArtist}>{currentTrack.artist}</div>}
                 </div>
             </div>
-            <div>
-                <div className={styles.buttons}>
-                    <button className={styles.forback} onClick={toPrevTrack}>Prev</button>
-                    <button className={styles.pauseplay} onClick={toggle}>
-                        {playing ? 'Pause' : 'Play'}
-                    </button>
-                    <button className={styles.forback} onClick={toNextTrack}>Next</button>
-                </div>
-                <div className={styles.buttons}>
-                    <div>{formatTime(isNaN(duration) || isNaN(progress) ? 0 : progress * duration)}</div>
+            {!isVideo && ( //only shows controls for audio
+                <div>
+                    <div className={styles.buttons}>
+                        <button className={styles.forback} onClick={toPrevTrack}>Prev</button>
+                        <button className={styles.pauseplay} onClick={toggle}>
+                            {playing ? 'Pause' : 'Play'}
+                        </button>
+                        <button className={styles.forback} onClick={toNextTrack}>Next</button>
+                    </div>
+                    <div className={styles.buttons}>
+                        <div>{formatTime(isNaN(duration) || isNaN(progress) ? 0 : progress * duration)}</div>
+                        <input 
+                            type="range" 
+                            min={0}
+                            max={1}
+                            step="any" 
+                            value={progress}
+                            onChange={handleSeekChange}
+                            onMouseUp={handleSeekMouseUp}
+                            className={styles.progress}
+                        />
+                        <div>{formatTime(duration)}</div> 
+                    </div>
+                <div className={styles.soundDiv}>
+                    <label htmlFor="volume">Volume</label>
                     <input 
+                        id="volume"
                         type="range" 
-                        min={0}
-                        max={1}
-                        step="any" 
-                        value={progress}
-                        onChange={handleSeekChange}
-                        onMouseUp={handleSeekMouseUp}
-                        className={styles.progress}
+                        min="0" 
+                        max="100" 
+                        value={volume * 100}
+                        onChange={(e) => onVolume(e.target.value)}
+                        className={styles.volume}
                     />
-                    <div>{formatTime(duration)}</div> 
-                </div>
-            </div>
-            <div className={styles.soundDiv}>
-            <label htmlFor="volume">Volume</label>
-                <input 
-                    id="volume"
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    value={volume * 100}
-                    onChange={(e) => onVolume(e.target.value)}
-                    className={styles.volume}
-                />
             </div>
         </div>
+        )}
+    </div>
     );
 };
 

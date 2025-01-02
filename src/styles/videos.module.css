@@ -1,33 +1,48 @@
 .videoGrid {
-    max-width: 1200px;
-    margin: 0 auto;
-    text-align: center;
-  }
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 20px;
+}
+
+.playerWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
   
-  .grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
-  }
-  
-  .card {
-    width: 300px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-    text-align: left;
-    background-color: #fff;
-  }
-  
-  .thumbnail {
-    width: 100%;
-    height: auto;
-  }
-  
-  .card p {
-    padding: 10px;
-    font-size: 16px;
-    color: #000;
-  }
-  
+.videoItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 250px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+  padding: 10px;
+}
+
+.videoThumbnail {
+  width: 100%;
+  height: auto;
+}
+
+.videoTitle {
+  font-size: 16px;
+  margin-top: 10px;
+  color: #000;
+  text-align: center;
+}
+
+.playButton {
+  margin-top: 10px;
+  background-color: #1db954;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+    cursor: pointer;
+}
+ 

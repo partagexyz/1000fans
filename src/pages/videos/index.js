@@ -1,6 +1,13 @@
 // simplified version of a youtube-like channel page
+import dynamic from 'next/dynamic';
 import styles from '@/styles/videos.module.css';
-import Player from '@/components/player';
+import Image from 'next/image';
+import { useState } from 'react';
+
+// dynamically import the player to make it client-side only
+const Player = dynamic(() => import('@/components/player'), { 
+    ssr: false,
+});
 
 export default function Videos() {
     const videos = [
@@ -25,10 +32,46 @@ export default function Videos() {
         },
     ];
 
+    const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+    const [playOnLoad, setPlayOnLoad] = useState(false);
+
+    // function to change the current video
+    const changeVideo = (index) => {
+        setCurrentVideoIndex(index);
+        setPlayOnLoad(true);
+    };
+
     return (
         <div className={styles.videoGrid}>
             <h1>Exclusive Videos</h1>
-            <Player url={videos} />
-        </div>
+            <Player 
+                url={videos}
+                changeTrack={changeVideo}
+                trackIndex={currentVideoIndex}
+                playOnLoad={playOnLoad} 
+            />
+            <ul className={styles.videoList}>
+                {videos.map((video, index) => (
+                    <li key={video.id} className={styles.videoItem}>
+                        <Image 
+                            src={JSON.parse(video.metadata).image} 
+                            alt={`Thumbnail for ${video.title}`}
+                            width={200} 
+                            height={112}
+                            className={styles.videoThumbnail}
+                        />
+                        <span className={styles.videoTitle}>
+                            {video.title}
+                        </span>
+                        <button
+                            className={styles.playButton}
+                            onClick={() => changeVideo(index)}
+                        >
+                            Play
+                        </button>
+                    </li>
+                ))}
+            </ul>
+        </div>  
     );
 }
