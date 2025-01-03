@@ -2,6 +2,6 @@
 node_modules
 package-lock.json
 
-public/music/*.mp3
-public/videos/*.mp4
+public/music/*
+public/videos/*
 .DS_Store
