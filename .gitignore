@@ -5,3 +5,5 @@ package-lock.json
 public/music/*
 public/videos/*
 .DS_Store
+
+scripts/metadata.json

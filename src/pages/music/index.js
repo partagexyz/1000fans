@@ -3,41 +3,15 @@ import dynamic from 'next/dynamic';
 import styles from '@/styles/music.module.css';
 import Image from 'next/image';
 import { useState } from 'react';
+import fs from 'fs';
+import path from 'path';
 
 // dynamically import the player to make it client-side only
 const Player = dynamic(() => import('@/components/player'), { 
     ssr: false, // this ensures the component is not rendered on server 
 });
 
-export default function Music() {
-    const tracks = [
-        // test files to be replaced with server-hosted files or API calls to a third-party
-        { 
-            id: 1, 
-            title: 'Track One', 
-            artist: 'Artist A', 
-            duration: '3:45', 
-            url: '/music/track1.mp3',
-            metadata: JSON.stringify({title: 'Track One', image: '/music/cover1.png'}),
-        },
-        { 
-            id: 2, 
-            title: 'Track Two', 
-            artist: 'Artist B', 
-            duration: '4:00', 
-            url: '/music/track2.mp3',
-            metadata: JSON.stringify({title: 'Track Two', image: '/music/cover2.png'}), 
-        },
-        { 
-            id: 3, 
-            title: 'Track Three', 
-            artist: 'Artist C', 
-            duration: '3:30', 
-            url: '/music/track3.mp3',
-            metadata: JSON.stringify({title: 'Track Three', image: '/music/cover3.png'}), 
-        },
-    ];
-
+export default function Music({ tracks }) {
     const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
     const [playOnLoad, setPlayOnLoad] = useState(false);
 
@@ -67,7 +41,7 @@ export default function Music() {
                             className={styles.trackIcon} 
                         />
                         <span className={styles.trackInfo}>
-                            {track.title} - {track.artist}
+                            {track.artist} - {track.title}
                         </span>
                         <span className={styles.trackDuration}>{track.duration}</span>
                         <button 
@@ -81,4 +55,29 @@ export default function Music() {
             </ul>
         </div>
     );
+}
+
+export async function getStaticProps() {
+    // Read metadata from a local file directly
+    const filePath = path.join(process.cwd(), 'scripts', 'metadata.json');
+    const metadata = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    // Convert metadata to the format expected by your player component
+    const tracks = Object.entries(metadata).map(([filename, data]) => ({
+        id: data.id,
+        title: data.title || filename,
+        artist: data.artist || 'Unknown Artist',
+        duration: data.duration || 'Unknown', // Assuming duration might not be in metadata
+        url: `/music/${filename}`,
+        metadata: JSON.stringify({ 
+            title: data.title || filename, 
+            image: data.image || '/music/default_cover.png' // Provide a default image if none exists
+        })
+    }));
+
+    return {
+        props: {
+            tracks,
+        },
+    };
 }

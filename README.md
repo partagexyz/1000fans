@@ -35,12 +35,13 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - ~~Update the smart contract: max 1 token per account, token count to automatically set the token ID: fan000, fan001, ..., fan999.~~ 
 - ~~Redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan000. re-test all access-keys etc.~~
 - Improve platform's design.
-- Add a paiement system for mint (buy) and transfer (sell)? nldr: so far the smart contract functions can be called by the contract's owner only (mint, transfer). in the future it could be good to allow any other account to mint it's own token and transfer it to anyone of their choice (min 1 year holding before transfer).
+- Add a private chat for fans.
+- Refund the smart-contract & the shop: 1000 tokens minted at smart contract init. 500 for shareholders, and 500 for fans. Everybody can sell their tokens after 1 year holding (from original mint). Allow multiple token holding to white-listed accounts (contract owner + shareholders). Based on email or account? Add a paiement system for token transfer (sale). No need for a public mint function, but the transfer function must be called by anyone.
 - Test the platform with a closed group of users on testnet.
 - Update the platform's design and UI/UX on user feedback.
 - Create a series of 1000 images for 1000 fans tokens.
-- Deploy the smart contract on mainnet + the platform on public domain.
-- Launch to 1000 fans. 
+- Deploy the smart contract on mainnet + the platform at 1000fans.xyz.
+
 
 #### Contribute:
 We welcome developers passionate about music, blockchain, and creating unique fan experiences to join this project. Let's innovate the way fans connect with artists in a secure, exclusive digital space.
