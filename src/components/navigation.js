@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState, useContext } from 'react';
 
 import { NearContext } from '@/wallets/near';
-import MentalaLogo from '/public/mentala.png';
+import Icon from '/public/favicon.ico';
 
 import styles from '@/styles/app.module.css';
 
@@ -30,8 +30,15 @@ export const Navigation = () => {
       <div className="container-fluid">
         <Link href="/" passHref legacyBehavior>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Image priority src={MentalaLogo} alt="Mentala Logo" width="51" height="51" className="d-inline-block align-text-top" />
-            <span className={`${styles['navbar-brand']} mb-0 h1 ms-2`}>1000 FANS</span>
+            <Image 
+              priority 
+              src={Icon} 
+              alt="Theosis Icon" 
+              width={51} 
+              height={51} 
+              className={`${styles['navbar-icon']} d-inline-block align-text-top`} 
+            />
+            {/*<span className={`${styles['navbar-brand']} mb-0 h1 ms-2`}>1000 FANS</span>*/}
           </div>
         </Link>
         <div className={`${styles['navbar-nav']} pt-1`}>

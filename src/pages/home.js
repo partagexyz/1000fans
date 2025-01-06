@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import styles from '@/styles/app.module.css';
 import { Cards } from '@/components/cards';
-import MentalaLogo from '/public/mentala.png';
+import Hero from '/public/hero.jpg';
 
 import { useEffect, useState, useContext } from 'react';
 import { NearContext } from '@/wallets/near';
@@ -36,21 +36,19 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-      <div className={styles.description}></div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src={MentalaLogo}
-          alt="Mentala Logo"
-          width={512} // adjust width and height according to logo size
-          height={512}
-          priority
-        />
-      </div>
-
       <div className={styles.grid}>
         <Cards handleCardClick={handleCardClick} />
+      </div>
+
+      <div className={styles.center}>
+        {/*<Image
+          className={styles.logo}
+          src={Hero}
+          alt="Hero Image"
+          width={1024} // adjust width and height according to logo size
+          height={768}
+          priority
+        />*/}
       </div>
     </main>
   );

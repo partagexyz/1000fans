@@ -35,6 +35,17 @@ export const Cards = ({ handleCardClick }) => {
         </h2>
         <p>Join private events and meet-and-greets with your favorite artists.</p>
       </div>
+
+      <div
+        className={styles.card}
+        onClick={() => handleCardClick('/chat')}
+        style={{ cursor: 'pointer' }}
+      >
+        <h2>
+          Chat Room <span>-&gt;</span>
+        </h2>
+        <p>Connect with other fans in real-time.</p>
+      </div>
     </div>
   );
 };
