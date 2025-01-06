@@ -1,0 +1,24 @@
+.widget {
+    position: absolute;
+    width: 300px;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 10px;
+    z-index: 1000;
+  }
+  
+  .closeButton {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: black;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .widget h3, .songInfo {
+    color: black
+  }

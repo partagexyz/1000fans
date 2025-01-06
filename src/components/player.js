@@ -84,7 +84,6 @@ const Player = ({ url, changeTrack, trackIndex, playOnLoad }) => {
                         ref={playerRef}
                         url={currentTrack.url}
                         playing={playing}
-                        //volume={volume}
                         onProgress={handleProgress}
                         onDuration={handleDuration}
                         onEnded={toNextTrack}

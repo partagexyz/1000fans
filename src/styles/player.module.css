@@ -58,11 +58,12 @@
 
 .songTitle {
     font-size: 16px;
-    color: white;
+    color: black;
 }
 
 .songArtist {
     font-size: 12px;
+    color: black;
 }
 
 /* Styles specific to the audio player */
