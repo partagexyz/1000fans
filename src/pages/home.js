@@ -39,17 +39,18 @@ export default function Home() {
       <div className={styles.grid}>
         <Cards handleCardClick={handleCardClick} />
       </div>
-
+      {/* 
       <div className={styles.center}>
-        {/*<Image
+        <Image
           className={styles.logo}
           src={Hero}
           alt="Hero Image"
           width={1024} // adjust width and height according to logo size
           height={768}
           priority
-        />*/}
+        />
       </div>
+      */}
     </main>
   );
 }
