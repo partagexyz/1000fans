@@ -1,15 +1,12 @@
 import { useEffect, useState, useContext } from 'react';
 import { NearContext } from '@/wallets/near';
-import { useRouter } from 'next/router';
 import styles from '@/styles/app.module.css';
 import { Cards } from '@/components/cards';
-import MusicWidget from '@/components/widgets/musicWidget';
 import fs from 'fs';
 import path from 'path';
 
 export default function Home({ tracks }) {
   const { signedAccountId, wallet } = useContext(NearContext);
-  const router = useRouter();
   const [isMember, setIsMember] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [playOnLoad, setPlayOnLoad] = useState(false);
@@ -24,12 +21,12 @@ export default function Home({ tracks }) {
     checkMembership();
   }, [signedAccountId, wallet]);
 
-  const handleCardClick = (path) => {
+  const handleCardClick = () => {
     if (signedAccountId) {
       if (isMember) {
-        router.push(path); // redirect when logged in and owns token
+        // perform handlecardclick when logged in and owns token.
       } else {
-        alert('You need to a fans token to access this page. Visit the shop to get one!');
+        alert('You need to a fans token to access this content. Visit the shop to get one!');
       }
     } else {
       wallet.signIn(); // trigger login when not logged in
@@ -41,18 +38,20 @@ export default function Home({ tracks }) {
     setPlayOnLoad(true);
   };
 
+  const widgetProps = {
+    music: { url: tracks, changeTrack, trackIndex: currentTrackIndex, playOnLoad },
+    videos: {},
+    events: {},
+    chat: {}
+  };
+
   return (
     <main className={styles.main}>
       <div className={styles.grid}>
         <Cards 
           handleCardClick={handleCardClick}
-          musicWidgetProps={{
-            url: tracks,
-            changeTrack,
-            trackIndex: currentTrackIndex,
-            playOnLoad,
-            closeWidget: () => setPlayOnLoad(false)
-          }}
+          widgetProps={widgetProps}
+          isMember={isMember}
         />
       </div>
     </main>

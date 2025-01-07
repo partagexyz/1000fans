@@ -29,7 +29,7 @@ export default function MyApp({ Component, pageProps }) {
     <>
       <Head>
         <title>Theosis Fans</title>
-        <meta name="description" content="Exclusive content club for Theosis fans" />
+        <meta name="description" content="Exclusive content for Theosis fans" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Add any other meta tags here */}
       </Head>
