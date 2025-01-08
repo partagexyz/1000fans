@@ -1,5 +1,5 @@
 .widget {
-    position: absolute;
+    position: fixed;
     width: 300px;
     background: white;
     border: 1px solid #ccc;

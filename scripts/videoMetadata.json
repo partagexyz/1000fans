@@ -1,0 +1,29 @@
+{
+    "video1.mp4": {
+        "id": 1,
+        "title": "Video One",
+        "url": "/videos/video1.mp4",
+        "metadata": {
+            "title": "Video One",
+            "image": "/videos/thumbnail1.png"
+        }
+    },
+    "video2.mp4": {
+        "id": 2,
+        "title": "Video Two",
+        "url": "/videos/video2.mp4",
+        "metadata": {
+            "title": "Video Two",
+            "image": "/videos/thumbnail2.png"
+        }
+    },
+    "video3.mp4": {
+        "id": 3,
+        "title": "Video Three",
+        "url": "/videos/video3.mp4",
+        "metadata": {
+            "title": "Video Three",
+            "image": "/videos/thumbnail3.png"
+        }
+    }
+}

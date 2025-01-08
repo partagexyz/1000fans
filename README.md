@@ -36,7 +36,8 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - ~~Redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan000. re-test all access-keys etc.~~
 - Improve platform's design.
 - Add a private chat for fans.
-- Refund the smart-contract & the shop: 1000 tokens minted at smart contract init. 500 for shareholders, and 500 for fans. Everybody can sell their tokens after 1 year holding (from original mint). Allow multiple token holding to white-listed accounts (contract owner + shareholders). Based on email or account? Add a paiement system for token transfer (sale). No need for a public mint function, but the transfer function must be called by anyone.
+- Refine the smart-contract & the shop: 1000 tokens minted at smart contract init (500 to be send to shareholders, and 500 to fans). No need for a mint function in the shop. Allow multiple token holding to white-listed accounts (contract owner + shareholders). Everybody can sell their tokens after 1 year holding (from original mint). Add a paiement system for token sale. Transfer function must be called by anyone holding a token. 
+- Original token transfer: through email or named account?
 - Test the platform with a closed group of users on testnet.
 - Update the platform's design and UI/UX on user feedback.
 - Create a series of 1000 images for 1000 fans tokens.

@@ -1,6 +1,7 @@
 import styles from '@/styles/app.module.css';
 import { useState } from 'react';
 import MusicWidget from './widgets/musicWidget';
+import VideoWidget from './widgets/videoWidget';
 
 export const Cards = ({ handleCardClick, widgetProps, isMember }) => {
   return (
@@ -62,6 +63,12 @@ const CardWidget = ({ cardType, title, description, widgetProps, onToggleWidget,
       </div>
       {cardType === 'music' && isWidgetOpen && 
         <MusicWidget 
+          {...widgetProps}
+          closeWidget={() => setWidgetOpen(false)} 
+        />
+      }
+      {cardType === 'videos' && isWidgetOpen && 
+        <VideoWidget 
           {...widgetProps}
           closeWidget={() => setWidgetOpen(false)} 
         />

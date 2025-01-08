@@ -1,4 +1,4 @@
-// audio player component
+// audio and video player component
 import React, { useState, useRef, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 import Image from 'next/image';
@@ -61,11 +61,6 @@ const Player = ({ url, changeTrack, trackIndex, playOnLoad }) => {
     const playTrack = (index) => {
         setTrackIndex(index);
         setPlaying(true);
-    };
-
-    const handleTrackChange = (index) => {
-        changeTrack(index);
-        playTrack(index);
     };
 
     useEffect(() => {

@@ -5,10 +5,11 @@ import { Cards } from '@/components/cards';
 import fs from 'fs';
 import path from 'path';
 
-export default function Home({ tracks }) {
+export default function Home({ audios, videos }) {
   const { signedAccountId, wallet } = useContext(NearContext);
   const [isMember, setIsMember] = useState(false);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [playOnLoad, setPlayOnLoad] = useState(false);
 
   useEffect(() => {
@@ -33,14 +34,19 @@ export default function Home({ tracks }) {
     }
   };
 
-  const changeTrack = (index) => {
-    setCurrentTrackIndex(index);
+  const changeAudio = (index) => {
+    setCurrentAudioIndex(index);
+    setPlayOnLoad(true);
+  };
+
+  const changeVideo = (index) => {
+    setCurrentVideoIndex(index);
     setPlayOnLoad(true);
   };
 
   const widgetProps = {
-    music: { url: tracks, changeTrack, trackIndex: currentTrackIndex, playOnLoad },
-    videos: {},
+    music: { url: audios, changeTrack: changeAudio, trackIndex: currentAudioIndex, playOnLoad },
+    videos: { url: videos, changeTrack: changeVideo, trackIndex: currentVideoIndex, playOnLoad },
     events: {},
     chat: {}
   };
@@ -59,11 +65,11 @@ export default function Home({ tracks }) {
 }
 
 export async function getStaticProps() {
-  // read metadata from a local file during build time
-  const filePath = path.join(process.cwd(), 'scripts', 'metadata.json');
-  const metadata = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  // read audio metadata from a local file during build time
+  const audioPath = path.join(process.cwd(), 'scripts', 'audioMetadata.json');
+  const audioMetadata = JSON.parse(fs.readFileSync(audioPath, 'utf8'));
 
-  const tracks = Object.entries(metadata).map(([filename, data]) => ({
+  const audios = Object.entries(audioMetadata).map(([filename, data]) => ({
     id: data.id,
     title: data.title || filename,
     artist: data.artist || 'Unknown Artist',
@@ -75,9 +81,24 @@ export async function getStaticProps() {
     })
   }));
 
+  // read video metadata from a local file during build time
+  const videoPath = path.join(process.cwd(), 'scripts', 'videoMetadata.json');
+  const videoMetadata = JSON.parse(fs.readFileSync(videoPath, 'utf8'));
+
+  const videos = Object.entries(videoMetadata).map(([filename, data]) => ({
+    id: data.id,
+    title: data.title || filename,
+    url: data.url || `/videos/${filename}`,
+    metadata: JSON.stringify({
+      title: data.title || filename,
+      image: data.image || '/videos/nocoverfound.jpg'
+    })
+  }));
+
   return {
     props: {
-      tracks,
+      audios,
+      videos
     },
     revalidate: 3600, // revalidate the tracklist every hour
   };
