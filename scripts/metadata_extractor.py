@@ -8,9 +8,9 @@ import io
 from PIL import Image
 import ffmpeg
 
-public_folder = '/Users/juliencarbonnell/near/fans-club/public'
-music_folder = '/Users/juliencarbonnell/near/fans-club/public/music'
-video_folder = '/Users/juliencarbonnell/near/fans-club/public/videos'
+public_folder = '../public'
+music_folder = '../public/music'
+video_folder = '../public/videos'
 
 def sanitize_filename(s):
     # Function to sanitize string for file names
