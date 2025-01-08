@@ -1,0 +1,6 @@
+[
+    { "id": 1, "title": "Event One", "date": "2025-03-01", "location": "Location A" },
+    { "id": 2, "title": "Event Two", "date": "2025-04-01", "location": "Location B" },
+    { "id": 3, "title": "Event Three", "date": "2025-05-01", "location": "Location C" }
+  ]
+  

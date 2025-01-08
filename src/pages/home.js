@@ -5,7 +5,7 @@ import { Cards } from '@/components/cards';
 import fs from 'fs';
 import path from 'path';
 
-export default function Home({ audios, videos }) {
+export default function Home({ audios, videos, events }) {
   const { signedAccountId, wallet } = useContext(NearContext);
   const [isMember, setIsMember] = useState(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
@@ -47,7 +47,7 @@ export default function Home({ audios, videos }) {
   const widgetProps = {
     music: { url: audios, changeTrack: changeAudio, trackIndex: currentAudioIndex, playOnLoad },
     videos: { url: videos, changeTrack: changeVideo, trackIndex: currentVideoIndex, playOnLoad },
-    events: {},
+    events: { events },
     chat: {}
   };
 
@@ -68,10 +68,12 @@ export async function getStaticProps() {
   // read metadata from local files during build time
   const audioPath = path.join(process.cwd(), 'public', 'audioMetadata.json');
   const videoPath = path.join(process.cwd(), 'public', 'videoMetadata.json');
+  const eventsPath = path.join(process.cwd(), 'public', 'eventsMetadata.json');
 
   try {
     const audioMetadata = JSON.parse(fs.readFileSync(audioPath, 'utf8'));
     const videoMetadata = JSON.parse(fs.readFileSync(videoPath, 'utf8'));
+    const eventsMetadata = JSON.parse(fs.readFileSync(eventsPath, 'utf8'));
 
     const audios = Object.entries(audioMetadata).map(([filename, data]) => ({
       id: data.id,
@@ -98,7 +100,8 @@ export async function getStaticProps() {
     return {
       props: {
         audios,
-        videos
+        videos,
+        events: eventsMetadata
       },
     };
   } catch (error) {
@@ -106,7 +109,8 @@ export async function getStaticProps() {
     return {
       props: {
         audios: [],
-        videos: []
+        videos: [],
+        events: []
       },
     };
   }

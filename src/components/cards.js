@@ -2,6 +2,8 @@ import styles from '@/styles/app.module.css';
 import { useState } from 'react';
 import MusicWidget from './widgets/musicWidget';
 import VideoWidget from './widgets/videoWidget';
+import EventsWidget from './widgets/eventsWidget';
+import ChatWidget from './widgets/chatWidget';
 
 export const Cards = ({ handleCardClick, widgetProps, isMember }) => {
   return (
@@ -71,6 +73,18 @@ const CardWidget = ({ cardType, title, description, widgetProps, onToggleWidget,
         <VideoWidget 
           {...widgetProps}
           closeWidget={() => setWidgetOpen(false)} 
+        />
+      }
+      {cardType === 'events' && isWidgetOpen && 
+        <EventsWidget 
+        {...widgetProps}
+          closeWidget={() => setWidgetOpen(false)}
+        />
+      }
+      {cardType === 'chat' && isWidgetOpen && 
+        <ChatWidget 
+        {...widgetProps}
+          closeWidget={() => setWidgetOpen(false)}
         />
       }
     </>
