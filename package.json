@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "python3 scripts/metadata_extractor.py && next build",
     "start": "next start -p 3002",
     "lint": "next lint"
   },

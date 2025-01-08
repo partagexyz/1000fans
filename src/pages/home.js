@@ -65,41 +65,49 @@ export default function Home({ audios, videos }) {
 }
 
 export async function getStaticProps() {
-  // read audio metadata from a local file during build time
-  const audioPath = path.join(process.cwd(), 'scripts', 'audioMetadata.json');
-  const audioMetadata = JSON.parse(fs.readFileSync(audioPath, 'utf8'));
+  // read metadata from local files during build time
+  const audioPath = path.join(process.cwd(), 'public', 'audioMetadata.json');
+  const videoPath = path.join(process.cwd(), 'public', 'videoMetadata.json');
 
-  const audios = Object.entries(audioMetadata).map(([filename, data]) => ({
-    id: data.id,
-    title: data.title || filename,
-    artist: data.artist || 'Unknown Artist',
-    duration: data.duration || 'Unknown',
-    url: data.url || `/music/${filename}`,
-    metadata: JSON.stringify({
+  try {
+    const audioMetadata = JSON.parse(fs.readFileSync(audioPath, 'utf8'));
+    const videoMetadata = JSON.parse(fs.readFileSync(videoPath, 'utf8'));
+
+    const audios = Object.entries(audioMetadata).map(([filename, data]) => ({
+      id: data.id,
       title: data.title || filename,
-      image: data.image || '/music/nocoverfound.jpg'
-    })
-  }));
+      artist: data.artist || 'Unknown Artist',
+      duration: data.duration || 'Unknown',
+      url: data.url || `/music/${filename}`,
+      metadata: JSON.stringify({
+        title: data.title || filename,
+        image: data.image || '/music/nocoverfound.jpg'
+      })
+    }));
 
-  // read video metadata from a local file during build time
-  const videoPath = path.join(process.cwd(), 'scripts', 'videoMetadata.json');
-  const videoMetadata = JSON.parse(fs.readFileSync(videoPath, 'utf8'));
-
-  const videos = Object.entries(videoMetadata).map(([filename, data]) => ({
-    id: data.id,
-    title: data.title || filename,
-    url: data.url || `/videos/${filename}`,
-    metadata: JSON.stringify({
+    const videos = Object.entries(videoMetadata).map(([filename, data]) => ({
+      id: data.id,
       title: data.title || filename,
-      image: data.image || '/videos/nocoverfound.jpg'
-    })
-  }));
+      url: data.url || `/videos/${filename}`,
+      metadata: JSON.stringify({
+        title: data.title || filename,
+        image: data.image || '/videos/nocoverfound.jpg'
+      })
+    }));
 
-  return {
-    props: {
-      audios,
-      videos
-    },
-    revalidate: 3600, // revalidate the tracklist every hour
-  };
+    return {
+      props: {
+        audios,
+        videos
+      },
+    };
+  } catch (error) {
+    console.error('Failed to read metadata:', error);
+    return {
+      props: {
+        audios: [],
+        videos: []
+      },
+    };
+  }
 }

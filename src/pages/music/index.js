@@ -59,7 +59,7 @@ export default function Music({ tracks }) {
 
 export async function getStaticProps() {
     // Read metadata from a local file directly
-    const filePath = path.join(process.cwd(), 'scripts', 'audioMetadata.json');
+    const filePath = path.join(process.cwd(), 'public', 'audioMetadata.json');
     const metadata = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
     // Convert metadata to the format expected by your player component

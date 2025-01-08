@@ -6,8 +6,11 @@ from mutagen.flac import FLAC
 import json
 import io
 from PIL import Image
+import ffmpeg
 
+public_folder = '/Users/juliencarbonnell/near/fans-club/public'
 music_folder = '/Users/juliencarbonnell/near/fans-club/public/music'
+video_folder = '/Users/juliencarbonnell/near/fans-club/public/videos'
 
 def sanitize_filename(s):
     # Function to sanitize string for file names
@@ -29,7 +32,7 @@ def seconds_to_ms(seconds):
     secs = math.floor(seconds % 60)
     return f"{minutes:02d}:{secs:02d}"
 
-def extract_metadata(file_path):
+def extract_audio_metadata(file_path):
     audio = File(file_path)
     
     if isinstance(audio, MP4):
@@ -55,7 +58,6 @@ def extract_metadata(file_path):
     embedded_image = extract_embedded_image(audio)
     if embedded_image:
         pil_image = Image.open(embedded_image)
-        # Convert image to RGB if it's in RGBA mode
         if pil_image.mode == 'RGBA':
             pil_image = pil_image.convert('RGB')
         
@@ -63,7 +65,7 @@ def extract_metadata(file_path):
         pil_image.save(image_path, 'JPEG')
         image = f"/music/{os.path.basename(image_path)}"
     else:
-        image = "/music/nocoverfound.jpg"
+        image = "/nocoverfound.jpg"
     
     # Prepare metadata structure
     filename = os.path.basename(file_path)
@@ -72,7 +74,6 @@ def extract_metadata(file_path):
     
     new_file_name = f"{id}{ext}"
     new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
-    
     # Rename file
     os.rename(file_path, new_file_path)
 
@@ -88,28 +89,76 @@ def extract_metadata(file_path):
         'duration': duration_ms
     }
 
+def extract_video_metadata(file_path):
+    try:
+        # use ffmeg to probe the video file
+        probe = ffmpeg.probe(file_path)
+        video_info = next((s for s in probe['streams'] if s['codec_type'] == 'video'), None)
+        audio_info = next((s for s in probe['streams'] if s['codec_type'] == 'audio'), None)
+
+        filename = os.path.basename(file_path)
+        title = os.path.splitext(filename)[0]
+        id = sanitize_filename(title)
+
+        metadata = {
+            'id': id,
+            'title': title,
+            'url': f"/videos/{filename}",
+            'metadata': {
+                'title': title,
+                'image': f"/videos/{id}.jpg",
+            }
+        }
+
+        if video_info:
+            metadata['metadata']['duration'] = seconds_to_ms(float(video_info['duration']))
+        else:
+            metadata['metadata']['duration'] = 'N/A'
+
+        return metadata
+    except Exception as e:
+        print(f"Error processing video {file_path}: {e}")
+        return None
+
 def main():
-    metadata_file = 'metadata.json'
-    
-    # Remove existing metadata file if it exists
-    if os.path.exists(metadata_file):
-        os.remove(metadata_file)
-        
-    metadata = {}
+    audio_metadata = {}
+    audio_metadata_path = os.path.join(public_folder, 'audioMetadata.json')
+
+    # delete pre-existing audio metadata file
+    if os.path.exists(audio_metadata_path):
+        os.remove(audio_metadata_path)
 
     for root, _, files in os.walk(music_folder):
         for file in files:
             if file.endswith(('.mp3', '.m4a', '.flac', '.wav')):
                 file_path = os.path.join(root, file)
                 try:
-                    file_metadata = extract_metadata(file_path)
-                    metadata[os.path.basename(file_path)] = file_metadata
+                    file_metadata = extract_audio_metadata(file_path)
+                    audio_metadata[os.path.basename(file_path)] = file_metadata
                 except Exception as e:
                     print(f"Error processing {file}: {e}")
 
     # Write metadata to JSON file
-    with open(metadata_file, 'w') as f:
-        json.dump(metadata, f, indent=2)
+    with open(audio_metadata_path, 'w') as f:
+        json.dump(audio_metadata, f, indent=2)
+
+    video_metadata = {}
+    video_metadata_path = os.path.join(public_folder, 'videoMetadata.json')
+
+    # delete pre-existing metadata file
+    if os.path.exists(video_metadata_path):
+        os.remove(video_metadata_path)
+
+    for root, _, files in os.walk(video_folder):
+        for file in files:
+            if file.endswith(('.mp4', '.mov', '.avi')):
+                file_path = os.path.join(root, file)
+                video_meta = extract_video_metadata(file_path)
+                if video_meta: # check if metadata extraction was successful
+                    video_metadata[os.path.basename(file_path)] = video_meta
+
+    with open(video_metadata_path, 'w') as f:
+        json.dump(video_metadata, f, indent=2)
 
 if __name__ == '__main__':
     main()
