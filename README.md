@@ -35,7 +35,7 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - ~~Update the smart contract: max 1 token per account, token count to automatically set the token ID: fan000, fan001, ..., fan999.~~ 
 - ~~Redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan000. re-test all access-keys etc.~~
 - Improve platform's design.
-- Add a private chat for fans.
+- ~~Add a private chat for fans.~~
 - Refine the smart-contract & the shop: 1000 tokens minted at smart contract init (500 to be send to shareholders, and 500 to fans). No need for a mint function in the shop. Allow multiple token holding to white-listed accounts (contract owner + shareholders). Everybody can sell their tokens after 1 year holding (from original mint). Add a paiement system for token sale. Transfer function must be called by anyone holding a token. 
 - Original token transfer: through email or named account?
 - Test the platform with a closed group of users on testnet.
