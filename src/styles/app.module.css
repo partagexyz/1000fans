@@ -107,7 +107,7 @@
   display: flex;
   align-items: center;
   font-weight: bold;
-  color: white !important;
+  color: white;
   text-shadow: 0 0 10px var(--accent-color);
 }
 
@@ -158,13 +158,13 @@
 }
 
 .footer p {
-  text-align: center !important;
+  text-align: center;
   margin: 0;
 }
 
 .footer a {
-  border-bottom: 1px solid white !important;
-  text-decoration: none !important;
+  border-bottom: 1px solid white;
+  text-decoration: none;
 }
 
 .theme-toggle-footer {
@@ -203,6 +203,7 @@
     background: rgba(var(--accent-color), 0.1);
     border: 2px solid;
     box-shadow: 0 0 15px rgba(var(--accent-color), 0.5);
+    transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
   }
 
   .card:hover span {

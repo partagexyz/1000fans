@@ -1,12 +1,22 @@
 // components/footer.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../styles/app.module.css';
 
 const Footer = () => {
+  const [currentTheme, setCurrentTheme] = useState('light');
+
+  useEffect(() => {
+    const savedTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    setCurrentTheme(savedTheme);
+  }, []);
+
   const toggleTheme = () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
-    localStorage.setItem('theme', currentTheme === 'dark' ? 'light' : 'dark');
+    console.log('Current theme:', currentTheme);
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    console.log('Setting new theme:', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    setCurrentTheme(newTheme);
   };
 
   return (
@@ -20,7 +30,7 @@ const Footer = () => {
         {new Date().getFullYear()}.
       </p>
       <button onClick={toggleTheme} aria-label="Toggle dark mode" className={`${styles['theme-toggle']} ${styles['theme-toggle-footer']}`}>
-        <i className="bi bi-moon-fill"></i>
+        <i className={`bi ${currentTheme === 'dark' ? 'bi-sun-fill' : 'bi-moon-fill'}`}></i>
       </button>
     </footer>
   );

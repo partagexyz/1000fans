@@ -39,6 +39,22 @@
   --font-secondary: 'Inter', sans-serif;
 }
 
+[data-theme="dark"] {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 1, 1, 1;
+  --background-end-rgb: 20, 20, 20;
+  --accent-color: #00FF00;
+  /* ... other dark theme variables ... */
+}
+
+[data-theme="light"] {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 240, 240, 255;
+  --accent-color: #FF00FF;
+  /* ... other light theme variables ... */
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
@@ -85,6 +101,7 @@ body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
   font-family: var(--font-secondary);
+  transition: background 0.3s ease, color 0.3s ease, filter 0.3s ease;
 }
 
 a {
@@ -96,4 +113,11 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+button {
+  font-family: var(--font-primary);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
 }
