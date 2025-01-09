@@ -12,13 +12,14 @@
     justify-content: flex-end;
   }
 
-.pauseplay {
+.pauseplay, .forback {
     font-size: 35px;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.pauseplay:hover {
+.pauseplay:hover, .forback:hover {
     transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(var(--accent-color), 0.5);
 }
 
 .forback {
@@ -43,7 +44,7 @@
 }
 
 .progress .ant-slider-track {
-    background-color: #A7A7A7;
+    background: linear-gradient(90deg, #00FF00, #0077B6);
 }
 
 .progress .ant-slider-handle {
@@ -55,6 +56,25 @@
     width: 512px;
     height: 512px;
 }
+
+.cover:hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .cover:hover::after {
+    opacity: 1;
+  }
 
 .songTitle {
     font-size: 16px;

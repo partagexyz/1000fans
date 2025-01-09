@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head'; // metadata
+import Footer from '@/components/footer';
 import '@/styles/globals.css';
 import { Navigation } from '@/components/navigation';
 import { Wallet, NearContext } from '@/wallets/near';
@@ -38,16 +39,7 @@ export default function MyApp({ Component, pageProps }) {
         <div className="main">
           <Component {...pageProps} />
         </div>
-        <footer className={styles.footer}>
-          <p>
-            Made by artists, for artists. {' '}
-            &copy; 
-            <Link href="https://1000Fans.xyz" target="_blank" rel="noopener noreferrer">
-            1000Fans.xyz
-            </Link>{', '}
-            {new Date().getFullYear()}.
-          </p>
-        </footer>
+        <Footer />
       </NearContext.Provider>
     </>
   );

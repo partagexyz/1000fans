@@ -1,10 +1,11 @@
 .widget {
     position: fixed;
     width: 300px;
-    background: white;
     color: black;
-    border: 1px solid #ccc;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    background: rgba(var(--background-start-rgb), 0.9);
+    border: 2px solid transparent;
+    border-image: linear-gradient(45deg, var(--accent-color), #0077B6) 1;
+    box-shadow: 0 0 15px rgba(var(--accent-color), 0.2);
     padding: 10px;
     z-index: 1000;
   }
@@ -18,6 +19,12 @@
     border: none;
     font-size: 18px;
     cursor: pointer;
+  }
+
+  .closeButton:hover {
+    transform: scale(1.1);
+    color: var(--accent-color);
+    text-shadow: 0 0 5px var(--accent-color);
   }
 
   .widget h3, .songInfo {
