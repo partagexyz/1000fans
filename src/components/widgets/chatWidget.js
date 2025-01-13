@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styles from '../../styles/widget.module.css';
+import styles from '@/styles/widget.module.css';
 import Draggable from 'react-draggable';
 
 const ChatWidget = ({ closeWidget }) => {

@@ -2,9 +2,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 import Image from 'next/image';
-import styles from '../styles/player.module.css';
+import styles from '@/styles/player.module.css';
 
-const Player = ({ url, changeTrack, trackIndex, playOnLoad }) => {
+const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad }) => {
+    console.log('Player URL:', url);
     const [playing, setPlaying] = useState(false);
     const [trackIndexState, setTrackIndex] = useState(trackIndex);
     const [volume, setVolume] = useState(1.0);
@@ -12,8 +13,16 @@ const Player = ({ url, changeTrack, trackIndex, playOnLoad }) => {
     const [duration, setDuration] = useState(0);
     const playerRef = useRef(null);
 
-    const currentTrack = url[trackIndexState];
-    const isVideo = currentTrack.url.endsWith('.mp4');
+    const currentTrack = url[trackIndexState] || { url: '', metadata: '{}', title: 'Unknown', artist: 'Unknown Artist' };
+    const isVideo = currentTrack.url ? currentTrack.url.endsWith('.mp4') : false;
+
+    useEffect(() => {
+        setTrackIndex(trackIndex);
+        if (playOnLoad && url.length > 0) {
+            setPlaying(true);
+            changeTrack(trackIndex);
+        }
+    }, [trackIndex, playOnLoad, changeTrack, url.length]);
 
     // Handle progress
     const handleProgress = (state) => {
@@ -63,13 +72,9 @@ const Player = ({ url, changeTrack, trackIndex, playOnLoad }) => {
         setPlaying(true);
     };
 
-    useEffect(() => {
-        setTrackIndex(trackIndex);
-        if (playOnLoad) {
-            setPlaying(true);
-            changeTrack(trackIndex);
-        }
-    }, [trackIndex, playOnLoad, changeTrack]);
+    if (!currentTrack || !currentTrack.url) {
+        return <div>No track available.</div>;
+    }
 
     return (
         <div className={isVideo ? styles['video-player'] : styles['audio-player']}>

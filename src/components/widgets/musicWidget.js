@@ -1,9 +1,10 @@
 import React from 'react';
 import Player from '../player';
-import styles from '../../styles/widget.module.css';
+import styles from '@/styles/widget.module.css';
 import Draggable from 'react-draggable';
 
 const MusicWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) => {
+    console.log('MusicWidget URL:', url);
     return (
         <Draggable>
             <div className={styles.widget}>

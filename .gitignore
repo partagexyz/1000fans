@@ -8,3 +8,4 @@ public/audioMetadata.json
 public/videoMetadata.json
 
 .DS_Store
+.vercel

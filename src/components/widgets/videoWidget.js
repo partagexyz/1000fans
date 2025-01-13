@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import Player from '../player';
 import Draggable from 'react-draggable';
-import styles from '../../styles/widget.module.css';
+import styles from '@/styles/widget.module.css';
 
 const VideoWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) => {
+    console.log('VideoWidget URL:', url);
     return (
         <Draggable>
             <div className={styles.widget}>

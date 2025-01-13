@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../../styles/widget.module.css';
+import styles from '@/styles/widget.module.css';
 import Draggable from 'react-draggable';
 
 const EventsWidget = ({ events, closeWidget }) => {      

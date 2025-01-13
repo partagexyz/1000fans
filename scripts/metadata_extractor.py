@@ -8,6 +8,9 @@ import io
 from PIL import Image
 import ffmpeg
 
+# Fetch environment variables for S3 bucket name
+s3_bucket_name = os.environ.get('AWS_S3_BUCKET_NAME', 'your-default-bucket-name')
+
 public_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'public')
 music_folder = os.path.join(public_folder, 'music')
 video_folder = os.path.join(public_folder, 'videos')
@@ -63,9 +66,9 @@ def extract_audio_metadata(file_path):
         
         image_path = os.path.join(os.path.dirname(file_path), f"{sanitize_filename(metadata['artist'])} - {sanitize_filename(metadata['title'])}.jpg")
         pil_image.save(image_path, 'JPEG')
-        image = f"/music/{os.path.basename(image_path)}"
+        image = f"https://{s3_bucket_name}.s3.amazonaws.com/music/{os.path.basename(image_path)}"
     else:
-        image = "/nocoverfound.jpg"
+        image = f"https://{s3_bucket_name}.s3.amazonaws.com/nocoverfound.jpg"
     
     # Prepare metadata structure
     filename = os.path.basename(file_path)
@@ -84,7 +87,7 @@ def extract_audio_metadata(file_path):
         'id': id,
         'title': metadata['title'],
         'artist': metadata['artist'],
-        'url': f"/music/{new_file_name}",
+        'url': f"https://{s3_bucket_name}.s3.amazonaws.com/music/{new_file_name}",
         'image': image,
         'duration': duration_ms
     }
@@ -103,17 +106,13 @@ def extract_video_metadata(file_path):
         metadata = {
             'id': id,
             'title': title,
-            'url': f"/videos/{filename}",
+            'url': f"https://{s3_bucket_name}.s3.amazonaws.com/videos/{filename}",
             'metadata': {
                 'title': title,
-                'image': f"/videos/{id}.jpg",
+                'image': f"https://{s3_bucket_name}.s3.amazonaws.com/videos/{id}.jpg",
+                'duration': seconds_to_ms(float(video_info['duration'])) if video_info else 'N/A'
             }
         }
-
-        if video_info:
-            metadata['metadata']['duration'] = seconds_to_ms(float(video_info['duration']))
-        else:
-            metadata['metadata']['duration'] = 'N/A'
 
         return metadata
     except Exception as e:

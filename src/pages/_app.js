@@ -5,8 +5,6 @@ import '@/styles/globals.css';
 import { Navigation } from '@/components/navigation';
 import { Wallet, NearContext } from '@/wallets/near';
 import { NetworkId } from '@/config';
-import Link from 'next/link';
-import styles from '../styles/app.module.css';
 
 // wallet instance
 const wallet = new Wallet({ networkId: NetworkId });

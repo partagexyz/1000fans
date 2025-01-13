@@ -2,10 +2,9 @@ import { useEffect, useState, useContext } from 'react';
 import { NearContext } from '@/wallets/near';
 import styles from '@/styles/app.module.css';
 import { Cards } from '@/components/cards';
-import fs from 'fs';
-import path from 'path';
+import { fetchFileFromS3 } from '../utils/fetchMetadata';
 
-export default function Index({ audios, videos, events }) {
+export default function Index({ music, videos, events }) {
   const { signedAccountId, wallet } = useContext(NearContext);
   const [isMember, setIsMember] = useState(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
@@ -45,7 +44,7 @@ export default function Index({ audios, videos, events }) {
   };
 
   const widgetProps = {
-    music: { url: audios, changeTrack: changeAudio, trackIndex: currentAudioIndex, playOnLoad },
+    music: { url: music, changeTrack: changeAudio, trackIndex: currentAudioIndex, playOnLoad },
     videos: { url: videos, changeTrack: changeVideo, trackIndex: currentVideoIndex, playOnLoad },
     events: { events },
     chat: {}
@@ -65,53 +64,43 @@ export default function Index({ audios, videos, events }) {
 }
 
 export async function getStaticProps() {
-  // read metadata from local files during build time
-  const audioPath = path.join(process.cwd(), 'public', 'audioMetadata.json');
-  const videoPath = path.join(process.cwd(), 'public', 'videoMetadata.json');
-  const eventsPath = path.join(process.cwd(), 'public', 'eventsMetadata.json');
+  const bucketName = process.env.AWS_S3_BUCKET_NAME;
+  const metadataFiles = [
+    { key: 'audioMetadata.json', stateKey: 'music' },
+    { key: 'videoMetadata.json', stateKey: 'videos' },
+    { key: 'eventsMetadata.json', stateKey: 'events' }
+  ];
+  
+  const metadata = {};
+  for (const { key, stateKey } of metadataFiles) {
+    const data = await fetchFileFromS3(bucketName, key);
 
-  try {
-    const audioMetadata = JSON.parse(fs.readFileSync(audioPath, 'utf8'));
-    const videoMetadata = JSON.parse(fs.readFileSync(videoPath, 'utf8'));
-    const eventsMetadata = JSON.parse(fs.readFileSync(eventsPath, 'utf8'));
-
-    const audios = Object.entries(audioMetadata).map(([filename, data]) => ({
-      id: data.id,
-      title: data.title || filename,
-      artist: data.artist || 'Unknown Artist',
-      duration: data.duration || 'Unknown',
-      url: data.url || `/music/${filename}`,
-      metadata: JSON.stringify({
-        title: data.title || filename,
-        image: data.image || '/music/nocoverfound.jpg'
-      })
-    }));
-
-    const videos = Object.entries(videoMetadata).map(([filename, data]) => ({
-      id: data.id,
-      title: data.title || filename,
-      url: data.url || `/videos/${filename}`,
-      metadata: JSON.stringify({
-        title: data.title || filename,
-        image: data.image || '/videos/nocoverfound.jpg'
-      })
-    }));
-
-    return {
-      props: {
-        audios,
-        videos,
-        events: eventsMetadata
-      },
-    };
-  } catch (error) {
-    console.error('Failed to read metadata:', error);
-    return {
-      props: {
-        audios: [],
-        videos: [],
-        events: []
-      },
-    };
+    if (data) {
+      if (stateKey === 'music' || stateKey === 'videos') {
+        metadata[stateKey] = Object.entries(data).map(([filename, info]) => ({
+          id: info.id,
+          title: info.title || filename,
+          artist: stateKey === 'music' ? (info.artist || 'Unknown Artist') : '',
+          duration: info.duration || 'Unknown',
+          url: info.url,
+          metadata: JSON.stringify({
+            title: info.title || filename,
+            image: info.image || `https://1000fans-theosis.s3.amazonaws.com/nocoverfound.jpg`
+          })
+        }));
+      } else if (stateKey === 'events') {
+        metadata[stateKey] = data;
+      }
+    } else {
+      metadata[stateKey] = stateKey === 'events' ? [] : {};
+    }
   }
+
+  return {
+    props: {
+      music: metadata.music || [],
+      videos: metadata.videos || [],
+      events: metadata.events || []
+    },
+  };
 }
