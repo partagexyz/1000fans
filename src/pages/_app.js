@@ -25,15 +25,14 @@ export default function MyApp({ Component, pageProps }) {
   }, []);
 
   useEffect(() => {
-    // Set dark as default theme if no theme is saved
-    const savedTheme = localStorage.getItem('theme');
+    // Set dark as default theme
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    if (savedTheme) {
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    } else {
-      // Here we set 'dark' as the default theme
+    if (prefersDark) {
       document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      // give users a chance to set a light theme
+      document.documentElement.setAttribute('data-theme', 'light');
     }
   }, []);
 
