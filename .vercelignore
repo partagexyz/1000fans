@@ -1,0 +1,11 @@
+.next/
+node_modules/
+package-lock.json
+
+public/music/*
+public/videos/*
+public/audioMetadata.json
+public/videoMetadata.json
+
+.DS_Store
+.vercel/
