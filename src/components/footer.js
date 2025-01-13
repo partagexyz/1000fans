@@ -6,14 +6,15 @@ const Footer = () => {
   const [currentTheme, setCurrentTheme] = useState('light');
 
   useEffect(() => {
-    const savedTheme = document.documentElement.getAttribute('data-theme') || 'light';
-    setCurrentTheme(savedTheme);
-  }, []);
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', initialTheme);
+    setCurrentTheme(initialTheme);
+  }, [currentTheme]);
 
   const toggleTheme = () => {
-    console.log('Current theme:', currentTheme);
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    console.log('Setting new theme:', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     setCurrentTheme(newTheme);

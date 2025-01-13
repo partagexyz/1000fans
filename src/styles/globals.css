@@ -41,17 +41,8 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
   --background-end-rgb: 240, 240, 255;
-  --accent-color: #FF00FF;
-  /* ... other light theme variables ... */
-}
-
-/* Dark theme should be the default, but we keep this if needed */
-[data-theme="dark"] {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 1, 1, 1;
-  --background-end-rgb: 20, 20, 20;
   --accent-color: #00FF00;
-  /* ... other dark theme variables ... */
+  /* ... other light theme variables ... */
 }
 
 * {
