@@ -18,6 +18,15 @@ const Footer = () => {
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     setCurrentTheme(newTheme);
+  
+    // Disable transitions for immediate color change
+    document.querySelectorAll('.card p').forEach(p => {
+      p.style.transition = 'none';
+      p.style.color = newTheme === 'light' ? 'black' : 'white';
+      setTimeout(() => {
+        p.style.transition = ''; // Reset transitions
+      }, 0);
+    });
   };
 
   return (
