@@ -126,6 +126,16 @@ html[data-theme="dark"] .card p {
   backdrop-filter: blur(10px);
 }
 
+html[data-theme="light"] .navbar {
+  background-color: white;
+  color: black;
+}
+
+html[data-theme="dark"] .navbar {
+  background-color: black;
+  color: white;
+}
+
 .navbar .navbar-brand {
   height: 100%;
   display: flex;
@@ -150,6 +160,14 @@ html[data-theme="dark"] .card p {
   color: rgb(var(--foreground-rgb));
   font-weight: bold;
   text-decoration: none;
+}
+
+html[data-theme="light"] .nav-link {
+  color: black;
+}
+
+html[data-theme="dark"] .nav-link {
+  color: white;
 }
 
 .nav-link-shop:hover {
