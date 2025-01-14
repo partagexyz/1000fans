@@ -5,16 +5,27 @@
   align-items: center;
   padding: 0;
   min-height: calc(100vh - 160px); /* minus the height of the navbar and footer */
+  position: relative; /* Required for pseudo-element positioning */
+  z-index: 1; /* Ensure content appears above the background */
+}
+
+.main::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-image: url('/hero.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: hue-rotate(180deg) contrast(120%); /* Change from invert(1) */
-  backdrop-filter: blur(5px); 
+  filter: none; /* Default filter */
+  z-index: -1; /* Place the background behind the content */
 }
 
-[data-theme="light"] .main {
-  filter: invert(1);
+[data-theme="light"] .main::before {
+  filter: invert(1); /* Apply filter only to the background image */
 }
 
 .description {
@@ -38,8 +49,8 @@
   position: relative;
   margin: 0;
   padding: 1rem;
-  background-color: rgba(var(--callout-rgb), 0.5);
-  border: 1px solid rgba(var(--callout-border-rgb), 0.3);
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(200, 200, 200, 0.3);
   border-radius: var(--border-radius);
 }
 
@@ -60,7 +71,7 @@
 .card {
   padding: 1rem;
   border-radius: var(--border-radius);
-  background: rgba(var(--card-rgb), 0);
+  background: rgba(240, 240, 240, 0);
   border: 2px solid transparent;
   border-image: linear-gradient(45deg, var(--accent-color), #0077B6) 1;
   transition: all 0.3s ease;
@@ -69,7 +80,7 @@
 
 .card span {
   display: inline-block;
-  transition: transform 200ms;
+  transition: transform 0.2s ease;
 }
 
 .card h2 {
@@ -111,7 +122,7 @@ html[data-theme="dark"] .card p {
 
 .navbar {
   height: 80px;
-  background: rgba(var(--background-start-rgb), 0.5);
+  background: rgba(245, 245, 245, 0.5);
   backdrop-filter: blur(10px);
 }
 
@@ -167,12 +178,17 @@ html[data-theme="dark"] .card p {
   left: 0;
   width: 100%;
   height: 80px; /* match the navbar */
-  background-color: rgba(var(--background-start-rgb), 0.5);
+  background-color: rgba(245, 245, 245, 0.5);
   backdrop-filter: blur(10px);
   color: rgb(var(--foreground-rgb));
   display: flex;
   justify-content: center; /* center horizontally */
   align-items: center; /* center vertically */
+}
+
+html[data-theme="dark"] .footer {
+  background-color: black;
+  color: white;
 }
 
 .footer p {
@@ -219,9 +235,9 @@ html[data-theme="dark"] .card p {
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
     padding:1 rem;
-    background: rgba(var(--accent-color), 0.1);
+    background: rgba(255, 0, 100, 0.1);
     border: 2px solid;
-    box-shadow: 0 0 15px rgba(var(--accent-color), 0.5);
+    box-shadow: 0 0 15px rgba(255, 0, 100, 0.5);
     transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
   }
 
@@ -276,10 +292,10 @@ html[data-theme="dark"] .card p {
     padding: 2rem 1rem 1.4rem;
     border-radius: 0;
     border: none;
-    border-bottom: 1px solid rgba(var(--callout-border-rgb), 0.25);
+    border-bottom: 1px solid rgba(200, 200, 200, 0.25);
     background: linear-gradient(to bottom,
-        rgba(var(--background-start-rgb), 1),
-        rgba(var(--callout-rgb), 0.5));
+        rgba(245, 245, 245, 1),
+        rgba(255, 255, 255, 0.5));
     background-clip: padding-box;
     backdrop-filter: blur(24px);
   }

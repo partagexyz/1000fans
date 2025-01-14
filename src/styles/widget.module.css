@@ -2,10 +2,10 @@
     position: fixed;
     width: 300px;
     color: black;
-    background: rgba(var(--background-start-rgb), 0.9);
+    background: rgba(245, 245, 245, 0.9);
     border: 2px solid transparent;
     border-image: linear-gradient(45deg, var(--accent-color), #0077B6) 1;
-    box-shadow: 0 0 15px rgba(var(--accent-color), 0.2);
+    box-shadow: 0 0 15px rgba(255, 0, 100, 0.2);
     padding: 10px;
     z-index: 1000;
   }
