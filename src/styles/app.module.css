@@ -3,7 +3,6 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 0;
   min-height: calc(100vh - 160px); /* minus the height of the navbar and footer */
   position: relative; /* Required for pseudo-element positioning */
   z-index: 1; /* Ensure content appears above the background */
@@ -54,16 +53,10 @@
   border-radius: var(--border-radius);
 }
 
-.code {
-  font-weight: 700;
-  font-family: var(--font-mono);
-}
-
 .grid {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  position: static;
   align-self: center;
   width: 100%;
 }
@@ -78,41 +71,14 @@
   max-width: 350px;
 }
 
-[data-theme='dark'] .card {
-  color: #fff; /* White font color for card text */
-}
-
+[data-theme='dark'] .card,
 [data-theme='dark'] .card h2,
 [data-theme='dark'] .card p {
-  color: #fff; /* Ensure headings and paragraphs in cards are white */
-}
-
-.card span {
-  display: inline-block;
-  transition: transform 0.2s ease;
-}
-
-.card h2 {
-  font-weight: 600;
-  margin-bottom: 0.7rem;
-}
-
-.card p {
-  margin: 0;
-  opacity: 0.6;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  max-width: 30ch;
-  color: rgb(var(--foreground-rgb)); /* This should work with theme variables */
-  transition: background 0.3s ease, opacity 0.3s ease; /* Exclude color from transition */
-}
-
-html[data-theme="light"] .card p {
-  color: black;
-}
-
-html[data-theme="dark"] .card p {
   color: white;
+}
+
+[data-theme='light'] .card p {
+  color: black;
 }
 
 .center {
@@ -125,27 +91,18 @@ html[data-theme="dark"] .card p {
   height: 100%;
 }
 
-.logo {
-  position: relative;
-}
-
-.navbar {
+.navbar, .footer {
   height: 80px;
   background: rgba(245, 245, 245, 0.5);
   backdrop-filter: blur(10px);
 }
 
-html[data-theme="light"] .navbar {
+[data-theme='light'] .navbar, [data-theme='light'] .footer {
   background-color: white;
   color: black;
 }
 
-[data-theme='dark'] .navbar {
-  background-color: black;
-  color: white;
-}
-
-html[data-theme="dark"] .navbar {
+[data-theme='dark'] .navbar, [data-theme='dark'] .footer {
   background-color: black;
   color: white;
 }
@@ -165,7 +122,6 @@ html[data-theme="dark"] .navbar {
   clip-path: inset(35% 0% 35% 0%);
 }
 
-/* Apply invert filter only in light theme */
 [data-theme="light"] .navbar-icon {
   filter: invert(1);
 }
@@ -176,32 +132,9 @@ html[data-theme="dark"] .navbar {
   text-decoration: none;
 }
 
-html[data-theme="light"] .nav-link {
-  color: black;
-}
-
-html[data-theme="dark"] .nav-link {
-  color: white;
-}
-
 .nav-link-shop:hover {
   color: #e0e0e0; /* A lighter shade for hover effect */
   font-weight: bold;
-}
-
-.navbar-nav {
-  display: flex;
-  align-items: center; /* Vertically align items */
-}
-
-.nav-link-shop {
-  margin-right: 15px; /* Adjust as needed */
-  color: rgb(var(--foreground-rgb));
-  text-decoration: none;
-}
-
-.nav-link-shop {
-  padding: 0.375rem 0.75rem; /* Similar to btn padding in Bootstrap */
 }
 
 .footer {
@@ -209,29 +142,9 @@ html[data-theme="dark"] .nav-link {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 80px; /* match the navbar */
-  background-color: rgba(245, 245, 245, 0.5);
-  backdrop-filter: blur(10px);
-  color: rgb(var(--foreground-rgb));
   display: flex;
   justify-content: center; /* center horizontally */
   align-items: center; /* center vertically */
-}
-
-html[data-theme="dark"] .footer {
-  background-color: black;
-  color: white;
-}
-
-.footer p {
-  text-align: center;
-  margin: 0;
-}
-
-.footer a {
-  border-bottom: 1px solid rgb(var(--foreground-rgb));
-  text-decoration: none;
-  color: inherit;
 }
 
 .theme-toggle-footer {
