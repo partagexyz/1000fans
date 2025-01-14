@@ -78,6 +78,15 @@
   max-width: 350px;
 }
 
+[data-theme='dark'] .card {
+  color: #fff; /* White font color for card text */
+}
+
+[data-theme='dark'] .card h2,
+[data-theme='dark'] .card p {
+  color: #fff; /* Ensure headings and paragraphs in cards are white */
+}
+
 .card span {
   display: inline-block;
   transition: transform 0.2s ease;
@@ -129,6 +138,11 @@ html[data-theme="dark"] .card p {
 html[data-theme="light"] .navbar {
   background-color: white;
   color: black;
+}
+
+[data-theme='dark'] .navbar {
+  background-color: #000;
+  color: #fff;
 }
 
 html[data-theme="dark"] .navbar {
