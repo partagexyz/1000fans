@@ -26,26 +26,26 @@ export const Navigation = () => {
   }, [signedAccountId, wallet]);
 
   return (
-    <nav className="navbar navbar-expand-lg">
-      <div className="container-fluid">
+    <nav className={styles.navbar}>
+      <div className={styles['navbar-content']}>
         <Link href="/" passHref legacyBehavior>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className={styles['navbar-brand']}>
             <Image 
               priority 
               src={Icon} 
               alt="Theosis Icon" 
               width={51} 
               height={51} 
-              className={`${styles['navbar-icon']} d-inline-block align-text-top`} 
+              className={styles['navbar-icon']} 
             />
             {/*<span className={`${styles['navbar-brand']} mb-0 h1 ms-2`}>1000 FANS</span>*/}
           </div>
         </Link>
-        <div className={`${styles['navbar-nav']} pt-1`}>
+        <div className={styles['navbar-actions']}>
           <Link href="/shop" passHref legacyBehavior>
             <a className={`${styles['nav-link']} ${styles['nav-link-shop']}`}>Shop</a>
           </Link>
-          <button className="btn btn-secondary" onClick={action} > {label} </button>
+          <button className={styles['action-button']} onClick={action}>{label}</button>
         </div>
       </div>
     </nav>
