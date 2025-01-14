@@ -25,15 +25,8 @@ export default function MyApp({ Component, pageProps }) {
   }, []);
 
   useEffect(() => {
-    // Set dark as default theme
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (prefersDark) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      // give users a chance to set a light theme
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
+    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
   }, []);
 
   return (
