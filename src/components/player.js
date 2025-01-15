@@ -121,8 +121,8 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                         onProgress={handleProgress}
                         onDuration={handleDuration}
                         onEnded={toNextTrack}
-                        width="911px"
-                        height="512px"
+                        width="640px"
+                        height="360px"
                         controls
                     />
                 </div>
@@ -140,6 +140,25 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                 />
             }
             <div className={styles.info}>
+                {isVideo && (
+                    <div className={styles.controlsContainer}>
+                        <span 
+                            onClick={toPrevTrack}
+                            className={`${styles.forback} ${styles.icon}`}
+                            style={{fontSize: '24px', cursor: 'pointer'}}
+                        >
+                            ⏮️
+                        </span>
+                        <span className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</span>
+                        <span 
+                            onClick={toNextTrack}
+                            className={`${styles.forback} ${styles.icon}`}
+                            style={{fontSize: '24px', cursor: 'pointer'}}
+                        >
+                            ⏭️
+                        </span>
+                    </div>
+                )}
                 {!isVideo && (
                     <Image
                         className={styles.cover}
@@ -150,11 +169,15 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                     />
                 )}
                 <div className={styles.infoText}>
-                    {/* Conditionally render artist first if it exists */}
-                    {currentTrack.artist && 
-                        <span className={styles.songArtist}>{currentTrack.artist} - </span>
-                    }
-                    <span className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</span>
+                    {/* Conditionally render artist and title only for audio */}
+                    {!isVideo && (
+                        <>
+                            {currentTrack.artist && 
+                                <span className={styles.songArtist}>{currentTrack.artist} - </span>
+                            }
+                            <span className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</span>
+                        </>
+                    )}
                 </div>
             </div>
             {!isVideo && ( // only shows controls for audio

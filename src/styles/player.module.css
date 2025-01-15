@@ -114,7 +114,7 @@
 
 /* Adjustments for when playing video */
 .video-player .info {
-    margin-top: 20px; /* More space after video for info */
+    margin-top: 0px; /* space after video for title */
 }
 
 .icon {

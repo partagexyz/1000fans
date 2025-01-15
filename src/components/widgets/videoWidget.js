@@ -1,16 +1,13 @@
 // a video player widget to display on the home page
-import React, { useState } from 'react';
+import React from 'react';
 import Player from '../player';
 import Draggable from 'react-draggable';
 import styles from '@/styles/widget.module.css';
 
 const VideoWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) => {
-
     return (
         <Draggable>
-            <div className={styles.widget}>
-                <button onClick={closeWidget} className={styles.closeButton}>X</button>
-                <h3> Exclusive Videos</h3>
+            <div className={styles.widget} style={{ width: '665px', height: '430px' }}>
                 <div className={styles['video-player-wrapper']}>
                     <Player 
                         url={url} 
@@ -19,6 +16,12 @@ const VideoWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) 
                         playOnLoad={playOnLoad}
                         className={styles['video-player']}
                     />
+                    <button 
+                    onClick={closeWidget} 
+                    className={`${styles.closeButton} ${styles.overlapClose}`}
+                    >
+                        X
+                    </button>
                 </div>
             </div>
         </Draggable>

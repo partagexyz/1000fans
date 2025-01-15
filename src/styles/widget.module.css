@@ -1,6 +1,7 @@
+/* general styles for all widgets */
 .widget {
     position: fixed;
-    width: 300px;
+    width: 300px; /* default to music widget */
     color: rgb(var(--foreground-rgb));
     background: rgba(var(--background-start-rgb), 0.9);
     border: 2px solid transparent;
@@ -14,6 +15,23 @@
 .widget .cover {
     width: 100%;
     max-height: 200px; /* Or whatever height fits within your widget */
+}
+
+/* Video Widget Specific */
+.video-widget {
+  width: 911px;
+  max-width: 100%;
+  height: auto; /* Allow dynamic height adjustment */
+  margin: 0 auto;
+}
+
+.video-widget .cover {
+  width: 911px;
+  height: 512px;
+}
+
+.videoWidget .info {
+  margin-bottom: 20px; /* Space for title */
 }
 
 .widget:hover .closeButton {
@@ -43,6 +61,25 @@
   .widget h3, .songInfo {
     color: rgb(var(--foreground-rgb))
   }
+
+  /* Video-Specific Layout */
+.video-player .info {
+  margin-top: 20px;
+}
+
+.videoContainer {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  width: 100%;
+}
+
+.videoContainer > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
 
   /* events.module.css */
 .event {
