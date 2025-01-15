@@ -1,26 +1,17 @@
 /* General styles for both audio and video players */
 .volume, .progress {
     width:100px;
+    margin: 0 auto;
   }
   
 .soundDiv {
     display: flex;
-    gap:15px;
+    gap: 0;
     font-size: 20px;
     align-items:center;
-    width: 300px;
-    justify-content: flex-end;
+    width: 100%;
+    justify-content: center;
   }
-
-.pauseplay, .forback {
-    font-size: 35px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.pauseplay:hover, .forback:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 10px rgba(255, 0, 100, 0.5);
-}
 
 .buttons {
     display: flex;
@@ -32,13 +23,23 @@
 
 .cover {
     /* audio files */
-    width: 512px;
-    height: 512px;
+    width: 100%;
+    height: 250px;
     position: relative;
 }
 
+.cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.audio-player, .video-player .cover {
+    background: linear-gradient(45deg, var(--background-start-rgb), var(--accent-color));
+}  
+
 .cover:hover::after {
-    content: '';
+    content: '▶';
     position: absolute;
     top: 0;
     left: 0;
@@ -48,21 +49,20 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    opacity: 0;
     transition: opacity 0.3s ease;
-  }
-  
-  .cover:hover::after {
     opacity: 1;
-  }
+    color: var(--accent-color);
+    font-size: 80px;
+}
 
 .songTitle {
     font-size: 16px;
     color: rgb(var(--foreground-rgb));
+    margin-left: 5px;
 }
 
 .songArtist {
-    font-size: 12px;
+    font-size: 16px;
     color: rgb(var(--foreground-rgb));
 }
 
@@ -76,6 +76,7 @@
     width: 911px;
     height: 512px;
     margin: 0 auto;
+    margin-right: 10px;
 }
 
 .videoContainer {
@@ -116,6 +117,67 @@
     margin-top: 20px; /* More space after video for info */
 }
 
-.video-player .cover {
-    margin-right: 10px; /* Space between video and cover image */
+.icon {
+    display: inline-block;
+    padding: 0px;
+    border-radius: 50%; /* Makes the icon circular */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    color: var(--accent-color); /* Example color, adjust as needed */
+    cursor: pointer;
+}
+
+.icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 0, 100, 0.5);
+}
+
+/* If you want specific styles for different icons */
+.forback {
+    font-size: 24px; /* Smaller for prev and next */
+}
+
+.pauseplay {
+    font-size: 40px; /* Larger for play/pause */
+}
+
+/* Styles for the playlist functionality */
+.hamburgerButton {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: rgb(var(--foreground-rgb));
+}
+
+.overlapPlaylist {
+    z-index: 1001; /* Ensure it's above other content */
+}
+
+.miniPlaylist {
+    position: absolute;
+    bottom: 40px; /* Position just above the hamburger button */
+    right: 10px;
+    background: rgba(var(--background-start-rgb), 0.9);
+    border: 1px solid var(--secondary-accent);
+    border-radius: 5px;
+    padding: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1002; /* Above the hamburger button */
+}
+
+.playlistItem {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 12px;
+    color: rgb(var(--foreground-rgb));
+    cursor: pointer; /* Allow clicking to change track */
+}
+
+.playlistItem:hover {
+    background-color: rgba(var(--secondary-accent), 0.1);
 }

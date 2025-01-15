@@ -4,8 +4,7 @@ import ReactPlayer from 'react-player';
 import Image from 'next/image';
 import styles from '@/styles/player.module.css';
 
-const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad }) => {
-    console.log('Player URL:', url);
+const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylist, togglePlaylist }) => {
     const [playing, setPlaying] = useState(false);
     const [trackIndexState, setTrackIndex] = useState(trackIndex);
     const [volume, setVolume] = useState(1.0);
@@ -26,7 +25,7 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad }) => {
 
     // Handle progress
     const handleProgress = (state) => {
-        setProgress(state.progress);
+        setProgress(state.played);
     };
 
     // Handle seeking
@@ -70,6 +69,20 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad }) => {
     const playTrack = (index) => {
         setTrackIndex(index);
         setPlaying(true);
+    };
+
+    const renderNextFiveTracks = () => {
+        const start = (trackIndexState + 1) % url.length;
+        return Array.from({ length: 5 }, (_, i) => {
+            const index = (start + i) % url.length; // Circular playlist
+            const track = url[index];
+            return (
+                <div key={track.id} className={styles.playlistItem} onClick={() => changeTrack(index)}>
+                    <span>{track.artist ? `${track.artist} - ` : ''}{JSON.parse(track.metadata).title}</span>
+                    <span>{track.duration}</span>
+                </div>
+            );
+        });
     };
 
     if (!currentTrack || !currentTrack.url) {
@@ -116,19 +129,37 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad }) => {
                     />
                 )}
                 <div className={styles.infoText}>
-                    <div className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</div>
-                    {/* Conditionally render artist only if it exists, since videos might not have this */}
-                    {currentTrack.artist && <div className={styles.songArtist}>{currentTrack.artist}</div>}
+                    {/* Conditionally render artist first if it exists */}
+                    {currentTrack.artist && 
+                        <span className={styles.songArtist}>{currentTrack.artist} - </span>
+                    }
+                    <span className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</span>
                 </div>
             </div>
-            {!isVideo && ( //only shows controls for audio
+            {!isVideo && ( // only shows controls for audio
                 <div>
                     <div className={styles.buttons}>
-                        <button className={styles.forback} onClick={toPrevTrack}>Prev</button>
-                        <button className={styles.pauseplay} onClick={toggle}>
-                            {playing ? 'Pause' : 'Play'}
-                        </button>
-                        <button className={styles.forback} onClick={toNextTrack}>Next</button>
+                        <span 
+                            onClick={toPrevTrack}
+                            className={`${styles.forback} ${styles.icon}`}
+                            style={{fontSize: '24px', cursor: 'pointer'}}
+                        >
+                            ⏮️
+                        </span>
+                        <span 
+                            onClick={toggle}
+                            className={`${styles.pauseplay} ${styles.icon}`}
+                            style={{fontSize: '40px', cursor: 'pointer'}} // Bigger than prev/next
+                        >
+                            {playing ? '⏸️' : '⏯️'}
+                        </span>
+                        <span 
+                            onClick={toNextTrack}
+                            className={`${styles.forback} ${styles.icon}`}
+                            style={{fontSize: '24px', cursor: 'pointer'}}
+                        >
+                            ⏭️
+                        </span>
                     </div>
                     <div className={styles.buttons}>
                         <div>{formatTime(isNaN(duration) || isNaN(progress) ? 0 : progress * duration)}</div>
@@ -139,7 +170,11 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad }) => {
                             step="any" 
                             value={progress}
                             onChange={handleSeekChange}
-                            onMouseUp={handleSeekMouseUp}
+                            onMouseUp={(e) => {
+                                e.stopPropagation();
+                                handleSeekMouseUp(e);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
                             className={styles.progress}
                         />
                         <div>{formatTime(duration)}</div> 
@@ -152,14 +187,28 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad }) => {
                         min="0" 
                         max="100" 
                         value={volume * 100}
-                        onChange={(e) => onVolume(e.target.value)}
+                        onChange={(e) => {
+                            e.stopPropagation();
+                            onVolume(e.target.value);
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
                         className={styles.volume}
                     />
+                </div>
+                <button 
+                    onClick={togglePlaylist} 
+                    className={`${styles.hamburgerButton} ${styles.overlapPlaylist}`}
+                >
+                    ☰
+                </button>
+                {showPlaylist && (
+                    <div className={styles.miniPlaylist}>
+                        {renderNextFiveTracks()}
+                    </div>
+                )}
             </div>
-        </div>
         )}
-    </div>
-    );
+    </div>);
 };
 
 function formatTime(seconds) {

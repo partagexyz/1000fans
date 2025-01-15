@@ -5,7 +5,7 @@ import Draggable from 'react-draggable';
 import styles from '@/styles/widget.module.css';
 
 const VideoWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) => {
-    console.log('VideoWidget URL:', url);
+
     return (
         <Draggable>
             <div className={styles.widget}>
@@ -16,7 +16,8 @@ const VideoWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) 
                         url={url} 
                         changeTrack={changeTrack} 
                         trackIndex={trackIndex} 
-                        playOnLoad={playOnLoad} 
+                        playOnLoad={playOnLoad}
+                        className={styles['video-player']}
                     />
                 </div>
             </div>
