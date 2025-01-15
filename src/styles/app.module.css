@@ -59,6 +59,7 @@
   gap: 1rem;
   align-self: center;
   width: 100%;
+  margin-left: 1rem;
 }
 
 .card {
@@ -128,8 +129,8 @@
 }
 
 .navbar-icon {
-  height: 100px;
-  width: auto;
+  height: 128px;
+  width: 96px;
   clip-path: inset(35% 0% 35% 0%);
 }
 

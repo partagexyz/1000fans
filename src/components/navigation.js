@@ -1,10 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, useContext } from 'react';
-
 import { NearContext } from '@/wallets/near';
 import Icon from '/public/favicon.ico';
-
 import styles from '@/styles/app.module.css';
 
 export const Navigation = () => {
