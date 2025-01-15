@@ -10,9 +10,30 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
     const [volume, setVolume] = useState(1.0);
     const [progress, setProgress] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [shuffledTracks, setShuffledTracks] = useState([]);
     const playerRef = useRef(null);
 
-    const currentTrack = url[trackIndexState] || { url: '', metadata: '{}', title: 'Unknown', artist: 'Unknown Artist' };
+    useEffect(() => {
+        // Shuffle tracks when they change or on component mount
+        const shuffled = shuffleArray(url);
+        setShuffledTracks(shuffled);
+        setTrackIndex(trackIndex);
+        if (playOnLoad && url.length > 0) {
+            setPlaying(true);
+            changeTrack(trackIndex);
+        }
+    }, [url, trackIndex, playOnLoad, changeTrack]);
+
+    // Fisher-Yates Shuffle Algorithm
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    const currentTrack = shuffledTracks[trackIndexState] || { url: '', metadata: '{}', title: 'Unknown', artist: 'Unknown Artist' };
     const isVideo = currentTrack.url ? currentTrack.url.endsWith('.mp4') : false;
 
     useEffect(() => {
@@ -50,13 +71,13 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
 
     // play next track
     const toNextTrack = () => {
-        setTrackIndex((prevIndex) => (prevIndex + 1) % url.length);
+        setTrackIndex((prevIndex) => (prevIndex + 1) % shuffledTracks.length);
         setPlaying(true);
     };
 
     // play previous track
     const toPrevTrack = () => {
-        setTrackIndex((prevIndex) => (prevIndex - 1 + url.length) % url.length);
+        setTrackIndex((prevIndex) => (prevIndex - 1 + shuffledTracks.length) % shuffledTracks.length);
         setPlaying(true);
     };
 
