@@ -96,6 +96,23 @@
   font-weight: bold;
 }
 
+.pastEventsTitle {
+  color: rgba(var(--foreground-rgb), 0.7);
+}
+
+.pastEvent {
+  background: rgba(var(--background-start-rgb), 0.8);
+  border: 1px solid var(--secondary-accent);
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  color: rgba(var(--foreground-rgb), 0.7);
+}
+
+.pastEvent h3 {
+  color: rgba(var(--foreground-rgb), 0.7);
+}
+
 .eventList ul {
   list-style-type: none;
   padding: 0;

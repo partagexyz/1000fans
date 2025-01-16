@@ -41,11 +41,11 @@ const EventsWidget = ({ events, closeWidget }) => {
 
                 {pastEvents.length > 0 && (
                     <>
-                        <h3>Past Events</h3>
+                        <h3 className={styles.pastEventsTitle}>Past Events</h3>
                         <div className={styles.eventList}>
                             <ul>
                                 {pastEvents.map(event => (
-                                    <li key={event.id} className={styles.event}>
+                                    <li key={event.id} className={`${styles.event} ${styles.pastEvent}`}>
                                         <div className={styles.eventDetails}>
                                             <h3>{event.title}</h3>
                                             <p>{event.date}</p>
