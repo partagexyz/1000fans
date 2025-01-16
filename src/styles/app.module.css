@@ -15,11 +15,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/hero.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: none; /* Default filter */
+  background-image: url('/hero.jpg'), linear-gradient(#000, #000);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
   z-index: -1; /* Place the background behind the content */
 }
 
