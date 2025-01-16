@@ -90,6 +90,21 @@
   margin-bottom: 10px;
 }
 
+.event h3 {
+  font-size: 1em; 
+  margin: 0;
+  font-weight: bold;
+}
+
+.eventList ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.eventList li {
+  margin-left: 0;
+}
+
 .registerButton {
   background: var(--accent-color);
   color: black;

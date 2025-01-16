@@ -89,10 +89,16 @@ export async function getStaticProps() {
           })
         }));
       } else if (stateKey === 'events') {
-        metadata[stateKey] = data;
+        // Wrap events in an object with an 'events' key to match the widget's expectation
+        metadata[stateKey] = { events: Object.values(data) };
       }
     } else {
-      metadata[stateKey] = stateKey === 'events' ? [] : {};
+      // Provide an empty structure for each type when data is not available
+      if(stateKey === 'events') {
+        metadata[stateKey] = { events: [] };
+      } else {
+        metadata[stateKey] = [];
+      }
     }
   }
 
