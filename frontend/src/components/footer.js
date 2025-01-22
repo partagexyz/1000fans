@@ -1,6 +1,6 @@
 // components/footer.js
 import React, { useState, useEffect } from 'react';
-import styles from '@/styles/app.module.css';
+import styles from '../styles/app.module.css';
 
 const Footer = () => {
   const [currentTheme, setCurrentTheme] = useState('light'); // Default to light

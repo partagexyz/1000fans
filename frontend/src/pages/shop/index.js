@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
-import { NearContext } from '@/wallets/near';
-import styles from '@/styles/app.module.css';
+import { NearContext } from '../../wallets/near';
+import styles from '../../styles/app.module.css';
 
 // Contract address
 const CONTRACT = '1000fans.testnet';

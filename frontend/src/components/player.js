@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 import Image from 'next/image';
-import styles from '@/styles/player.module.css';
+import styles from '../styles/player.module.css';
 
 const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylist, togglePlaylist }) => {
     const [playing, setPlaying] = useState(false);

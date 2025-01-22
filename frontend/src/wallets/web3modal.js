@@ -1,4 +1,4 @@
-import { NetworkId, EVMWalletChain } from '@/config';
+import { NetworkId, EVMWalletChain } from '../config';
 import { reconnect, http, createConfig } from "@wagmi/core";
 import { walletConnect, injected } from "@wagmi/connectors";
 import { createWeb3Modal } from "@web3modal/wagmi";

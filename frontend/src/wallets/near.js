@@ -16,7 +16,7 @@ import { setupSender } from '@near-wallet-selector/sender';
 import { setupBitteWallet } from '@near-wallet-selector/bitte-wallet';
 
 // ethereum wallets
-import { wagmiConfig, web3Modal } from '@/wallets/web3modal';
+import { wagmiConfig, web3Modal } from './web3modal';
 import { setupEthereumWallets } from "@near-wallet-selector/ethereum-wallets";
 
 const THIRTY_TGAS = '30000000000000';

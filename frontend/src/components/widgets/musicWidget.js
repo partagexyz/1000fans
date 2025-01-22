@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Player from '../player';
-import styles from '@/styles/widget.module.css';
+import styles from '../../styles/widget.module.css';
 import Draggable from 'react-draggable';
 
 const MusicWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) => {

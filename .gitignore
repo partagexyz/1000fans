@@ -15,8 +15,6 @@ yarn-error.log*
 /frontend/.vercel
 
 # backend .gitignore
-/contract/package-lock.json
-/contract/**/node_modules
 /contract/.pnp
 /contract/.pnp.js
 /contract/**/out

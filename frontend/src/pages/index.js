@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
-import { NearContext } from '@/wallets/near';
-import styles from '@/styles/app.module.css';
-import { Cards } from '@/components/cards';
+import { NearContext } from '../wallets/near';
+import styles from '../styles/app.module.css';
+import { Cards } from '../components/cards';
 import { fetchFileFromS3 } from '../utils/fetchMetadata';
 
 export default function Index({ music, videos, events }) {

@@ -2,7 +2,7 @@
 import React from 'react';
 import Player from '../player';
 import Draggable from 'react-draggable';
-import styles from '@/styles/widget.module.css';
+import styles from '../../styles/widget.module.css';
 
 const VideoWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) => {
     return (

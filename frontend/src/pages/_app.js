@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head'; // metadata
-import Footer from '@/components/footer';
-import '@/styles/globals.css';
-import { Navigation } from '@/components/navigation';
-import { Wallet, NearContext } from '@/wallets/near';
-import { NetworkId } from '@/config';
+import Footer from '../components/footer';
+import '../styles/globals.css';
+import { Navigation } from '../components/navigation';
+import { Wallet, NearContext } from '../wallets/near';
+import { NetworkId } from '../config';
 
 // wallet instance
 const wallet = new Wallet({ networkId: NetworkId });

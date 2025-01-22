@@ -1,4 +1,4 @@
-import styles from '@/styles/app.module.css';
+import styles from '../styles/app.module.css';
 import { useState } from 'react';
 import MusicWidget from './widgets/musicWidget';
 import VideoWidget from './widgets/videoWidget';

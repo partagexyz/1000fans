@@ -1,0 +1,24 @@
+[package]
+name = "athousandfans"
+description = "A smart contract to mint and check ownership of 1000 fans tokens"
+version = "1.1.0"
+authors = ["jcarbonnell.near"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "5.5.0"
+near-contract-standards = "5.5.0"
+borsh = "1.1.0"
+
+[dev-dependencies] 
+near-sdk = { version = "5.5.0", features = ["unit-testing"] }
+near-workspaces = { version = "0.14.1", features = ["unstable"] }
+anyhow = "1.0"
+tokio = { version = "1.41.0", features = ["full"] }
+
+[package.metadata.near.reproducible_build]
+image = "ghcr.io/near/cargo-near:latest"
+image_digest = "sha256:2236fee337e4cec28460c1f4f5d047a5597f334ae6f20d3bd94c03874a47d819"
