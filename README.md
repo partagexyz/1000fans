@@ -6,7 +6,7 @@ We are developing a premium, token-gated platform for an artist to connect with 
 - **Frontend**: JavaScript with the latest Next.js framework
 - **Smart Contract**: An NFT minter contract, limited to 1000 tokens, to be deployed on NEAR's mainnet post-testnet validation.
 
-#### Platform Features:
+#### Frontend Features:
 - **Homepage**: Designed to engage and excite potential members with details about exclusive perks and artist insights.
 - **Navigation Bar**: Includes a prominent wallet connect/disconnect button for user authentication.
 - **Footer**: Links to the artist's social media platforms for broader community engagement.
@@ -20,6 +20,9 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - **Music Catalog**: Styled like a Spotify playlist, displaying tracks with artist names, song titles, and icons.
 - **Video Catalog**: Mimics a YouTube channel interface with video previews, sortable by various filters for user convenience.
 - **Event Catalog**: Features a calendar view and a carousel of upcoming events. Clicking an event card leads to a ticket purchase.
+
+#### Smart Contract features: 1000 Fans Token Minter
+A smart contract to mint, transfer and check ownership of 1000 fans tokens (from fan000 to fan999). Any token holder can offer their token for sale. Any near wallet owner can buy tokens.
 
 #### Development Goals:
 - **Security**: Ensuring that all transactions and content access are secure and only accessible to token holders.
