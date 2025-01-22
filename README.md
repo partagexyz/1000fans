@@ -1,10 +1,13 @@
-## Exclusive Fan Clubs on the NEAR Blockchain
-We are developing a premium, token-gated platform for an artist to connect with their 1000 most dedicated fans. This platform will offer exclusive music, video content, and access to private events, all secured by blockchain technology.
+## Exclusive Fans Clubs on the NEAR Blockchain
+We are developing a premium, token-gated platform for artists, creators, producers, and their music labels and distributors to connect with their 1000 most engaged fans. This platform provides fans with exclusive content, a music and video player, link to private events and a closed chat for fans and their favorite artist. All secured by crypto tokens technology.
 
 #### Technology Stack:
 - **Blockchain**: NEAR Blockchain
 - **Frontend**: JavaScript with the latest Next.js framework
-- **Smart Contract**: An NFT minter contract, limited to 1000 tokens, to be deployed on NEAR's mainnet post-testnet validation.
+- **Smart Contract**: An NFT minter contract, limited to 1000 fans tokens.
+
+#### Smart Contract Features: 
+A smart contract to mint, transfer and check ownership of 1000 fans tokens (from fan000 to fan999). Any token holder can offer their token for sale. Any near wallet owner can buy tokens.
 
 #### Frontend Features:
 - **Homepage**: Designed to engage and excite potential members with details about exclusive perks and artist insights.
@@ -20,9 +23,6 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - **Music Catalog**: Styled like a Spotify playlist, displaying tracks with artist names, song titles, and icons.
 - **Video Catalog**: Mimics a YouTube channel interface with video previews, sortable by various filters for user convenience.
 - **Event Catalog**: Features a calendar view and a carousel of upcoming events. Clicking an event card leads to a ticket purchase.
-
-#### Smart Contract features: 1000 Fans Token Minter
-A smart contract to mint, transfer and check ownership of 1000 fans tokens (from fan000 to fan999). Any token holder can offer their token for sale. Any near wallet owner can buy tokens.
 
 #### Development Goals:
 - **Security**: Ensuring that all transactions and content access are secure and only accessible to token holders.
