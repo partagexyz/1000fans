@@ -1,11 +1,33 @@
-.next/
-node_modules
-package-lock.json
-
-public/music/*
-public/videos/*
-public/audioMetadata.json
-public/videoMetadata.json
-
+# root level .gitignore
 .DS_Store
-.vercel
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# frontend .gitignore
+/frontend/.next/
+/frontend/node_modules
+/frontend/package-lock.json
+/frontend/public/music/*
+/frontend/public/videos/*
+/frontend/public/audioMetadata.json
+/frontend/public/videoMetadata.json
+/frontend/.vercel
+
+# backend .gitignore
+/contract/package-lock.json
+/contract/**/node_modules
+/contract/.pnp
+/contract/.pnp.js
+/contract/**/out
+/contract/*.lock
+/contract/**/neardev
+/contract/coverage
+/contract/build
+/contract/.env.local
+/contract/.env.development.local
+/contract/.env.test.local
+/contract/.env.production.local
+/contract/.testnet
+/contract/**/target
+/contract/*.wasm
