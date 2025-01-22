@@ -1,4 +1,4 @@
-## Exclusive Fan Club Platform on NEAR Blockchain
+## Exclusive Fan Clubs on the NEAR Blockchain
 We are developing a premium, token-gated platform for an artist to connect with their 1000 most dedicated fans. This platform will offer exclusive music, video content, and access to private events, all secured by blockchain technology.
 
 #### Technology Stack:
@@ -34,10 +34,10 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - ~~Implement a shop to allow the mint and transfer of fans token. (route users based on wallet connect? and token ownership? action buttons and input fields on the shop UI.~~)
 - ~~Update the smart contract: max 1 token per account, token count to automatically set the token ID: fan000, fan001, ..., fan999.~~ 
 - ~~Redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan000. re-test all access-keys etc.~~
-- Improve platform's design.
+- ~~Improve platform's design.~~
 - ~~Add a private chat for fans.~~
-- Refine the smart-contract & the shop: 1000 tokens minted at smart contract init (500 to be send to shareholders, and 500 to fans). No need for a mint function in the shop. Allow multiple token holding to white-listed accounts (contract owner + shareholders). Everybody can sell their tokens after 1 year holding (from original mint). Add a paiement system for token sale. Transfer function must be called by anyone holding a token. 
-- Original token transfer: through email or named account?
+- Smart-contract update:  ~~Allow multiple token holding~~. ~~Remove 1-year-holding-before-sale rule~~. ~~Add a paiement system for token sale. Anyone can sell their tokens~~. 1000 tokens minted at smart contract init (500 to shareholders, 500 to fans). batch transfering tokens.
+- Shop update: (call it commands or dashboard?): no need for a mint function. check ownership and display "join the waitlist or check tokens for sale" or "offer your token for sale". display the text lower on the page to match background. token transfer: through email or named account?
 - Test the platform with a closed group of users on testnet.
 - Update the platform's design and UI/UX on user feedback.
 - Create a series of 1000 images for 1000 fans tokens.
