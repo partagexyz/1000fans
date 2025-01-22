@@ -14,7 +14,7 @@ export default function Index({ music, videos, events }) {
   useEffect(() => {
     const checkMembership = async () => {
       if (signedAccountId && wallet) {
-        const ownsToken = await wallet.ownsToken(signedAccountId, 'partage-lock.testnet');
+        const ownsToken = await wallet.ownsToken(signedAccountId, '1000fans.testnet');
         setIsMember(ownsToken);
       }
     };

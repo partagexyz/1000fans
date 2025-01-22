@@ -3,6 +3,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.vercel/
 
 # frontend .gitignore
 /frontend/.next/
@@ -12,7 +13,6 @@ yarn-error.log*
 /frontend/public/videos/*
 /frontend/public/audioMetadata.json
 /frontend/public/videoMetadata.json
-/frontend/.vercel
 
 # backend .gitignore
 /contract/.pnp

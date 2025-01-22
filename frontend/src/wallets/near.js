@@ -32,7 +32,7 @@ export class Wallet {
    * const wallet = new Wallet({ networkId: 'testnet', createAccessKeyFor: 'contractId' });
    * wallet.startUp((signedAccountId) => console.log(signedAccountId));
    */
-  constructor({ networkId = 'testnet', createAccessKeyFor = undefined }) {
+  constructor({ networkId = 'testnet', createAccessKeyFor = '1000fans.testnet' }) {
     this.createAccessKeyFor = createAccessKeyFor;
     this.networkId = networkId;
   }
