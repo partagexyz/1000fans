@@ -46,14 +46,14 @@ Upon wallet connection, the platform checks for the presence of the valid member
 - ~~Update the smart contract: max 1 token per account, token count to automatically set the token ID: fan000, fan001, ..., fan999.~~ 
 - ~~Redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan000. re-test all access-keys etc.~~
 - ~~Improve platform's design.~~
-- ~~Add a private chat for fans.~~ fix the chat history saving. 
+- ~~Add a private chat for fans.~~ ~~fix the chat history saving~~. 
 - fetch eventsMetadata from resident advisor API? track events by organizer Theosis Records.
-- Smart-contract update:  ~~Allow multiple token holding~~. ~~Remove 1-year-holding-before-sale rule~~. Add a paiement system for token sale. Anyone can transfer their tokens. Batch transfering tokens. 1000 tokens minted at smart contract init (500 to shareholders, 500 to fans). 
-- Shop update: (call it commands or dashboard?): no need for a mint function. check ownership and display "join the waitlist or check tokens for sale" or "offer your token for sale". display the text lower on the page to match background. token transfer: through email or named account?
+- Smart-contract update:  ~~Allow multiple token holding~~. ~~Remove 1-year-holding-before-sale rule~~. Add a paiement system for token sale. Anyone can sell their tokens from their dashboard. add function listTokensForSale. Batch mint/transfer tokens. 
+- Shop update: (call it commands or dashboard): no mint function for public: check ownership and "join the waitlist or check tokens for sale" or "offer your token for sale". display the text lower on the page to match background.
 - Test the platform with a closed group of users on testnet.
-- Update the platform's design and UI/UX on user feedback.
-- Create a series of 1000 images for 1000 fans tokens.
-- Deploy the smart contract on mainnet + the platform at 1000fans.xyz.
+- Update the platform on user feedback.
+- Deploy the contract on mainnet.
+- Automate cloning from main domain 1000fans.xyz
 
 
 #### Contribute:
