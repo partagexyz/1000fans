@@ -19,62 +19,47 @@ s3 = boto3.client('s3',
 # File path in S3 bucket
 CHAT_HISTORY_S3_PATH = 'chatHistory.json'
 
-# Local file path where the chat history will be saved
-LOCAL_CHAT_HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'chatHistory.json')
-
 def fetch_chat_history():
     """
-    Fetches the chat history from S3 and saves it locally.
+    Fetches the chat history from S3.
     """
     try:
-        # Download the JSON file from S3
-        s3.download_file(AWS_S3_BUCKET_NAME, CHAT_HISTORY_S3_PATH, LOCAL_CHAT_HISTORY_PATH)
-        print("Chat history fetched and saved locally.")
+        response = s3.get_object(Bucket=AWS_S3_BUCKET_NAME, Key=CHAT_HISTORY_S3_PATH)
+        content = response['Body'].read().decode('utf-8')
+        return json.loads(content)
     except Exception as e:
         print(f"Failed to fetch chat history: {e}")
+        return []
 
-def save_chat_history(chat_data):
+def save_chat_history(new_message):
     """
-    Saves the new chat data to local file and then uploads it to S3.
+    Saves a new message to S3.
 
-    :param chat_data: New chat data to be appended to the history
+    :param new_message: Dictionary containing the new message data
     """
     try:
-        # First, read the existing chat history if it exists
-        if os.path.exists(LOCAL_CHAT_HISTORY_PATH):
-            with open(LOCAL_CHAT_HISTORY_PATH, 'r') as file:
-                current_data = json.load(file)
-        else:
-            current_data = {}
-
-        # Append new chat data
-        current_data.update(chat_data)
-
-        # Write updated data back to the local file
-        with open(LOCAL_CHAT_HISTORY_PATH, 'w') as file:
-            json.dump(current_data, file, indent=4)
-
-        # Upload the updated file to S3
-        s3.upload_file(LOCAL_CHAT_HISTORY_PATH, AWS_S3_BUCKET_NAME, CHAT_HISTORY_S3_PATH)
-        print("Chat history saved and updated in S3.")
+        current_history = fetch_chat_history()
+        current_history.append(new_message)
+        
+        s3.put_object(
+            Bucket=AWS_S3_BUCKET_NAME,
+            Key=CHAT_HISTORY_S3_PATH,
+            Body=json.dumps(current_history, indent=4),
+            ContentType='application/json'
+        )
+        print("Chat history updated in S3.")
     except Exception as e:
         print(f"Failed to save chat history: {e}")
 
-def on_chat_widget_open():
-    """
-    Function to be called when chat widget opens. Fetches the latest chat history.
-    """
-    fetch_chat_history()
-
-def on_message_sent(chat_data):
-    """
-    Function to be called when a message is sent. Updates and saves the chat history.
-
-    :param chat_data: Dictionary containing the new message data
-    """
-    save_chat_history(chat_data)
-
 # Example usage:
 if __name__ == "__main__":
+    # Simulating message send
+    new_message = {
+        "username": "jcarbonnell",
+        "message": "Hello, World!",
+        "timestamp": "2025-01-27 14:17:00"
+    }
+    save_chat_history(new_message)
+
     # Simulating chat widget open
-    on_chat_widget_open()
+    print(fetch_chat_history())

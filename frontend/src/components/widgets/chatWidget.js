@@ -2,21 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from '../../styles/widget.module.css';
 import Draggable from 'react-draggable';
 
-const ChatWidget = ({ closeWidget }) => {
-    const [messages, setMessages] = useState([]);
+const ChatWidget = ({ closeWidget, messages, sendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
     const [username, setUsername] = useState('');
     const messageEndRef = useRef(null);
 
+    // Scroll to bottom when messages update
     useEffect(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (newMessage.trim() && username.trim()) {
             const timestamp = new Date().toLocaleString();
-            setMessages(prevMessages => [...prevMessages, { username, message: newMessage, timestamp }]);
+            await sendMessage({ username, message: newMessage, timestamp });
             setNewMessage('');
         }
     };
@@ -35,12 +35,14 @@ const ChatWidget = ({ closeWidget }) => {
                 <button onClick={closeWidget} className={styles.closeButton}>X</button>
                 <h3>Chat Room</h3>
                 <div className={styles.chatMessages}>
-                    {messages.map((msg, index) => (
-                        <div key={index} className={styles.message}>
-                            <strong>{msg.username}</strong> <span className={styles.timestamp}>{msg.timestamp}</span>
-                            <p>{msg.message}</p>
-                        </div>
-                    ))}
+                    {Array.isArray(messages) ? 
+                        messages.map((msg, index) => (
+                            <div key={index} className={styles.message}>
+                                <strong>{msg.username}</strong> <span className={styles.timestamp}>{msg.timestamp}</span>
+                                <p>{msg.message}</p>
+                            </div>
+                        ))
+                        : null}
                     <div ref={messageEndRef} />
                 </div>
                 <form onSubmit={handleSendMessage} className={styles.chatForm}>

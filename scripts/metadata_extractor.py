@@ -9,7 +9,7 @@ from PIL import Image
 import ffmpeg
 
 # Fetch environment variables for S3 bucket name
-s3_bucket_name = os.environ.get('AWS_S3_BUCKET_NAME', 'your-default-bucket-name')
+s3_bucket_name = os.environ.get('AWS_S3_BUCKET_NAME', 'your-default-bucket-name') #check for the need to add a default bucket name
 
 public_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'public')
 music_folder = os.path.join(public_folder, 'music')
