@@ -19,6 +19,7 @@ const wallet = new Wallet({
 
 export default function MyApp({ Component, pageProps }) {
   const [signedAccountId, setSignedAccountId] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => { 
     wallet.startUp(setSignedAccountId) 
@@ -29,16 +30,25 @@ export default function MyApp({ Component, pageProps }) {
     document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
   }, []);
 
+  // remove logo on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Check on initial render
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <>
       <Head>
         <title>Theosis Fans</title>
         <meta name="description" content="Exclusive content for Theosis fans" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Add any other meta tags here */}
       </Head>
       <NearContext.Provider value={{ wallet, signedAccountId }}>
-        <Navigation />
+        <Navigation isMobile={isMobile} />
         <div className="main">
           <Component {...pageProps} />
         </div>

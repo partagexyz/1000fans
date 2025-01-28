@@ -41,6 +41,9 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
     const currentTrack = shuffledTracks[trackIndexState] || { url: '', metadata: '{}', title: 'Unknown', artist: 'Unknown Artist' };
     const isVideo = currentTrack.url ? currentTrack.url.endsWith('.mp4') : false;
 
+    // determine if the device is mobile
+    const isMobile = () => window.innerWidth <= 768;
+
     useEffect(() => {
         setTrackIndex(trackIndex);
         if (playOnLoad && url.length > 0) {
@@ -165,13 +168,17 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                     </div>
                 )}
                 {!isVideo && (
-                    <Image
-                        className={styles.cover}
-                        src={JSON.parse(currentTrack.metadata).image}
-                        alt={`Cover for ${currentTrack.title}`}
-                        width={isVideo ? 911 : 512} 
-                        height={512}
-                    />
+                    <div className={styles.coverContainer}>
+                        <Image
+                            className={styles.cover}
+                            src={JSON.parse(currentTrack.metadata).image}
+                            alt={`Cover for ${currentTrack.title}`}
+                            // Use dynamic sizes for mobile
+                            width={isMobile() ? 400 : 512} 
+                            height={isMobile() ? 400 : 512}
+                            layout="responsive" // Ensures the image maintains its aspect ratio
+                        />
+                    </div>
                 )}
                 <div className={styles.infoText}>
                     {/* Conditionally render artist and title only for audio */}

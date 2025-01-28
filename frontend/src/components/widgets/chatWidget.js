@@ -6,7 +6,17 @@ const ChatWidget = ({ closeWidget, messages, sendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
     const [username, setUsername] = useState('');
     const messageEndRef = useRef(null);
+    const [widgetSize, setWidgetSize] = useState('small');
 
+    useEffect(() => {
+        const handleResize = () => {
+            setWidgetSize(window.innerWidth <= 768 ? 'full' : 'small');
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Check on initial render
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    
     // Scroll to bottom when messages update
     useEffect(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -31,8 +41,8 @@ const ChatWidget = ({ closeWidget, messages, sendMessage }) => {
 
     return (
         <Draggable>
-            <div className={styles.widget}>
-                <button onClick={closeWidget} className={styles.closeButton}>X</button>
+            <div className={`${styles.widget} ${widgetSize === 'full' ? styles.fullScreen : ''}`}>
+                <button onClick={closeWidget} className={`${styles.closeButton} ${styles.overlapClose}`}>X</button>
                 <h3>Chat Room</h3>
                 <div className={styles.chatMessages}>
                     {Array.isArray(messages) ? 

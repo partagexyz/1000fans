@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../../styles/widget.module.css';
 import Draggable from 'react-draggable';
 
 const EventsWidget = ({ events, closeWidget }) => {
+    const [widgetSize, setWidgetSize] = useState('small');
+
+    useEffect(() => {
+        const handleResize = () => {
+            setWidgetSize(window.innerWidth <= 768 ? 'full' : 'small');
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // sort events by date, most recent first
     const sortedEvents = [...(events.events || [])].sort((a, b) => 
         new Date(b.date) - new Date(a.date)
@@ -15,8 +26,8 @@ const EventsWidget = ({ events, closeWidget }) => {
 
     return (
         <Draggable>
-            <div className={styles.widget}>
-                <button onClick={closeWidget} className={styles.closeButton}>X</button>
+            <div className={`${styles.widget} ${widgetSize === 'full' ? styles.fullScreen : ''}`}>
+                <button onClick={closeWidget} className={`${styles.closeButton} ${styles.overlapClose}`}>X</button>
                 <h3>Upcoming Events</h3>
                 <div className={styles.eventList}>
                     <ul>
@@ -38,7 +49,6 @@ const EventsWidget = ({ events, closeWidget }) => {
                         )}
                     </ul>
                 </div>
-
                 {pastEvents.length > 0 && (
                     <>
                         <h3 className={styles.pastEventsTitle}>Past Events</h3>
