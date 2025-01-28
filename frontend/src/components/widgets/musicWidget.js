@@ -42,4 +42,6 @@ const MusicWidget = memo(({ url, changeTrack, trackIndex, playOnLoad, closeWidge
     );
 });
 
+MusicWidget.displayName = 'MusicWidget';
+
 export default MusicWidget;
