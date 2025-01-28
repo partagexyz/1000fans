@@ -14,9 +14,14 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
     const playerRef = useRef(null);
 
     useEffect(() => {
-        // Shuffle tracks when they change or on component mount
-        const shuffled = shuffleArray(url);
-        setShuffledTracks(shuffled);
+        const videos = url.filter(track => track.url && track.url.endsWith('.mp4'));
+        const audios = url.filter(track => track.url && track.url.endsWith('.mp3'));
+
+        // shuffle audio tracks but order video tracks
+        const shuffledAudios = shuffleArray([...audios]);
+        const sortedVideos = [...videos].sort((a, b) => a.title.localeCompare(b.title));
+        setShuffledTracks([...sortedVideos, ...shuffledAudios]);
+        
         setTrackIndex(trackIndex);
         if (playOnLoad && url.length > 0) {
             setPlaying(true);
