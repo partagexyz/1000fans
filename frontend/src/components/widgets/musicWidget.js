@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import Player from '../player';
 import styles from '../../styles/widget.module.css';
 import Draggable from 'react-draggable';
 
-const MusicWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) => {
+const MusicWidget = memo(({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) => {
     const [showPlaylist, setShowPlaylist] = useState(false); // State to toggle playlist visibility
 
     const togglePlaylist = () => {
@@ -30,6 +30,6 @@ const MusicWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) 
             </div>
         </Draggable>
     );
-}
+});
 
 export default MusicWidget;

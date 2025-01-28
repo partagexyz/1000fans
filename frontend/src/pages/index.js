@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useCallback } from 'react';
 import { NearContext } from '../wallets/near';
 import styles from '../styles/app.module.css';
 import { Cards } from '../components/cards';
@@ -46,17 +46,17 @@ export default function Index({ music, videos, events }) {
     }
   };
 
-  const changeAudio = (index) => {
+  const changeAudio = useCallback((index) => {
     setCurrentAudioIndex(index);
     setPlayOnLoad(true);
-  };
+  }, []);
 
-  const changeVideo = (index) => {
+  const changeVideo = useCallback((index) => {
     setCurrentVideoIndex(index);
     setPlayOnLoad(true);
-  };
+  }, []);
 
-  const fetchChatHistory = async () => {
+  const fetchChatHistory = useCallback(async () => {
     try {
       const response = await fetch('https://astq6uqxkf.execute-api.eu-north-1.amazonaws.com/prod/chat/getHistory');
       const data = await response.json();
@@ -69,9 +69,9 @@ export default function Index({ music, videos, events }) {
       // Reset to empty array on error
       setChatHistory([]);
     }
-  };
+  }, []);
 
-  const sendMessage = async (messageData) => {
+  const sendMessage = useCallback(async (messageData) => {
     try {
       const response = await fetch('https://astq6uqxkf.execute-api.eu-north-1.amazonaws.com/prod/chat/sendMessage', {
         method: 'POST',
@@ -90,7 +90,7 @@ export default function Index({ music, videos, events }) {
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  };
+  }, []);
 
   const widgetProps = {
     music: { url: music, changeTrack: changeAudio, trackIndex: currentAudioIndex, playOnLoad },
