@@ -9,6 +9,8 @@ yarn-error.log*
 /frontend/.next/
 /frontend/node_modules
 /frontend/package-lock.json
+/frontend/public/favicon.ico
+/frontend/public/hero.jpg
 /frontend/public/music/*
 /frontend/public/videos/*
 /frontend/public/audioMetadata.json
