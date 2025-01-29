@@ -17,7 +17,7 @@ export default function Console() {
     if (signedAccountId && wallet) {
       checkTokenOwnership();
     }
-  }, [checkTokenOwnership, signedAccountId, wallet]);
+  }, [signedAccountId, wallet]);
 
   const checkTokenOwnership = async () => {
     if (!wallet) return;
@@ -101,40 +101,42 @@ export default function Console() {
 
   return (
     <main className={styles.main}>
-      <div className={styles.center}>
-        {signedAccountId ? (
-          <h1>Do you own a fans token? {ownsToken ? `Yes: ${tokenId}` : 'No'}</h1>
-        ) : (
-          <h1>Please login to check your fans token</h1>
-        )}
-      </div>
-      <div className={`${styles.center} ${styles.shopContainer}`}>
-        {signedAccountId ? (
-          <>
-            {!ownsToken ? (
-              <div className={styles.shopSection}>
-                <h2>Claim your Fans Token</h2>
-                <button onClick={mintNFT} disabled={isLoading}>
-                  {isLoading ? 'Minting...' : 'Claim your fans token'}
-                </button>
-              </div>
-            ) : (
-              <div className={styles.shopSection}>
-                <h2>Transfer your Fans Token</h2>
-                <input
-                  type="text"
-                  placeholder="Receiver ID"
-                  value={receiverId}
-                  onChange={(e) => setReceiverId(e.target.value)} // store receiver ID in state
-                />
-                <button onClick={transferNFT} disabled={isLoading || !receiverId}>
-                  {isLoading ? 'Transferring...' : 'Transfer Your Fans Token'}
-                </button>
-              </div>
-            )}
-          </>
-        ) : null}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+      <div style={{ marginTop: '20rem' }}> {/* Add space to move content down */}
+        <div className={styles.center}>
+          {signedAccountId ? (
+            <h1>Do you own a fans token? {ownsToken ? `Yes: ${tokenId}` : 'No'}</h1>
+          ) : (
+            <h1>Please login to check your fans token</h1>
+          )}
+        </div>
+        <div className={`${styles.center} ${styles.shopContainer}`}>
+          {signedAccountId ? (
+            <>
+              {!ownsToken ? (
+                <div className={styles.shopSection}>
+                  <h2>Claim your Fans Token</h2>
+                  <button onClick={mintNFT} disabled={isLoading}>
+                    {isLoading ? 'Minting...' : 'Claim your fans token'}
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.shopSection}>
+                  <h2>Transfer your Fans Token</h2>
+                  <input
+                    type="text"
+                    placeholder="Receiver ID"
+                    value={receiverId}
+                    onChange={(e) => setReceiverId(e.target.value)} // store receiver ID in state
+                  />
+                  <button onClick={transferNFT} disabled={isLoading || !receiverId}>
+                    {isLoading ? 'Transferring...' : 'Transfer Your Fans Token'}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : null}
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+        </div>
       </div>
     </main>
   );
