@@ -186,12 +186,12 @@ cd 1000fans
   ```
   git checkout -b <your-branch-name>
   ```
-  Choose a descriptive name for your branch, like `feature/my-fans-club`. 
+  Give your branch the name of `your-account-id`. 
 
 - **Commit Your Changes:**
   ```
   git add .
-  git commit -m "Added my fans club setup"
+  git commit -m "Added <your-account-id> fans club"
   ```
   Make sure to commit all changes you've made for your fans club.
 
@@ -212,4 +212,4 @@ cd 1000fans
   - After submission, your pull request will be reviewed. You might need to respond to comments, make adjustments, and push new commits to your branch, which will automatically update the pull request.
 
 - **Deployment on Approval:**
-  - Once approved, your fans club will be deployed automatically or manually depending on the project's CI/CD setup. Your club will be accessible at `<your-account-id.1000fans.xyz>`.
+  - Once approved, your fans club will be deployed and accessible at [your-account-id.1000fans.xyz](https://1000fans.xyz).
