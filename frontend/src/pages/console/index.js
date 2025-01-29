@@ -17,7 +17,7 @@ export default function Console() {
     if (signedAccountId && wallet) {
       checkTokenOwnership();
     }
-  }, [signedAccountId, wallet]);
+  }, [checkTokenOwnership, signedAccountId, wallet]);
 
   const checkTokenOwnership = async () => {
     if (!wallet) return;

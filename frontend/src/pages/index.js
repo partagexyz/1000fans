@@ -69,7 +69,7 @@ export default function Index({ music, videos, events }) {
       // Reset to empty array on error
       setChatHistory([]);
     }
-  }, []);
+  }, [setChatHistory]);
 
   const sendMessage = useCallback(async (messageData) => {
     try {
@@ -90,7 +90,7 @@ export default function Index({ music, videos, events }) {
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  }, []);
+  }, [fetchChatHistory]);
 
   const widgetProps = {
     music: { url: music, changeTrack: changeAudio, trackIndex: currentAudioIndex, playOnLoad },
