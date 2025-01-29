@@ -28,6 +28,8 @@ const Footer = () => {
     <footer className={styles.footer}>
       <p>
         Made by artists, for artists.{' '}
+      </p>
+      <p>
         ©{' '}
         <a href="https://1000Fans.xyz" target="_blank" rel="noopener noreferrer">
           1000Fans.xyz

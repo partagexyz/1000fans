@@ -177,6 +177,14 @@
   display: flex;
   justify-content: center; /* center horizontally */
   align-items: center; /* center vertically */
+  height: 80px;
+  flex-direction: column;
+  padding: 0 1rem;
+}
+
+.footer p {
+  margin: 0;
+  text-align: center;
 }
 
 .theme-toggle-footer {
