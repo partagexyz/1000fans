@@ -240,7 +240,15 @@
   }
 
   [data-theme="dark"] .main {
-    background-color: rgb(var(--background-start-rgb)); /* This should be dark grey */
+    background-color: rgb(var(--background-start-rgb));
+  }
+
+  .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 2; /* Ensure footer is above main content and background */
   }
 
   .navbar-content {
