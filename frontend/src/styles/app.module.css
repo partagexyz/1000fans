@@ -15,7 +15,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/hero.jpg'), linear-gradient(#000, #000);
+  background-image: url('/hero.jpg'), linear-gradient(#000, #000); /* default is transparent for dark mode */
   background-size: cover, cover;
   background-position: center, center;
   background-repeat: no-repeat, no-repeat;
@@ -234,13 +234,17 @@
   .main {
     min-height: calc(100vh - 160px); /* Ensure content fits with footer */
   }
-  
-  .main::before {
-    display: none;
-  }
 
   [data-theme="dark"] .main {
     background-color: rgb(var(--background-start-rgb));
+  }
+
+  [data-theme="light"] .main {
+    background-color: #FFFBF0;
+  }
+
+  .main::before {
+    display: none;
   }
 
   .footer {
