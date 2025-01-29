@@ -5,7 +5,7 @@ import styles from '../../styles/app.module.css';
 // Contract address
 const CONTRACT = '1000fans.testnet';
 
-export default function Shop() {
+export default function Console() {
   const { signedAccountId, wallet } = useContext(NearContext);
   const [ownsToken, setOwnsToken] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,7 +86,7 @@ export default function Shop() {
           receiver_id: receiverId,
           token_id: tokenId,
           approval_id: null, // optional approval ID
-          memo: 'Transfer fans token from the shop interface',
+          memo: 'Transfer fans token from the console',
         },
         deposit: '1', // minimal deposit required for transfer
       });

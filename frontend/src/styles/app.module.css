@@ -140,7 +140,7 @@
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 15px; /* Space between Shop link and Login button */
+  gap: 20px; /* Space between Shop link and Login button */
 }
 
 .action-button {
@@ -238,13 +238,29 @@
   .main::before {
     display: none;
   }
+
+  [data-theme="dark"] .main {
+    background-color: rgb(var(--background-start-rgb)); /* This should be dark grey */
+  }
+
+  .navbar-content {
+    justify-content: flex-end; /* Aligns items to the right */
+  }
+
+  .navbar-actions {
+    margin-left: auto; /* Pushes the actions to the right */
+  }
   
   .content {
     padding: 4rem;
   }
 
+  .card {
+    padding: 0.5rem
+  }
+
   .card h2 {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
   }
 
   .center {

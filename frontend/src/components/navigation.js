@@ -43,8 +43,8 @@ export const Navigation = ({ isMobile }) => {
           </Link>
         )}
         <div className={styles['navbar-actions']}>
-          <Link href="/shop" passHref legacyBehavior>
-            <a className={`${styles['nav-link']} ${styles['nav-link-shop']}`}>Shop</a>
+          <Link href="/console" passHref legacyBehavior>
+            <a className={`${styles['nav-link']} ${styles['nav-link-shop']}`}>Console</a>
           </Link>
           <button className={styles['action-button']} onClick={action}>{label}</button>
         </div>
