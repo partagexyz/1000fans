@@ -9,16 +9,19 @@
 }
 
 .main h1,
+.main h2,
 .main p {
   color: rgb(var(--foreground-rgb));
 }
 
 [data-theme="dark"] .main h1,
+[data-theme="dark"] .main h2,
 [data-theme="dark"] .main p {
   color: #FFFFFF; /* Light text for dark theme */
 }
 
 [data-theme="light"] .main h1,
+[data-theme="light"] .main h2,
 [data-theme="light"] .main p {
   color: #000000; /* Dark text for light theme */
 }
@@ -263,7 +266,6 @@
   }
   
   .main, .main > div {
-    min-height: auto;
     overflow: visible;
   }
 
