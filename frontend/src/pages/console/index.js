@@ -101,10 +101,10 @@ export default function Console() {
 
   return (
     <main className={styles.main}>
-      <div style={{ marginTop: '20rem' }}> {/* Add space to move content down */}
+      <div style={{ marginTop: '10rem' }}> {/* Add space to move content down */}
         <div className={styles.center}>
           {signedAccountId ? (
-            <h1>Do you own a fans token? {ownsToken ? `Yes: ${tokenId}` : 'No'}</h1>
+            <h1 className={styles.noMarginBottom}>Do you own a fans token? {ownsToken ? `Yes: ${tokenId}` : 'No'}</h1>
           ) : (
             <h1>Please login to check your fans token</h1>
           )}

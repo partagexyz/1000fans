@@ -269,6 +269,10 @@
     overflow: visible;
   }
 
+  .noMarginBottom {
+    margin-bottom: 0;
+  }
+
   [data-theme="dark"] .main, 
   [data-theme="dark"] .main h1 {
     background-color: rgb(var(--background-start-rgb));
