@@ -39,7 +39,7 @@ export default function Index({ music, videos, events }) {
       if (isMember) {
         // perform handlecardclick when logged in and owns token.
       } else {
-        alert('You need to a fans token to access this content. Visit the shop to get one!');
+        alert('You need to a fans token to access this content. Visit the console to get one!');
       }
     } else {
       wallet.signIn(); // trigger login when not logged in
