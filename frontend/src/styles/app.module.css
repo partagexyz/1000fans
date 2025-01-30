@@ -243,8 +243,10 @@
     min-height: calc(100vh - 160px); /* Ensure content fits with footer */
   }
 
-  [data-theme="dark"] .main {
+  [data-theme="dark"] .main, 
+  [data-theme="dark"] .main h1 {
     background-color: rgb(var(--background-start-rgb));
+    color: #FFFBF0
   }
 
   [data-theme="light"] .main {
