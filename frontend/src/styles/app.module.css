@@ -8,6 +8,21 @@
   z-index: 1; /* Ensure content appears above the background */
 }
 
+.main h1,
+.main p {
+  color: rgb(var(--foreground-rgb));
+}
+
+[data-theme="dark"] .main h1,
+[data-theme="dark"] .main p {
+  color: #FFFFFF; /* Light text for dark theme */
+}
+
+[data-theme="light"] .main h1,
+[data-theme="light"] .main p {
+  color: #000000; /* Dark text for light theme */
+}
+
 .main::before {
   content: "";
   position: absolute;
@@ -241,6 +256,15 @@
 @media (max-width: 767px) {
   .main {
     min-height: calc(100vh - 160px); /* Ensure content fits with footer */
+  }
+
+  .main > div:first-child {
+    margin-top: 0;
+  }
+  
+  .main, .main > div {
+    min-height: auto;
+    overflow: visible;
   }
 
   [data-theme="dark"] .main, 
