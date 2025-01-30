@@ -50,17 +50,16 @@ Upon wallet connection, the platform checks for the presence of a fan token:
 - ~~Redeploy the contract on a new account 1000fans.testnet. start from scratch with token fan000. re-test all access-keys etc.~~
 - ~~Improve platform's design.~~
 - ~~Add a private chat for fans.~~ ~~fix the chat history saving~~. 
-- Smart-contract update:  ~~Allow multiple token holding~~. ~~Remove 1-year-holding-before-sale rule~~. Add a paiement system for token sale. Anyone can sell their tokens from their dashboard. add function listTokensForSale. Batch mint/transfer tokens. 
-- Console update: no mint function for public: check ownership and "join the waitlist or check tokens for sale" or "offer your token for sale". display the text lower on the page to match background.
-- Automate events from query to resident advisor API?
+- Smart-contract update:  ~~Allow multiple token holding~~. ~~Remove 1-year-holding-before-sale rule~~. Add a paiement system: anyone can buy/sell tokens from their console. Add function listTokensForSale, and a buy function. Batch mint/transfer tokens? 
+- Console update: no mint function for public? check ownership and "check tokens for sale" or "offer your token for sale". ~~display the text lower on the page to match background~~.
+- Automate events metadata: fetch resident advisor API?
 - Test the platform with a closed group of users on testnet.
 - Update the platform on user feedback.
-- Deploy the contract on mainnet.
-- Automate cloning from main domain 1000fans.xyz
+- Deploy the contract on mainnet. 
 
 ### Clone your own 1000fans - Step-by-Step Tutorial:
 
-To clone and deploy your own version of 1000fans, follow these steps:
+At term, anyone should be able to clone their own 1000fans from the main domain at 1000fans.xyz, with a couple of clicks and forms to fill in their personal data. So far, to clone and deploy your own 1000fans, you have to do it manually by following these steps:
 
 1. **Clone the Repository:**
 ```
