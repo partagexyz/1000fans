@@ -31,3 +31,6 @@ yarn-error.log*
 /contract/.testnet
 /contract/**/target
 /contract/*.wasm
+
+# scripts .gitignore
+/scripts/__pycache__/

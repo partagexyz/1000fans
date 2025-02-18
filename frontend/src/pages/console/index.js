@@ -12,6 +12,10 @@ export default function Console() {
   const [error, setError] = useState(null);
   const [receiverId, setReceiverId] = useState('');
   const [tokenId, setTokenId] = useState('');
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (signedAccountId && wallet) {
@@ -39,11 +43,11 @@ export default function Console() {
       } else {
         setTokenId('');
       }
-      setIsLoading(false); // reset loading state
+      setIsLoading(false);
     } catch (error) {
       console.error('Error checking token ownership:', error);
       setError('Failed to check token ownership');
-      setIsLoading(false); // reset loading state
+      setIsLoading(false);
     }
   };
 
@@ -99,18 +103,79 @@ export default function Console() {
     setIsLoading(false);
   }
 
+  const handleDrag = (e) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    const droppedFiles = Array.from(e.dataTransfer.files);
+
+    if (droppedFiles.some(file => file.size > 25 * 1024 * 1024 * 1024 || !['mp3', 'mp4'].includes(file.name.split('.').pop().toLowerCase()))) {
+      alert('Files must be .mp3 or .mp4 and not exceed 25GB');
+      return;
+    }
+
+    setFiles(prevFiles => [...prevFiles, ...droppedFiles]);
+  };
+
+  const handleUpload = async () => {
+    if (!files.length) return;
+    const formData = new FormData();
+    for (let file of files) {
+      if (allowedFile(file.name)) {
+        formData.append('files', file);
+      } else {
+        console.error(`${file.name} is not a supported file type.`);
+      }
+    }
+    if (formData.getAll('files').length === 0) {
+      setError('No valid files to upload.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const response = await fetch('https://theosis.1000fans.xyz/api/run_automation', {
+        method: 'POST',
+        body: formData
+      });
+      if (response.ok) {
+        alert('Upload successful!');
+        setFiles([]);
+      } else {
+        setError('Upload failed: ' + await response.text());
+      }
+    } catch (error) {
+      setError('Upload error: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  function allowedFile(filename) {
+    const allowedExtensions = ['mp3', 'mp4'];
+    return allowedExtensions.includes(filename.split('.').pop().toLowerCase());
+  }
+
   return (
     <main className={styles.main}>
-      <div style={{ marginTop: '10rem' }}> {/* Add space to move content down */}
+      <div style={{ marginTop: '-17rem' }}> {/* Add space to move content down */}
         <div className={styles.center}>
-          {signedAccountId ? (
-            <h1 className={styles.noMarginBottom}>Do you own a fans token? {ownsToken ? `Yes: ${tokenId}` : 'No'}</h1>
-          ) : (
+          {!signedAccountId ? (
             <h1>Please login to check your fans token</h1>
+          ) : (
+            <h1 className={styles.noMarginBottom}>Do you own a fans token? {ownsToken ? `Yes: ${tokenId}` : 'No'}</h1>
           )}
         </div>
         <div className={`${styles.center} ${styles.shopContainer}`}>
-          {signedAccountId ? (
+          {signedAccountId && (
             <>
               {!ownsToken ? (
                 <div className={styles.shopSection}>
@@ -120,23 +185,51 @@ export default function Console() {
                   </button>
                 </div>
               ) : (
-                <div className={styles.shopSection}>
-                  <h2>Transfer your Fans Token</h2>
-                  <input
-                    type="text"
-                    placeholder="Receiver ID"
-                    value={receiverId}
-                    onChange={(e) => setReceiverId(e.target.value)} // store receiver ID in state
-                  />
-                  <button onClick={transferNFT} disabled={isLoading || !receiverId}>
-                    {isLoading ? 'Transferring...' : 'Transfer Your Fans Token'}
-                  </button>
+                <div className={styles.shopSection} style={{ marginTop: '-100px' }}>
+                  <div>
+                    <h2>Transfer your Fans Token</h2>
+                    <input
+                      type="text"
+                      placeholder="Receiver ID"
+                      value={receiverId}
+                      onChange={(e) => setReceiverId(e.target.value)}
+                    />
+                    <button onClick={transferNFT} disabled={isLoading || !receiverId}>
+                      {isLoading ? 'Transferring...' : 'Transfer Your Fans Token'}
+                    </button>
+                  </div>
                 </div>
               )}
             </>
-          ) : null}
+          )}
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
+      </div>
+      <div className={styles.center} style={{ marginTop: '5rem' }}>
+        {signedAccountId === CONTRACT && ( // try with CONTRACT directly if this doesn't work
+          <div className={styles.shopSection}>
+            <h2>Upload Files</h2>
+            <div 
+              onDragEnter={handleDrag}
+              onDragLeave={handleDragLeave}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              style={{
+                border: `2px dashed ${isDragActive ? 'green' : 'gray'}`,
+                padding: '20px',
+                textAlign: 'center',
+                marginBottom: '10px'
+              }}
+            >
+              {isDragActive ? 'Drop files here' : 'Drag and drop files here or click to select'}
+            </div>
+            <button onClick={handleUpload} disabled={files.length === 0 || uploading}>
+              {uploading ? 'Uploading...' : 'Upload Files'}
+            </button>
+            {uploading && <p>Do not close or refresh this window until upload is complete.</p>}
+            {uploadProgress !== null && <p>Upload Progress: {uploadProgress}%</p>}
+          </div>
+        )}
       </div>
     </main>
   );

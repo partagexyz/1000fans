@@ -53,10 +53,15 @@ Upon wallet connection, the platform checks for the presence of a fan token:
 - ~~Improve platform's design.~~
 - ~~Add a private chat for fans.~~ ~~fix the chat history saving~~. 
 - Smart-contract update:  ~~Allow multiple token holding~~. ~~Remove 1-year-holding-before-sale rule~~. Add a paiement system: anyone can buy/sell tokens from their console. Add function listTokensForSale, and a buy function. Batch mint/transfer tokens? 
-- Console update: no mint function for public? check ownership and "check tokens for sale" or "offer your token for sale". ~~display the text lower on the page to match background~~.
+- Console update: ~~on token ownership check : "claim your fans token" or "transfer your token"~~. ~~display the text lower on the page to match background~~.
 - Automate events metadata: fetch resident advisor API?
 - Test the platform with a closed group of users on testnet.
-- Update the platform on user feedback.
+- Update the platform on user feedback: 
+  - music widget => a player for encrypted .mp3 that only this player can play (@vandigital).
+  - chat widget => link to near social and/or curate.news (@elliot_braem)
+  - login => allow login with email/social accounts (@ThePiVortex)
+  - upload.py => ~~drag and drop window in the console to upload new files with ai-extracted features for better file organization in storage. (@jcarbonnell)~~
+  - video widget => live stream (@bandit_sonore)
 - Deploy the contract on mainnet. 
 
 ### Clone your own 1000fans - Step-by-Step Tutorial:

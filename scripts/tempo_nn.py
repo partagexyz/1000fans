@@ -1,0 +1,357 @@
+# README
+# Phillip Long
+# August 1, 2023
+
+# Creates and trains a linear regression neural network in PyTorch.
+# Given an audio file as input, it outputs a single number representing the song's tempo in Beats per Minute (BPM).
+
+# python ./tempo_neural_network.py labels_filepath nn_filepath freeze_pretrained epochs
+# python /Users/philliplong/Desktop/Coding/artificial_dj/determine_tempo/tempo_neural_network.py "/Users/philliplong/Desktop/Coding/artificial_dj/data/tempo_data.tsv" "/Users/philliplong/Desktop/Coding/artificial_dj/data/tempo_nn.pth"
+
+
+# IMPORTS
+##################################################
+import sys
+from time import time
+from os.path import exists
+from tqdm import tqdm
+import torch
+from torch.utils.data import DataLoader
+from torchvision.models import resnet50, ResNet50_Weights
+from torchsummary import summary
+import pandas as pd
+from numpy import percentile
+from tempo_dataset import tempo_dataset, TEMPO_MAPPINGS, get_tempo, get_tempo_index # import dataset class
+# sys.argv = ("./tempo_neural_network.py", "/Users/philliplong/Desktop/Coding/artificial_dj/data/tempo_data.tsv", "/Users/philliplong/Desktop/Coding/artificial_dj/data/tempo_nn.pth")
+# sys.argv = ("./tempo_neural_network.py", "/dfs7/adl/pnlong/artificial_dj/data/tempo_data.cluster.tsv", "/dfs7/adl/pnlong/artificial_dj/data/tempo_nn.pth")
+##################################################
+
+
+# CONSTANTS
+##################################################
+BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+MOMENTUM = 0.9
+USE_PRETRAINED = False
+##################################################
+
+
+# NEURAL NETWORK CLASS
+##################################################
+class tempo_nn(torch.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+        if USE_PRETRAINED:
+            # initialize pretrained model from pytorch, setting pretrained to True
+            self.model = resnet50(weights = ResNet50_Weights.DEFAULT)
+
+            # change the final layer of the model to match my problem, change depending on the transfer learning model being used
+            self.model.fc = torch.nn.Sequential(torch.nn.Linear(in_features = 2048, out_features = 1000), torch.nn.ReLU(),
+                                                torch.nn.Linear(in_features = 1000, out_features = 500), torch.nn.ReLU(),
+                                                torch.nn.Linear(in_features = 500, out_features = 100), torch.nn.ReLU(),
+                                                torch.nn.Linear(in_features = 100, out_features = len(TEMPO_MAPPINGS)))
+
+        else:    
+            # convolutional block 1 -> convolutional block 2 -> convolutional block 3 -> convolutional block 4 -> flatten -> linear block 1 -> linear block 2 -> linear block 3 -> output
+            self.model = torch.nn.Sequential(
+                torch.nn.Conv2d(in_channels = 3, out_channels = 16, kernel_size = 3, stride = 1, padding = 2), torch.nn.ReLU(), torch.nn.MaxPool2d(kernel_size = 2),
+                torch.nn.Conv2d(in_channels = 16, out_channels = 32, kernel_size = 3, stride = 1, padding = 2), torch.nn.ReLU(), torch.nn.MaxPool2d(kernel_size = 2),
+                torch.nn.Conv2d(in_channels = 32, out_channels = 64, kernel_size = 3, stride = 1, padding = 2), torch.nn.ReLU(), torch.nn.MaxPool2d(kernel_size = 2),
+                torch.nn.Conv2d(in_channels = 64, out_channels = 128, kernel_size = 3, stride = 1, padding = 2), torch.nn.ReLU(), torch.nn.MaxPool2d(kernel_size = 2),
+                torch.nn.Flatten(start_dim = 1),
+                torch.nn.Linear(in_features = 36992, out_features = 1000), torch.nn.ReLU(),
+                torch.nn.Linear(in_features = 1000, out_features = 500), torch.nn.ReLU(),
+                torch.nn.Linear(in_features = 500, out_features = 100), torch.nn.ReLU(),
+                torch.nn.Linear(in_features = 100, out_features = len(TEMPO_MAPPINGS))
+            )
+
+    def forward(self, input_data):
+        return self.model(input_data)
+    
+    def freeze_pretrained_parameters(self, freeze_pretrained):
+        # freeze layers according to freeze_pretrained argument, by default all layers require gradient
+        for parameter in self.model.parameters(): # unfreeze all layers
+            parameter.requires_grad = True
+        
+        # if I need to freeze pretrained layers
+        if freeze_pretrained:
+            for parameter in self.model.parameters(): # freeze all layers
+                parameter.requires_grad = False
+            for parameter in self.model.fc.parameters(): # unfreeze my layers
+                parameter.requires_grad = True
+
+##################################################
+
+
+if __name__ == "__main__":
+
+    # CONSTANTS
+    ##################################################
+    LABELS_FILEPATH = sys.argv[1]
+    NN_FILEPATH = sys.argv[2]
+    OUTPUT_PREFIX = ".".join(NN_FILEPATH.split(".")[:-1])
+    # freeze pretrained parameters (true = freeze pretrained, false = unfreeze pretrained)
+    try:
+        if sys.argv[3].lower().startswith("f"):
+            FREEZE_PRETRAINED = False
+        else:
+            FREEZE_PRETRAINED = True
+    except (IndexError):
+        FREEZE_PRETRAINED = True
+    # number of epochs to train
+    try:
+        EPOCHS = max(0, int(sys.argv[4])) # in case of a negative number
+    except (IndexError, ValueError): # in case there is no epochs argument or there is a non-int string
+        EPOCHS = 10
+    ##################################################
+
+    # PREPARE TO TRAIN NEURAL NETWORK
+    ##################################################
+
+    # determine device
+    print("----------------------------------------------------------------")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Device: {device.upper()}")
+    
+    # instantiate our dataset objects and data loader
+    data = {
+        "train": tempo_dataset(labels_filepath = LABELS_FILEPATH, set_type = "train", device = device),
+        "validate": tempo_dataset(labels_filepath = LABELS_FILEPATH, set_type = "validate", device = device)
+    }
+    data_loader = { # shuffles the batches each epoch to reduce overfitting
+        "train": DataLoader(dataset = data["train"], batch_size = BATCH_SIZE, shuffle = True),
+        "validate": DataLoader(dataset = data["validate"], batch_size = BATCH_SIZE, shuffle = True)
+    }
+
+    # construct model and assign it to device 
+    tempo_nn = tempo_nn().to(device)
+    if device == "cuda": # some memory usage statistics
+        print(f"Device Name: {torch.cuda.get_device_name(0)}")
+        print("Memory Usage:")
+        print(f"  - Allocated: {(torch.cuda.memory_allocated(0)/ (1024 ** 3)):.1f} GB")
+        print(f"  - Cached: {(torch.cuda.memory_reserved(0) / (1024 ** 3)):.1f} GB")
+
+    # instantiate loss function and optimizer
+    loss_criterion = torch.nn.CrossEntropyLoss() # make sure loss function agrees with the problem (see https://neptune.ai/blog/pytorch-loss-functions for more), assumes loss function is some sort of mean
+    optimizer = torch.optim.SGD(params = tempo_nn.parameters(), lr = LEARNING_RATE, momentum = MOMENTUM) # if I am not using a pretrained model, I need to specify lr = LEARNING_RATE
+
+    # load previously trained info if applicable
+    start_epoch = 0
+    if exists(NN_FILEPATH):
+        checkpoint = torch.load(NN_FILEPATH, map_location = device)
+        tempo_nn.load_state_dict(checkpoint["state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
+        start_epoch = int(checkpoint["epoch"]) + 1
+
+    # freeze pretrained parameters if necessary
+    if USE_PRETRAINED:
+        tempo_nn.freeze_pretrained_parameters(freeze_pretrained = FREEZE_PRETRAINED)
+
+    # print summary
+    print("================================================================")
+    print("Summary of Neural Network:")
+    summary(model = tempo_nn, input_size = data["train"][0][0].shape) # input_size = (# of channels, # of mels [frequency axis], time axis)
+    print("================================================================")
+
+    # STARTING BEST ACCURACY, ADJUST IF NEEDED
+    best_accuracy = 0.0 # make sure to adjust for different accuracy metrics
+    def labels_to_tempo_indicies(labels): # convert raw labels (floats in BPM) into class indicies
+        return torch.tensor(data = list(map(lambda label: get_tempo_index(tempo = label), labels)), dtype = torch.uint8)
+    
+    # history of losses and accuracy
+    history_columns = ("epoch", "train_loss", "train_accuracy", "validate_loss", "validate_accuracy", "freeze_pretrained")
+    OUTPUT_FILEPATH_HISTORY = OUTPUT_PREFIX + ".history.tsv"
+    if not exists(OUTPUT_FILEPATH_HISTORY): # write column names if they are not there yet
+        pd.DataFrame(columns = history_columns).to_csv(OUTPUT_FILEPATH_HISTORY, sep = "\t", header = True, index = False, na_rep = "NA", mode = "w") # write column names
+
+    # history of percentiles in validation data
+    percentiles_history_columns = ("epoch", "percentile", "value")
+    OUTPUT_FILEPATH_PERCENTILES_HISTORY = OUTPUT_PREFIX + ".percentiles_history.tsv"
+    if not exists(OUTPUT_FILEPATH_PERCENTILES_HISTORY): # write column names if they are not there yet
+        pd.DataFrame(columns = percentiles_history_columns).to_csv(OUTPUT_FILEPATH_PERCENTILES_HISTORY, sep = "\t", header = True, index = False, na_rep = "NA", mode = "w") # write column names
+    
+    # percentiles for percentiles plots; define here since it doesn't need to be redefined every epoch
+    percentiles = range(0, 101)
+
+    # mark when I started training
+    start_time = time()
+
+    ##################################################
+
+
+    # FUNCTION FOR TRAINING AN EPOCH
+    ##################################################
+    def train_an_epoch(epoch):
+
+        # TRAIN AN EPOCH
+        ##################################################
+
+        # set to training mode
+        tempo_nn.train()
+
+        # instantiate some stats values
+        history_epoch = dict(zip(history_columns, (0.0,) * len(history_columns))) # in the case of linear regression, accuracy is actually the average absolute error
+        history_epoch["epoch"] = epoch + 1
+        history_epoch["freeze_pretrained"] = FREEZE_PRETRAINED
+        start_time_epoch = time()
+
+        # training loop
+        for inputs, labels in tqdm(data_loader["train"], desc = "Training"):
+
+            # register inputs and labels with device
+            inputs, labels = inputs.to(device), labels_to_tempo_indicies(labels = labels).view(-1).to(device) # https://stackoverflow.com/questions/71399847/runtimeerror-0d-or-1d-target-tensor-expected-multi-target-not-supported-i-was
+            
+            # clear existing gradients
+            optimizer.zero_grad()
+
+            # forward pass: compute predictions on input data using the model
+            predictions = tempo_nn(inputs)
+
+            # compute loss
+            loss_batch = loss_criterion(predictions, labels)
+
+            # backpropagate the gradients
+            loss_batch.backward()
+
+            # update the parameters
+            optimizer.step()
+
+            # compute the total loss for the batch and add it to history_epoch["train_loss"]
+            history_epoch["train_loss"] += loss_batch.item() * inputs.size(0) # inputs.size(0) is the number of inputs in the current batch, assumes loss is an average over the batch
+            
+            # compute the accuracy
+            predictions = torch.argmax(input = predictions, dim = 1, keepdim = True).view(-1)
+
+            # compute the total accuracy for the batch and add it to history_epoch["train_accuracy"]
+            history_epoch["train_accuracy"] += torch.sum(input = (predictions == labels)).item()
+
+        # for calculating time statistics
+        end_time_epoch = time()
+        total_time_epoch = end_time_epoch - start_time_epoch
+        del end_time_epoch, start_time_epoch
+
+        ##################################################
+
+
+        # VALIDATE MODEL
+        ##################################################
+
+        # no gradient tracking needed
+        with torch.no_grad():
+            
+            # set to evaluation mode
+            tempo_nn.eval()
+
+            # validation loop
+            error_validate = torch.tensor(data = [], dtype = torch.float32).to(device)
+            for inputs, raw_labels in tqdm(data_loader["validate"], desc = "Validating"):
+
+                # register inputs and labels with device
+                raw_labels = raw_labels.view(-1, 1).to(device)
+                inputs, labels = inputs.to(device), labels_to_tempo_indicies(labels = raw_labels).view(-1).to(device)
+            
+                # forward pass: compute predictions on input data using the model
+                predictions = tempo_nn(inputs)
+
+                # compute loss
+                loss_batch = loss_criterion(predictions, labels)
+
+                # compute the total loss for the batch and add it to history_epoch["validate_loss"]
+                history_epoch["validate_loss"] += loss_batch.item() * inputs.size(0) # inputs.size(0) is the number of inputs in the current batch, assumes loss is an average over the batch
+            
+                # compute the accuracy
+                predictions = torch.argmax(input = predictions, dim = 1, keepdim = True).view(-1)
+
+                # compute the total accuracy for the batch and add it to history_epoch["validate_accuracy"]
+                history_epoch["validate_accuracy"] += torch.sum(input = (predictions == labels)).item()
+
+                # add accuracy to running count of all the errors in the validation dataset
+                predictions = torch.tensor(data = list(map(lambda i: get_tempo(index = i), predictions)), dtype = torch.float32).view(-1, 1).to(device) # convert predicted indicies into actual predicted tempos
+                predictions = torch.cat(tensors = (predictions / 2, predictions, predictions * 2), dim = 1) # make predictions into three columns, left-to-right: tempo / 2, tempo, tempo * 2
+                error_batch = torch.min(input = torch.abs(input = predictions - raw_labels), dim = 1, keepdim = False)[0] # get absolute error
+                error_validate = torch.cat(tensors = (error_validate, error_batch), dim = 0) # append to error validate
+
+        ##################################################
+
+
+        # OUTPUT SUMMARY STATISTICS
+        ##################################################
+
+        # compute average losses and accuracies
+        history_epoch["train_loss"] /= len(data["train"])
+        history_epoch["train_accuracy"] /= len(data["train"])
+        history_epoch["validate_loss"] /= len(data["validate"])
+        history_epoch["validate_accuracy"] /= len(data["validate"])
+        # store average losses and accuracies in history
+        pd.DataFrame(data = [history_epoch], columns = history_columns).to_csv(OUTPUT_FILEPATH_HISTORY, sep = "\t", header = False, index = False, na_rep = "NA", mode = "a") # write to file
+
+        # calculate percentiles
+        percentile_values = percentile(error_validate.numpy(force = True), q = percentiles)
+        pd.DataFrame(data = {"epoch": [epoch + 1,] * len(percentiles), "percentile": percentiles, "value": percentile_values}, columns = percentiles_history_columns).to_csv(OUTPUT_FILEPATH_PERCENTILES_HISTORY, sep = "\t", header = False, index = False, na_rep = "NA", mode = "a") # write to file
+
+        # save current model if its validation accuracy is the best so far
+        global best_accuracy
+        if history_epoch["validate_accuracy"] >= best_accuracy:
+            best_accuracy = history_epoch["validate_accuracy"] # update best_accuracy
+            checkpoint = {
+                "epoch": epoch,
+                "state_dict": tempo_nn.state_dict(),
+                "optimizer": optimizer.state_dict()
+                }
+            torch.save(obj = checkpoint, f = NN_FILEPATH)
+
+        # print out updates
+        print(f"Training Time: {(total_time_epoch / 60):.1f} minutes")
+        print(f"Training Loss: {history_epoch['train_loss']:.3f}, Validation Loss: {history_epoch['validate_loss']:.3f}")
+        print(f"Training Accuracy: {100 * history_epoch['train_accuracy']:.3f}%, Validation Accuracy: {100 * history_epoch['validate_accuracy']:.3f}%")
+        print(f"Five Number Summary of Validation Errors: {' '.join((f'{value:.2f}' for value in (percentile_values[percentile] for percentile in (0, 25, 50, 75, 100))))}")
+
+        ##################################################
+
+
+    ##################################################
+
+
+    # TRAIN EPOCHS
+    ##################################################
+
+    # helper function for training 
+    def train_epochs(start, n): # start = epoch to start training on; n = number of epochs to train from there
+        
+        # print what section is being trained
+        if FREEZE_PRETRAINED:
+            print("Training final regression layer...")
+        elif not FREEZE_PRETRAINED:
+            print("Fine-tuning pretrained layers...")
+        else:
+            print("Training all layers...")
+
+        # epochs loop
+        epochs_to_train = range(start, start + n)
+        for epoch in epochs_to_train:
+            print("----------------------------------------------------------------")
+            print(f"EPOCH {epoch + 1} / {epochs_to_train.stop}")
+            train_an_epoch(epoch = epoch)
+        print("================================================================")
+    
+    # train epochs
+    train_epochs(start = start_epoch, n = EPOCHS)
+
+    ##################################################
+
+
+    # PRINT TRAINING STATISTICS
+    ##################################################
+
+    # mark when training ended, calculate total time
+    end_time = time()
+    total_time = end_time - start_time
+    del end_time, start_time
+
+    # print training statistics
+    print("Training is done.")
+    print(f"Time Elapsed: {total_time // (60 * 60):.0f} hours and {(total_time % (60 * 60)) / 60:.1f} minutes")
+    
+    ##################################################
