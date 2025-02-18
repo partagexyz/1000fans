@@ -166,7 +166,7 @@ export default function Console() {
 
   return (
     <main className={styles.main}>
-      <div style={{ marginTop: '-17rem' }}> {/* Add space to move content down */}
+      <div style={{ marginTop: '0rem' }}> {/* Add space to move content down */}
         <div className={styles.center}>
           {!signedAccountId ? (
             <h1>Please login to check your fans token</h1>
