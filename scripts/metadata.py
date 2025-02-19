@@ -153,15 +153,15 @@ def main(temp_dir):
         for file in files:
             file_path = os.path.join(root, file)
             if file.endswith('.mp3'):
-                metadata = extract_metadata(file_path, 'audio')
+                metadata = extract_metadata(file_path, 'audio', audio_dir)
                 if metadata:
-                    new_audio_metadata[os.path.basename(new_path)] = metadata
-                    print(f"Metadata extracted and saved for audio: {os.path.basename(new_path)}")
+                    new_audio_metadata[os.path.basename(file_path)] = metadata
+                    print(f"Metadata extracted and saved for audio: {os.path.basename(file_path)}")
             elif file.endswith('.mp4'):
-                metadata = extract_metadata(file_path, 'video')
+                metadata = extract_metadata(file_path, 'video', video_dir)
                 if metadata:
-                    new_video_metadata[os.path.basename(new_path)] = metadata
-                    print(f"Metadata extracted and saved for video: {os.path.basename(new_path)}")
+                    new_video_metadata[os.path.basename(file_path)] = metadata
+                    print(f"Metadata extracted and saved for video: {os.path.basename(file_path)}")
 
     # Save temporary metadata files
     with open(os.path.join(temp_dir, 'new_audioMetadata.json'), 'w') as f:
