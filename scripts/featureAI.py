@@ -32,6 +32,7 @@ class RemoteTempoDeterminer(tempo_determiner):
         self.tempo_nn.load_state_dict(state_dict)
 
 def process_audio_files(audio_dir):
+    print(f"Starting tempo detection for audio directory: {audio_dir}")
     tempo_det = RemoteTempoDeterminer()
     audio_files = [f for f in os.listdir(audio_dir) if f.endswith('.mp3')]
 
@@ -41,6 +42,7 @@ def process_audio_files(audio_dir):
     if os.path.exists(processed_files_path):
         with open(processed_files_path, 'r') as f:
             processed_files = json.load(f)
+        print(f"Loaded previously processed files from {processed_files_path}")
     
     print(f"Total number of .mp3 files to process: {len(audio_files)}")
 
@@ -48,22 +50,31 @@ def process_audio_files(audio_dir):
     for i, file in enumerate(audio_files, 1):
         file_path = os.path.join(audio_dir, file)
         if file not in processed_files:
+            print(f"Processing file {i}/{len(audio_files)}: {file}")
             try:
-                print(f"Processing file {i}/{len(audio_files)}: {file}")
                 # Determine Tempo
                 tempo = tempo_det.determine_tempo(song_filepath=file_path)
                 print(f"Processed {file} - BPM: {tempo:.0f}")
                 with open(os.path.join(audio_dir, f"{os.path.splitext(file)[0]}_bpm.json"), 'w') as f:
                     json.dump({'bpm': tempo}, f)
+                print(f"Saved BPM data for {file} to {os.path.splitext(file)[0]}_bpm.json")
                 # Mark file as processed
                 new_processed_files[file] = True
             except Exception as e:
                 print(f"Failed to process {file}. Error: {e}")
+        else:
+            print(f"Skipping already processed file: {file}")
 
     # Update the processed files list
-    processed_files.update(new_processed_files)
-    with open(processed_files_path, 'w') as f:
-        json.dump(processed_files, f, indent=2)
+    if new_processed_files:
+        processed_files.update(new_processed_files)
+        with open(processed_files_path, 'w') as f:
+            json.dump(processed_files, f, indent=2)
+        print(f"Updated processed files list in {processed_files_path}")
+    else:
+        print("No new files processed; no changes to processed files list.")
+
+    print("Tempo detection process completed for all files.")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

@@ -7,11 +7,7 @@ import io
 from PIL import Image
 import ffmpeg
 
-# Fetch environment variables for S3 bucket name
-s3_bucket_name = os.environ.get('AWS_S3_BUCKET_NAME', 'your-default-bucket-name') #check for the need to add a default bucket name
-
 def sanitize_filename(s):
-    # Function to sanitize string for file names
     return s.replace('/', '_').replace('\\', '_').replace(':', '_').replace('*', '_').replace('?', '_').replace('"', '_').replace('<', '_').replace('>', '_').replace('|', '_')
 
 def extract_embedded_image(audio):
@@ -30,62 +26,58 @@ def seconds_to_ms(seconds):
     secs = math.floor(seconds % 60)
     return f"{minutes:02d}:{secs:02d}"
 
-def extract_metadata(file_path):
+def extract_metadata(file_path, file_type):
     filename = os.path.basename(file_path)
     ext = os.path.splitext(filename)[1].lower()
 
+    if file_type == 'audio' and ext != '.mp3':
+        return None
+    if file_type == 'video' and ext != '.mp4':
+        return None
+
+    print(f"Processing file: {filename}")
+    if ext not in ['.mp3', '.mp4']:
+        print(f"Skipping unsupported file: {filename}")
+        return None
+    
     if ext == '.mp3':
         audio = File(file_path)
-
         metadata = {
-            'title': 'Unknown',
-            'artist': 'Unknown Artist',
-            'duration': 'Unknown'
+            'title': audio.get('TIT2', ['Unknown'])[0] if hasattr(audio, 'get') else 'Unknown',
+            'artist': audio.get('TPE1', ['Unknown Artist'])[0] if hasattr(audio, 'get') else 'Unknown Artist',
+            'duration': audio.info.length if hasattr(audio.info, 'length') else 'Unknown'
         }
-    
-        if isinstance(audio, MP4):
-            metadata = {
-                'title': audio.get('©nam', ['Unknown'])[0],
-                'artist': audio.get('©ART', ['Unknown Artist'])[0],
-                'duration': audio.info.length if hasattr(audio.info, 'length') else 'Unknown'
-            }
-        else:  # Assume MP3 or other formats with ID3 tags
-            metadata = {
-                'title': audio.get('TIT2', ['Unknown'])[0],
-                'artist': audio.get('TPE1', ['Unknown Artist'])[0],
-                'duration': audio.info.length if hasattr(audio.info, 'length') else 'Unknown'
-            }
     
         # Extract cover art
         embedded_image = extract_embedded_image(audio)
+        image = "nocoverfound.jpg"
         if embedded_image:
             pil_image = Image.open(embedded_image)
             if pil_image.mode == 'RGBA':
                 pil_image = pil_image.convert('RGB')
-        
             image_path = os.path.join(os.path.dirname(file_path), f"{sanitize_filename(metadata['artist'])} - {sanitize_filename(metadata['title'])}.jpg")
             pil_image.save(image_path, 'JPEG')
-            image = f"https://{s3_bucket_name}.s3.amazonaws.com/music/{os.path.basename(image_path)}"
-        else:
-            image = f"https://{s3_bucket_name}.s3.amazonaws.com/nocoverfound.jpg"
+            image = os.path.basename(image_path)
+            print(f"Extracted cover art for: {filename}")
     
         # Prepare metadata structure
         id = f"{sanitize_filename(metadata['artist'])} - {sanitize_filename(metadata['title'])}"
         new_file_name = f"{id}{ext}"
         new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
         os.rename(file_path, new_file_path)
+        print(f"Renamed file to: {new_file_name}")
 
         # Convert duration to HH:MM:SS if not 'Unknown'
         duration_ms = seconds_to_ms(metadata['duration']) if metadata['duration'] != 'Unknown' else 'Unknown'
 
         metadata.update({
             'id': id,
-            'url': f"https://{s3_bucket_name}.s3.amazonaws.com/music/{new_file_name}",
+            'url': f"music/{new_file_name}",
             'image': image,
             'duration': duration_ms
         })
 
-        # Load temporary metadata for BPM and Key
+        # Load temporary metadata for BPM
         temp_metadata_path = os.path.join(os.path.dirname(new_file_path), f"{os.path.splitext(filename)[0]}_bpm.json")
         if os.path.exists(temp_metadata_path):
             with open(temp_metadata_path, 'r') as f:
@@ -94,12 +86,12 @@ def extract_metadata(file_path):
                 metadata['bpm'] = temp_metadata['bpm']
             # Clean up temp file
             os.remove(temp_metadata_path)
+            print(f"Added BPM to metadata for: {new_file_name}")
 
         return metadata
 
     elif ext == '.mp4':
         try:
-            # use ffmeg to probe the video file
             probe = ffmpeg.probe(file_path)
             video_info = next((s for s in probe['streams'] if s['codec_type'] == 'video'), None)
         
@@ -116,35 +108,52 @@ def extract_metadata(file_path):
                     'duration': seconds_to_ms(float(video_info['duration'])) if video_info else 'N/A'
                 }
             }
-
+            print(f"Extracted metadata for video: {filename}")
             return metadata
         except Exception as e:
             print(f"Error processing video {file_path}: {e}")
             return None
-        
-    else:
-        print(f"Unsupported file format: {ext}")
-        return None
 
 def main(temp_dir):
-    metadata = {}
+    print(f"Starting metadata extraction for directory: {temp_dir}")
+    new_audio_metadata = {}
+    new_video_metadata = {}
+
+    # Create music and videos directories if they don't exist
+    audio_dir = os.path.join(temp_dir, 'music')
+    video_dir = os.path.join(temp_dir, 'videos')
+    os.makedirs(audio_dir, exist_ok=True)
+    os.makedirs(video_dir, exist_ok=True)
+
     for root, _, files in os.walk(temp_dir):
         for file in files:
             file_path = os.path.join(root, file)
-            file_metadata = extract_metadata(file_path)
-            if file_metadata:
-                    metadata[os.path.basename(file_path)] = file_metadata
+            if file.endswith('.mp3'):
+                metadata = extract_metadata(file_path, 'audio')
+                if metadata:
+                    # move the file to the music directory
+                    new_path = os.path.join(audio_dir, os.path.basename(file_path))
+                    os.rename(file_path, new_path)
+                    new_audio_metadata[os.path.basename(new_path)] = metadata
+                    print(f"Metadata extracted and saved for audio: {os.path.basename(new_path)}")
+            elif file.endswith('.mp4'):
+                metadata = extract_metadata(file_path, 'video')
+                if metadata:
+                    # move the file to the videos directory
+                    new_path = os.path.join(video_dir, os.path.basename(file_path))
+                    os.rename(file_path, new_path)
+                    new_video_metadata[os.path.basename(new_path)] = metadata
+                    print(f"Metadata extracted and saved for video: {os.path.basename(new_path)}")
 
-    # Write metadata to JSON files
-    audio_metadata = {k: v for k, v in metadata.items() if 'music' in v.get('url', '')}
-    video_metadata = {k: v for k, v in metadata.items() if 'videos' in v.get('url', '')}
+    # Save temporary metadata files
+    with open(os.path.join(temp_dir, 'new_audioMetadata.json'), 'w') as f:
+        json.dump(new_audio_metadata, f, indent=2)
+        print("Saved new audio metadata to new_audioMetadata.json")
+    
+    with open(os.path.join(temp_dir, 'new_videoMetadata.json'), 'w') as f:
+        json.dump(new_video_metadata, f, indent=2)
+        print("Saved new video metadata to new_videoMetadata.json")
 
-    # Write metadata to JSON file
-    with open(os.path.join(temp_dir, 'audioMetadata.json'), 'w') as f:
-        json.dump(audio_metadata, f, indent=2)
-
-    with open(os.path.join(temp_dir, 'videoMetadata.json'), 'w') as f:
-        json.dump(video_metadata, f, indent=2)
 
 if __name__ == '__main__':
     import sys

@@ -14,8 +14,8 @@ export default function Console() {
   const [tokenId, setTokenId] = useState('');
   const [isDragActive, setIsDragActive] = useState(false);
   const [files, setFiles] = useState([]);
-  const [uploadProgress, setUploadProgress] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState([]);
 
   useEffect(() => {
     if (signedAccountId && wallet) {
@@ -37,12 +37,7 @@ export default function Console() {
       });
       const ownsToken = tokenInfo.length > 0;
       setOwnsToken(ownsToken);
-      if (ownsToken) {
-        // set the token_id if a token is owned
-        setTokenId(tokenInfo[0].token_id);
-      } else {
-        setTokenId('');
-      }
+      setTokenId(ownsToken ? tokenInfo[0].token_id : '');
       setIsLoading(false);
     } catch (error) {
       console.error('Error checking token ownership:', error);
@@ -128,30 +123,32 @@ export default function Console() {
 
   const handleUpload = async () => {
     if (!files.length) return;
+    setUploading(true);
+    setUploadStatus([]);
+
     const formData = new FormData();
     for (let file of files) {
-      if (allowedFile(file.name)) {
+      if (['mp3', 'mp4'].includes(file.name.split('.').pop().toLowerCase())) {
         formData.append('files', file);
-      } else {
-        console.error(`${file.name} is not a supported file type.`);
       }
     }
     if (formData.getAll('files').length === 0) {
       setError('No valid files to upload.');
+      setUploading(false);
       return;
     }
-    setUploading(true);
+
     try {
       const response = await fetch('https://theosis.1000fans.xyz/api/run_automation', {
         method: 'POST',
         body: formData
       });
-      if (response.ok) {
-        alert('Upload successful!');
-        setFiles([]);
-      } else {
-        setError('Upload failed: ' + await response.text());
+      if (!response.ok) {
+        throw new Error('Upload failed: ' + await response.text());
       }
+      alert('Upload initiated! Check status below for updates.');
+      // Start polling for status updates
+      pollUploadStatus();
     } catch (error) {
       setError('Upload error: ' + error.message);
     } finally {
@@ -159,14 +156,30 @@ export default function Console() {
     }
   };
 
-  function allowedFile(filename) {
-    const allowedExtensions = ['mp3', 'mp4'];
-    return allowedExtensions.includes(filename.split('.').pop().toLowerCase());
-  }
+  const pollUploadStatus = () => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('https://theosis.1000fans.xyz/api/upload_status');
+        if (!response.ok) throw new Error('Failed to fetch status');
+        const data = await response.json();
+        setUploadStatus(prev => {
+          // Only add new statuses to avoid duplicates
+          const newStatuses = data.status.filter(msg => !prev.includes(msg));
+          return [...prev, ...newStatuses];
+        });
+      } catch (error) {
+        console.error('Error polling status:', error);
+        setError('Failed to update status: ' + error.message);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    // Clean up interval when component unmounts or upload completes
+    return () => clearInterval(interval);
+  };
 
   return (
     <main className={styles.main}>
-      <div style={{ marginTop: '0rem' }}> {/* Add space to move content down */}
+      <div style={{ marginTop: '0rem' }}>
         <div className={styles.center}>
           {!signedAccountId ? (
             <h1>Please login to check your fans token</h1>
@@ -226,8 +239,15 @@ export default function Console() {
             <button onClick={handleUpload} disabled={files.length === 0 || uploading}>
               {uploading ? 'Uploading...' : 'Upload Files'}
             </button>
-            {uploading && <p>Do not close or refresh this window until upload is complete.</p>}
-            {uploadProgress !== null && <p>Upload Progress: {uploadProgress}%</p>}
+            {uploading && <p>Upload in progress. Check status below.</p>}
+            {/* Display real-time status updates */}
+            <div style={{ marginTop: '20px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px' }}>
+              <h3>Upload Status:</h3>
+              {uploadStatus.map((msg, index) => (
+                <p key={index} style={{ margin: '5px 0' }}>{msg}</p>
+              ))}
+              {uploadStatus.length === 0 && <p>No updates yet...</p>}
+            </div>
           </div>
         )}
       </div>
