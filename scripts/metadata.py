@@ -26,7 +26,7 @@ def seconds_to_ms(seconds):
     secs = math.floor(seconds % 60)
     return f"{minutes:02d}:{secs:02d}"
 
-def extract_metadata(file_path, file_type):
+def extract_metadata(file_path, file_type, target_dir):
     filename = os.path.basename(file_path)
     ext = os.path.splitext(filename)[1].lower()
 
@@ -63,8 +63,18 @@ def extract_metadata(file_path, file_type):
         # Prepare metadata structure
         id = f"{sanitize_filename(metadata['artist'])} - {sanitize_filename(metadata['title'])}"
         new_file_name = f"{id}{ext}"
-        new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
-        os.rename(file_path, new_file_path)
+        new_file_path = os.path.join(target_dir, new_file_name)
+        
+        # Ensure target directory exists
+        os.makedirs(os.path.dirname(new_file_path) or '.', exist_ok=True)
+
+        if os.path.exists(file_path):
+            print(f"Renaming file from {filename} to {new_file_name} in {target_dir}")
+            os.rename(file_path, new_file_path)
+        else:
+            print(f"Error: Source file {filename} not found for renaming")
+            return None
+
         print(f"Renamed file to: {new_file_name}")
 
         # Convert duration to HH:MM:SS if not 'Unknown'
@@ -98,6 +108,19 @@ def extract_metadata(file_path, file_type):
             title = os.path.splitext(filename)[0]
             id = sanitize_filename(title)
 
+            new_file_name = filename  # Keep original name for videos
+            new_file_path = os.path.join(target_dir, new_file_name)
+
+            # Ensure target directory exists
+            os.makedirs(os.path.dirname(new_file_path) or '.', exist_ok=True)
+
+            if os.path.exists(file_path):
+                print(f"Moving video file from {filename} to {new_file_name} in {target_dir}")
+                os.rename(file_path, new_file_path)
+            else:
+                print(f"Error: Source video file {filename} not found for moving")
+                return None
+
             metadata = {
                 'id': id,
                 'title': title,
@@ -125,23 +148,18 @@ def main(temp_dir):
     os.makedirs(audio_dir, exist_ok=True)
     os.makedirs(video_dir, exist_ok=True)
 
+    # process all files in temp_dir
     for root, _, files in os.walk(temp_dir):
         for file in files:
             file_path = os.path.join(root, file)
             if file.endswith('.mp3'):
                 metadata = extract_metadata(file_path, 'audio')
                 if metadata:
-                    # move the file to the music directory
-                    new_path = os.path.join(audio_dir, os.path.basename(file_path))
-                    os.rename(file_path, new_path)
                     new_audio_metadata[os.path.basename(new_path)] = metadata
                     print(f"Metadata extracted and saved for audio: {os.path.basename(new_path)}")
             elif file.endswith('.mp4'):
                 metadata = extract_metadata(file_path, 'video')
                 if metadata:
-                    # move the file to the videos directory
-                    new_path = os.path.join(video_dir, os.path.basename(file_path))
-                    os.rename(file_path, new_path)
                     new_video_metadata[os.path.basename(new_path)] = metadata
                     print(f"Metadata extracted and saved for video: {os.path.basename(new_path)}")
 
