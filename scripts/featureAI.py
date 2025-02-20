@@ -33,7 +33,7 @@ class RemoteTempoDeterminer(tempo_determiner):
         # Load the state dict directly since keys are already in the correct format
         self.tempo_nn.load_state_dict(state_dict)
 
-def process_file(file, audio_dir, processed_files, lock):
+def process_file(file, audio_dir, tempo_det, processed_files, lock):
     file_path = os.path.join(audio_dir, file)
     if file in processed_files:
         print(f"Skipping already processed file: {file}")
@@ -73,7 +73,10 @@ def process_audio_files(audio_dir):
     # Process files concurrently
     new_processed_files = {}
     with ThreadPoolExecutor(max_workers=4) as executor:
-        results = executor.map(lambda f: process_file(f, audio_dir, processed_files, lock), audio_files)
+        results = executor.map(
+            lambda f: process_file(f, audio_dir, tempo_det, processed_files, lock), 
+            audio_files
+        )
     
     # Collect results
     for file, success in results:
