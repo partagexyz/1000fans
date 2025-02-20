@@ -149,18 +149,24 @@ def main(temp_dir):
     os.makedirs(video_dir, exist_ok=True)
 
     # process all files in temp_dir
+    processed_files = set()  # Track processed files to avoid re-processing
     for root, _, files in os.walk(temp_dir):
         for file in files:
+            if file in processed_files:
+                continue
             file_path = os.path.join(root, file)
             if file.endswith('.mp3'):
                 metadata = extract_metadata(file_path, 'audio', audio_dir)
                 if metadata:
-                    new_audio_metadata[os.path.basename(file_path)] = metadata
+                    new_audio_metadata[file] = metadata
+                    processed_files.add(file)
+                    processed_files.add(os.path.basename(metadata['url']))
                     print(f"Metadata extracted and saved for audio: {os.path.basename(file_path)}")
             elif file.endswith('.mp4'):
                 metadata = extract_metadata(file_path, 'video', video_dir)
                 if metadata:
-                    new_video_metadata[os.path.basename(file_path)] = metadata
+                    new_video_metadata[file] = metadata
+                    processed_files.add(file)
                     print(f"Metadata extracted and saved for video: {os.path.basename(file_path)}")
 
     # Save temporary metadata files

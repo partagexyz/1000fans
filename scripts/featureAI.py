@@ -2,7 +2,7 @@
 import os
 import json
 import torch
-from transformers import PretrainedConfig, AutoConfig, AutoModelForSequenceClassification
+from transformers import PretrainedConfig
 from tempo_detection import tempo_determiner, tempo_nn
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -41,7 +41,6 @@ def process_file(file, audio_dir, processed_files, lock):
 
     print(f"Processing file: {file}")
     try:
-        tempo_det = RemoteTempoDeterminer()
         tempo = tempo_det.determine_tempo(song_filepath=file_path)
         print(f"Processed {file} - BPM: {tempo:.0f}")
         with open(os.path.join(audio_dir, f"{os.path.splitext(file)[0]}_bpm.json"), 'w') as f:
@@ -56,6 +55,7 @@ def process_file(file, audio_dir, processed_files, lock):
 
 def process_audio_files(audio_dir):
     print(f"Starting tempo detection for audio directory: {audio_dir}")
+    tempo_det = RemoteTempoDeterminer()
     audio_files = [f for f in os.listdir(audio_dir) if f.endswith('.mp3')]
 
     # Load processed files to avoid re-processing

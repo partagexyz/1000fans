@@ -39,7 +39,7 @@ def main(temp_dir):
     for script, *args in steps:
         print(f"Executing step: {script}")
         if not run_script(script, *args):
-            print(f"Script {script} failed. Stopping automation.")
+            print(f"Script {script} failed for some files but continuing with remaining steps.")
             # continue to next script despite failure
     print("Automation process completed successfully.")
 
