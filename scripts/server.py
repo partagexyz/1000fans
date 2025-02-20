@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
-status_updates = []
+status_updates = {}
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ def allowed_file(filename):
 @app.route('/api/run_automation', methods=['POST'])
 def run_automation():
     global status_updates
-    status_updates = []
+    status_updates = {}
 
     if 'files' not in request.files:
         logger.error('No file part in request')
@@ -37,26 +37,39 @@ def run_automation():
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(temp_dir, filename))
-                status_updates.append(f"Received file: {filename}")
+                status_updates[filename] = [f"Received file: {filename}"]
             else:
-                status_updates.append(f"Invalid file skipped: {file.filename}")
+                status_updates[file.filename] = [f"Invalid file skipped: {file.filename}"]
                 logger.error(f'Invalid file: {file.filename}')
                 return jsonify({'status': 'error', 'message': f'File {file.filename} has an invalid extension'}), 400
 
         try:
             # Run automation script and capture its output
-            process = subprocess.run(['python3', os.path.join(SCRIPTS_DIR, "automation.py"), temp_dir], 
-                                    check=True, capture_output=True, text=True)
-            status_updates.extend(process.stdout.splitlines())
+            process = subprocess.run(
+                ['python3', os.path.join(SCRIPTS_DIR, "automation.py"), temp_dir], 
+                check=True, capture_output=True, text=True
+            )
+            for line in process.stdout.splitlines():
+                # Parse output to associate with files (assuming scripts output filenames)
+                for filename in status_updates.keys():
+                    if filename in line:
+                        status_updates[filename].append(line)
+                        break
+                else:
+                    # If no specific file match, broadcast to all
+                    for statuses in status_updates.values():
+                        statuses.append(line)
             if process.stderr:
-                status_updates.extend([f"Error: {line}" for line in process.stderr.splitlines()])
+                for filename in status_updates.keys():
+                    status_updates[filename].extend([f"Error: {line}" for line in process.stderr.splitlines()])
                 logger.error('Automation failed: %s', process.stderr)
                 return jsonify({'status': 'error', 'message': f'Automation failed: {process.stderr}'}), 500
 
             logger.info('Automation completed successfully for files in %s', temp_dir)
             return jsonify({'status': 'success', 'message': 'Automation completed successfully'}), 200
         except subprocess.CalledProcessError as e:
-            status_updates.append(f"Automation failed: {e.stderr}")
+            for filename in status_updates.keys():
+                status_updates[filename].append(f"Automation failed: {e.stderr}")
             logger.error('Automation failed: %s', e.stderr)
             return jsonify({'status': 'error', 'message': f'Automation failed: {e.stderr}'}), 500
 

@@ -113,6 +113,13 @@ export default function Console() {
     setIsDragActive(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
 
+    // Check batch size limit
+    if (droppedFiles.length > 10) {
+      alert('Maximum 10 files per upload');
+      return;
+    }
+    
+    // Check file size and type
     if (droppedFiles.some(file => file.size > 25 * 1024 * 1024 * 1024 || !['mp3', 'mp4'].includes(file.name.split('.').pop().toLowerCase()))) {
       alert('Files must be .mp3 or .mp4 and not exceed 25GB');
       return;
