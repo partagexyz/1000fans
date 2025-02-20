@@ -72,7 +72,7 @@ def process_audio_files(audio_dir):
 
     # Process files concurrently
     new_processed_files = {}
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         results = executor.map(
             lambda f: process_file(f, audio_dir, tempo_det, processed_files, lock), 
             audio_files
