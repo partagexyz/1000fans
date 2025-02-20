@@ -75,16 +75,21 @@ def process_audio_files(audio_dir):
     # Process files concurrently
     new_processed_files = {}
     with ThreadPoolExecutor(max_workers=1) as executor:
-        results = executor.map(
+        results = list(executor.map(
             lambda f: process_file(f, audio_dir, tempo_det, processed_files, lock), 
             audio_files
-        )
+        ))
     
+    processed_count = 0
     # Collect results
     for file, success in results:
-        if success and file not in processed_files:
-            new_processed_files[file] = True
-            print(f"Marked {file} as newly processed")
+        if success:
+            if file not in processed_files:
+                new_processed_files[file] = True
+                processed_count += 1
+                print(f"Marked {file} as newly processed")
+            else:
+                print(f"File {file} already processed previously")
 
     # Update processed files list with thread safety
     if new_processed_files:
