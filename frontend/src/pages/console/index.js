@@ -118,7 +118,7 @@ export default function Console() {
       alert('Maximum 10 files per upload');
       return;
     }
-    
+
     // Check file size and type
     if (droppedFiles.some(file => file.size > 25 * 1024 * 1024 * 1024 || !['mp3', 'mp4'].includes(file.name.split('.').pop().toLowerCase()))) {
       alert('Files must be .mp3 or .mp4 and not exceed 25GB');
@@ -170,9 +170,20 @@ export default function Console() {
         if (!response.ok) throw new Error('Failed to fetch status');
         const data = await response.json();
         setUploadStatus(prev => {
-          // Only add new statuses to avoid duplicates
-          const newStatuses = data.status.filter(msg => !prev.includes(msg));
-          return [...prev, ...newStatuses];
+          // Merge new status updates into previous state
+          const newStatus = { ...prev };
+          for (const [filename, statuses] of Object.entries(data.status)) {
+            if (!newStatus[filename]) {
+              newStatus[filename] = [];
+            }
+            // Add only new statuses not already present
+            statuses.forEach(msg => {
+              if (!newStatus[filename].includes(msg)) {
+                newStatus[filename].push(msg);
+              }
+            });
+          }
+          return newStatus;
         });
       } catch (error) {
         console.error('Error polling status:', error);
@@ -225,7 +236,7 @@ export default function Console() {
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
       </div>
-      <div className={styles.center} style={{ marginTop: '5rem' }}>
+      <div className={styles.center} style={{ marginTop: '0rem' }}>
         {signedAccountId === CONTRACT && ( // try with CONTRACT directly if this doesn't work
           <div className={styles.shopSection}>
             <h2>Upload Files</h2>
@@ -248,12 +259,19 @@ export default function Console() {
             </button>
             {uploading && <p>Upload in progress. Check status below.</p>}
             {/* Display real-time status updates */}
-            <div style={{ marginTop: '20px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px' }}>
-              <h3>Upload Status:</h3>
-              {uploadStatus.map((msg, index) => (
-                <p key={index} style={{ margin: '5px 0' }}>{msg}</p>
-              ))}
-              {uploadStatus.length === 0 && <p>No updates yet...</p>}
+            <div style={{ marginTop: '10px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px' }}>
+            {Object.entries(uploadStatus).length === 0 ? (
+                <p>No updates yet...</p>
+              ) : (
+                Object.entries(uploadStatus).map(([filename, statuses]) => (
+                  <div key={filename}>
+                    <strong>{filename}:</strong>
+                    {statuses.map((msg, index) => (
+                      <p key={index} style={{ margin: '5px 0' }}>{msg}</p>
+                    ))}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
