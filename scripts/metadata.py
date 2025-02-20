@@ -47,6 +47,16 @@ def extract_metadata(file_path, file_type, target_dir):
             'artist': audio.get('TPE1', ['Unknown Artist'])[0] if hasattr(audio, 'get') else 'Unknown Artist',
             'duration': audio.info.length if hasattr(audio.info, 'length') else 'Unknown'
         }
+
+        # Check for BPM before renaming
+        temp_metadata_path = os.path.join(target_dir, f"{os.path.splitext(filename)[0]}_bpm.json")
+        if os.path.exists(temp_metadata_path):
+            with open(temp_metadata_path, 'r') as f:
+                temp_metadata = json.load(f)
+            if 'bpm' in temp_metadata:
+                metadata['bpm'] = temp_metadata['bpm']
+            os.remove(temp_metadata_path)
+            print(f"Added BPM to metadata for: {filename}")
     
         # Extract cover art
         embedded_image = extract_embedded_image(audio)
@@ -55,7 +65,7 @@ def extract_metadata(file_path, file_type, target_dir):
             pil_image = Image.open(embedded_image)
             if pil_image.mode == 'RGBA':
                 pil_image = pil_image.convert('RGB')
-            image_path = os.path.join(os.path.dirname(file_path), f"{sanitize_filename(metadata['artist'])} - {sanitize_filename(metadata['title'])}.jpg")
+            image_path = os.path.join(target_dir, f"{sanitize_filename(metadata['artist'])} - {sanitize_filename(metadata['title'])}.jpg")
             pil_image.save(image_path, 'JPEG')
             image = os.path.basename(image_path)
             print(f"Extracted cover art for: {filename}")
@@ -86,17 +96,6 @@ def extract_metadata(file_path, file_type, target_dir):
             'image': image,
             'duration': duration_ms
         })
-
-        # Load temporary metadata for BPM
-        temp_metadata_path = os.path.join(os.path.dirname(new_file_path), f"{os.path.splitext(filename)[0]}_bpm.json")
-        if os.path.exists(temp_metadata_path):
-            with open(temp_metadata_path, 'r') as f:
-                temp_metadata = json.load(f)
-            if 'bpm' in temp_metadata:
-                metadata['bpm'] = temp_metadata['bpm']
-            # Clean up temp file
-            os.remove(temp_metadata_path)
-            print(f"Added BPM to metadata for: {new_file_name}")
 
         return metadata
 

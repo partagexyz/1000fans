@@ -43,7 +43,9 @@ def process_file(file, audio_dir, tempo_det, processed_files, lock):
     try:
         tempo = tempo_det.determine_tempo(song_filepath=file_path)
         print(f"Processed {file} - BPM: {tempo:.0f}")
-        with open(os.path.join(audio_dir, f"{os.path.splitext(file)[0]}_bpm.json"), 'w') as f:
+        bpm_path = os.path.join(audio_dir, 'music', f"{os.path.splitext(file)[0]}_bpm.json")
+        os.makedirs(os.path.dirname(bpm_path), exist_ok=True)
+        with open(bpm_path, 'w') as f:
             json.dump({'bpm': tempo}, f)
         print(f"Saved BPM data for {file}")
         with lock:
@@ -82,6 +84,7 @@ def process_audio_files(audio_dir):
     for file, success in results:
         if success and file not in processed_files:
             new_processed_files[file] = True
+            print(f"Marked {file} as newly processed")
 
     # Update processed files list with thread safety
     if new_processed_files:
