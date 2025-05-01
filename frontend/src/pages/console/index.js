@@ -1,281 +1,354 @@
 import { useState, useEffect, useContext } from 'react';
 import { NearContext } from '../../wallets/near';
 import styles from '../../styles/app.module.css';
+import OpenAI from 'openai';
+import * as nearAPI from 'near-api-js';
 
-// Contract address
 const CONTRACT = '1000fans.testnet';
 
 export default function Console() {
-  const { signedAccountId, wallet } = useContext(NearContext);
-  const [ownsToken, setOwnsToken] = useState(false);
+  const { signedAccountId, wallet, loginWithProvider, logout, keyPair } = useContext(NearContext);
+  const [authToken, setAuthToken] = useState(null);
+  const [threadId, setThreadId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [receiverId, setReceiverId] = useState('');
+  const [ownsToken, setOwnsToken] = useState(false);
   const [tokenId, setTokenId] = useState('');
   const [isDragActive, setIsDragActive] = useState(false);
-  const [files, setFiles] = useState([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState([]);
+  const [agentTokenStatus, setAgentTokenStatus] = useState(null);
 
+  const openai = new OpenAI({
+    baseURL: 'https://api.near.ai/v1',
+    apiKey: authToken ? `Bearer ${authToken}` : '',
+    dangerouslyAllowBrowser: true, // Temporary for client-side testing
+  });
+
+  // Generate NEAR AI auth token
   useEffect(() => {
-    if (signedAccountId && wallet) {
-      checkTokenOwnership();
+    async function generateAuthToken() {
+      if (!signedAccountId) return;
+      try {
+        const nonce = String(Date.now());
+        const recipient = 'ai.near';
+        const callbackUrl = window.location.href;
+        const message = 'Login to NEAR AI';
+
+        let signedMessage;
+        if (keyPair) {
+          // Web3Auth user
+          const messageBuffer = Buffer.from(message);
+          const nonceBuffer = Buffer.from(nonce.padStart(32, '0'));
+          const signed = keyPair.sign(Buffer.concat([messageBuffer, nonceBuffer]));
+          signedMessage = {
+            signature: Buffer.from(signed.signature).toString('base64'),
+            publicKey: keyPair.getPublicKey().toString(),
+            accountId: signedAccountId,
+          };
+        } else if (wallet) {
+          // NEAR wallet user
+          const { keyStores, connect } = nearAPI;
+          const keyStore = new keyStores.BrowserLocalStorageKeyStore();
+          const config = {
+            networkId: 'testnet',
+            keyStore,
+            nodeUrl: 'https://rpc.testnet.near.org',
+            walletUrl: 'https://wallet.testnet.near.org',
+            helperUrl: 'https://helper.testnet.near.org',
+          };
+          const near = await connect(config);
+          const account = await near.account(signedAccountId);
+          const keyPair = await keyStore.getKey('testnet', signedAccountId);
+          if (!keyPair) throw new Error('No key pair found for account');
+          const messageBuffer = Buffer.from(message);
+          const nonceBuffer = Buffer.from(nonce.padStart(32, '0'));
+          const signed = keyPair.sign(Buffer.concat([messageBuffer, nonceBuffer]));
+          signedMessage = {
+            signature: Buffer.from(signed.signature).toString('base64'),
+            publicKey: keyPair.getPublicKey().toString(),
+            accountId: signedAccountId,
+          };
+        } else {
+          throw new Error('No valid signing method available');
+        }
+
+        const auth = JSON.stringify({
+          account_id: signedAccountId,
+          public_key: signedMessage.publicKey,
+          signature: signedMessage.signature,
+          message,
+          nonce,
+          recipient,
+          callbackUrl,
+        });
+        setAuthToken(auth);
+      } catch (e) {
+        setError('Failed to authenticate with NEAR AI: ' + e.message);
+      }
     }
+    generateAuthToken();
+  }, [signedAccountId, wallet, keyPair]);
+
+  // Primary token ownership check (NEAR blockchain)
+  useEffect(() => {
+    const checkTokenOwnership = async () => {
+      if (!signedAccountId || !wallet) return;
+      try {
+        const tokenInfo = await wallet.viewMethod({
+          contractId: '1000fans.testnet',
+          method: 'nft_tokens_for_owner',
+          args: {
+            account_id: signedAccountId,
+            from_index: null,
+            limit: 1,
+          },
+        });
+        const ownsToken = tokenInfo.length > 0;
+        setOwnsToken(ownsToken);
+        setTokenId(ownsToken ? tokenInfo[0].token_id : '');
+      } catch (e) {
+        console.error('Error checking token ownership:', e);
+        setError('Failed to check token ownership: ' + e.message);
+      }
+    };
+    checkTokenOwnership();
   }, [signedAccountId, wallet]);
 
-  const checkTokenOwnership = async () => {
-    if (!wallet) return;
-    try {
-      const tokenInfo = await wallet.viewMethod({
-        contractId: CONTRACT,
-        method: 'nft_tokens_for_owner',
-        args: { 
-          account_id: signedAccountId, 
-          from_index: null, 
-          limit: 1 
-        },
-      });
-      const ownsToken = tokenInfo.length > 0;
-      setOwnsToken(ownsToken);
-      setTokenId(ownsToken ? tokenInfo[0].token_id : '');
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error checking token ownership:', error);
-      setError('Failed to check token ownership');
-      setIsLoading(false);
-    }
-  };
+  // Secondary token ownership check (NEAR AI agentic system)
+  useEffect(() => {
+    if (!threadId || !authToken) return;
+    const interval = setInterval(async () => {
+      try {
+        console.log('Checking agent token status for threadId:', threadId);
+        const files = await openai.beta.threads.files.list(threadId);
+        const authFile = files.data.find(f => f.filename === 'auth_status.json');
+        if (authFile) {
+          const fileContent = await openai.files.content(authFile.id);
+          const authStatus = JSON.parse(await fileContent.text());
+          setAgentTokenStatus(authStatus.authorized);
+        } else {
+          setAgentTokenStatus(false);
+        }
+      } catch (e) {
+        console.error('Error checking agent token status:', e);
+        setAgentTokenStatus(null); // Indicate check failed
+      }
+    }, 10000); // Run every 10 seconds to reduce load
+    return () => clearInterval(interval);
+  }, [threadId, authToken]);
 
-  const mintNFT = async () => {
-    if (!wallet || !signedAccountId) return;
+  // Create thread
+  useEffect(() => {
+    async function createThread() {
+      if (!authToken) return;
+      try {
+        const thread = await openai.beta.threads.create();
+        setThreadId(thread.id);
+      } catch (e) {
+        setError('Failed to create thread: ' + e.message);
+      }
+    }
+    createThread();
+  }, [authToken]);
+
+  // Poll thread messages
+  useEffect(() => {
+    if (!threadId || !authToken) return;
+    const interval = setInterval(async () => {
+      try {
+        const threadMessages = await openai.beta.threads.messages.list(threadId);
+        setMessages(threadMessages.data.reverse());
+      } catch (e) {
+        setError('Failed to fetch messages: ' + e.message);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [threadId, authToken]);
+
+  // Send user message
+  const sendMessage = async () => {
+    if (!userInput.trim()) return;
     setIsLoading(true);
     setError(null);
     try {
-      await wallet.callMethod({
-        contractId: CONTRACT,
-        method: 'nft_mint',
-        args: { 
-          token_owner_id: signedAccountId,
-          token_metadata: {
-            title: "Exlusive Fans Token",
-            description: "Your exclusive fans token to access exclusive content from the fans club",
-          },
-        },
-        deposit: '100000000000000000000000', // 0.1 NEAR in yoctoNEAR for storage cost - adjust this based on your contract's requirements
+      // Handle email login command
+      if (userInput.toLowerCase().includes('login with email')) {
+        try {
+          await loginWithProvider('email_passwordless', {
+            loginHint: prompt('Enter your email address:'),
+          });
+          setMessages([
+            ...messages,
+            { role: 'assistant', content: [{ text: { value: 'Email login initiated. Account created or restored.' } }] },
+          ]);
+          setUserInput('');
+          return;
+        } catch (e) {
+          throw new Error('Email login failed: ' + e.message);
+        }
+      }
+
+      // Handle logout command
+      if (userInput.toLowerCase().includes('logout')) {
+        await logout();
+        setMessages([
+          ...messages,
+          { role: 'assistant', content: [{ text: { value: 'Logged out successfully.' } }] },
+        ]);
+        setUserInput('');
+        return;
+      }
+
+      // Send to NEAR AI
+      if (!threadId) throw new Error('No thread available');
+      await openai.beta.threads.messages.create(threadId, {
+        role: 'user',
+        content: userInput,
       });
-      alert('Fans Token minted to your wallet!');
-      await checkTokenOwnership(); //refresh ownership status
-    } catch (error) {
-      console.error('Error minting fans token:', error);
-      setError('Failed to mint fans token. Try again later');
+      const run = await openai.beta.threads.runs.createAndPoll(threadId, {
+        assistant_id: 'devbot.near/manager-agent/latest',
+      });
+      if (run.status !== 'completed') {
+        throw new Error('Run failed: ' + run.status);
+      }
+      if (userInput.toLowerCase().includes('create wallet')) {
+        const threadMessages = await openai.beta.threads.messages.list(threadId);
+        const latestMessage = threadMessages.data.find(
+          m => m.role === 'assistant' && m.content[0].text.value.includes('Wallet created')
+        );
+        if (latestMessage) {
+          const files = await openai.beta.threads.messages.files.list(threadId, latestMessage.id);
+          const credentialsFile = files.data.find(f => f.filename === 'wallet_credentials.json');
+          if (credentialsFile) {
+            const fileContent = await openai.files.content(credentialsFile.id);
+            const credentials = JSON.parse(await fileContent.text());
+            alert(
+              `New wallet created! Account ID: ${credentials.account_id}. Save your private key securely: ${credentials.private_key}`
+            );
+          }
+        }
+      }
+      setUserInput('');
+    } catch (e) {
+      setError('Failed to process request: ' + e.message);
     } finally {
-    setIsLoading(false); // ensure isLoading is set back to false
+      setIsLoading(false);
     }
   };
 
-  const transferNFT = async () => {
-    if (!wallet || !ownsToken || !tokenId) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      await wallet.callMethod({
-        contractId: CONTRACT,
-        method: 'nft_transfer',
-        args: { 
-          receiver_id: receiverId,
-          token_id: tokenId,
-          approval_id: null, // optional approval ID
-          memo: 'Transfer fans token from the console',
-        },
-        deposit: '1', // minimal deposit required for transfer
-      });
-      alert('Fans Token transferred successfully!');
-      await checkTokenOwnership(); //refresh ownership status
-    } catch (error) {
-      console.error('Error transferring fans token:', error);
-      setError('Failed to transfer your fans token. Check receiver ID or try again later');
-    }
-    setIsLoading(false);
-  }
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    setIsDragActive(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragActive(false);
-  };
-
-  const handleDrop = (e) => {
+  // Drag and drop file upload
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragActive(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
-
-    // Check batch size limit
     if (droppedFiles.length > 10) {
-      alert('Maximum 10 files per upload');
-      return;
+        setError('Maximum 10 files per upload');
+        return;
     }
-
-    // Check file size and type
     if (droppedFiles.some(file => file.size > 25 * 1024 * 1024 * 1024 || !['mp3', 'mp4'].includes(file.name.split('.').pop().toLowerCase()))) {
-      alert('Files must be .mp3 or .mp4 and not exceed 25GB');
-      return;
+        setError('Files must be .mp3 or .mp4 and not exceed 25GB');
+        return;
     }
-
-    setFiles(prevFiles => [...prevFiles, ...droppedFiles]);
-  };
-
-  const handleUpload = async () => {
-    if (!files.length) return;
-    setUploading(true);
-    setUploadStatus([]);
-
-    const formData = new FormData();
-    for (let file of files) {
-      if (['mp3', 'mp4'].includes(file.name.split('.').pop().toLowerCase())) {
-        formData.append('files', file);
-      }
-    }
-    if (formData.getAll('files').length === 0) {
-      setError('No valid files to upload.');
-      setUploading(false);
-      return;
-    }
-
     try {
-      const response = await fetch('https://theosis.1000fans.xyz/api/run_automation', {
-        method: 'POST',
-        body: formData
-      });
-      if (!response.ok) {
-        throw new Error('Upload failed: ' + await response.text());
-      }
-      alert('Upload initiated! Check status below for updates.');
-      // Start polling for status updates
-      pollUploadStatus();
-    } catch (error) {
-      setError('Upload error: ' + error.message);
-    } finally {
-      setUploading(false);
+        for (const file of droppedFiles) {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await fetch('https://api.near.ai/v1/files', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${authToken}` },
+                body: formData,
+            });
+            const fileData = await response.json();
+            await openai.beta.threads.messages.create(threadId, {
+                role: 'user',
+                content: `Uploaded file: ${file.name}`,
+                file_ids: [fileData.id],
+            });
+        }
+        await sendMessage('upload file');
+    } catch (e) {
+        setError('Failed to upload files: ' + e.message);
     }
   };
 
-  const pollUploadStatus = () => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch('https://theosis.1000fans.xyz/api/upload_status');
-        if (!response.ok) throw new Error('Failed to fetch status');
-        const data = await response.json();
-        setUploadStatus(prev => {
-          // Merge new status updates into previous state
-          const newStatus = { ...prev };
-          for (const [filename, statuses] of Object.entries(data.status)) {
-            if (!newStatus[filename]) {
-              newStatus[filename] = [];
-            }
-            // Add only new statuses not already present
-            statuses.forEach(msg => {
-              if (!newStatus[filename].includes(msg)) {
-                newStatus[filename].push(msg);
-              }
-            });
-          }
-          return newStatus;
-        });
-      } catch (error) {
-        console.error('Error polling status:', error);
-        setError('Failed to update status: ' + error.message);
-      }
-    }, 2000); // Poll every 2 seconds
-
-    // Clean up interval when component unmounts or upload completes
-    return () => clearInterval(interval);
-  };
+  // Welcoming text
+  const welcomeText = `Hi! 👋 Welcome to 1000fans! 
+  1000fans is a private content platform used by Theosis to provide fans with exclusive content.
+  
+  You can access the artist's music or videos by saying 'spotify' or 'youtube', or contact him by saying 'contact'.
+  
+  To access unreleased music and videos, connect your crypto wallet by typing 'connect wallet'.
+  If you do not have a crypto wallet and want to create one, type 'create wallet'.
+  
+  Type 'list' to view all available commands.`;
 
   return (
-    <main className={styles.main}>
-      <div style={{ marginTop: '0rem' }}>
-        <div className={styles.center}>
-          {!signedAccountId ? (
-            <h1>Please login to check your fans token</h1>
-          ) : (
-            <h1 className={styles.noMarginBottom}>Do you own a fans token? {ownsToken ? `Yes: ${tokenId}` : 'No'}</h1>
-          )}
-        </div>
-        <div className={`${styles.center} ${styles.shopContainer}`}>
-          {signedAccountId && (
-            <>
-              {!ownsToken ? (
-                <div className={styles.shopSection}>
-                  <h2>Claim your Fans Token</h2>
-                  <button onClick={mintNFT} disabled={isLoading}>
-                    {isLoading ? 'Minting...' : 'Claim your fans token'}
-                  </button>
-                </div>
-              ) : (
-                <div className={styles.shopSection} style={{ marginTop: '-100px' }}>
-                  <div>
-                    <h2>Transfer your Fans Token</h2>
-                    <input
-                      type="text"
-                      placeholder="Receiver ID"
-                      value={receiverId}
-                      onChange={(e) => setReceiverId(e.target.value)}
-                    />
-                    <button onClick={transferNFT} disabled={isLoading || !receiverId}>
-                      {isLoading ? 'Transferring...' : 'Transfer Your Fans Token'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-        </div>
-      </div>
-      <div className={styles.center} style={{ marginTop: '0rem' }}>
-        {signedAccountId === CONTRACT && ( // try with CONTRACT directly if this doesn't work
-          <div className={styles.shopSection}>
-            <h2>Upload Files</h2>
-            <div 
-              onDragEnter={handleDrag}
-              onDragLeave={handleDragLeave}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              style={{
-                border: `2px dashed ${isDragActive ? 'green' : 'gray'}`,
-                padding: '20px',
-                textAlign: 'center',
-                marginBottom: '10px'
-              }}
-            >
-              {isDragActive ? 'Drop files here' : 'Drag and drop files here or click to select'}
-            </div>
-            <button onClick={handleUpload} disabled={files.length === 0 || uploading}>
-              {uploading ? 'Uploading...' : 'Upload Files'}
-            </button>
-            {uploading && <p>Upload in progress. Check status below.</p>}
-            {/* Display real-time status updates */}
-            <div style={{ marginTop: '10px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px' }}>
-            {Object.entries(uploadStatus).length === 0 ? (
-                <p>No updates yet...</p>
-              ) : (
-                Object.entries(uploadStatus).map(([filename, statuses]) => (
-                  <div key={filename}>
-                    <strong>{filename}:</strong>
-                    {statuses.map((msg, index) => (
-                      <p key={index} style={{ margin: '5px 0' }}>{msg}</p>
-                    ))}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+    <main className={styles.consoleMain}>
+      {/* Wallet and Token Status */}
+      <div className={styles.consoleStatus}>
+        {!signedAccountId ? (
+          <p>Please log in with your NEAR wallet or use 'login with email' in the chat.</p>
+        ) : (
+          <>
+            <p>Connected as: {signedAccountId}</p>
+            <p> Token Status: {ownsToken ? `Owns Token ID: ${tokenId}` : 'No token owned'}</p>
+            {agentTokenStatus !== null && (
+              <p>Agent Token Status: {agentTokenStatus ? 'Token Detected' : 'No token detected'}</p>
+            )}
+          </>
         )}
+        {error && <p className={styles.consoleError}>{error}</p>}
       </div>
+      {/* Chat Interface */}
+      <div className={styles.consoleChatContainer}>
+        <div className={styles.consoleChatMessages}>
+          {messages.length === 0 ? (
+            <p className={styles.consolePlaceholder}>
+            {welcomeText.split('\n').map((line, index) => (
+              <span key={index} style={{ display: 'block', marginBottom: '0.5rem' }}>
+                {line}
+              </span>
+            ))}
+          </p>
+          ) : (
+            messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`${styles.consoleMessage} ${msg.role === 'user' ? styles.consoleUserMessage : styles.consoleAssistantMessage}`}
+              >
+                <strong>{msg.role === 'user' ? 'You' : 'Manager'}:</strong> {msg.content[0].text.value}
+              </div>
+            ))
+          )}
+        </div>
+        <div className={styles.consoleChatInput}>
+          <input
+            type="text"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            placeholder="Type 'list' to view all available commands."
+            disabled={isLoading}
+            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={isLoading || !userInput.trim()}
+          >
+            {isLoading ? 'Sending...' : 'Send'}
+          </button>
+        </div>
+      </div>
+      {/*Drag and Drop Area
+      <div
+      className={styles.consoleDragDrop}
+        onDragEnter={(e) => { e.preventDefault(); setIsDragActive(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setIsDragActive(false); }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
+        {isDragActive ? 'Drop files here' : 'Drag and drop .mp3/.mp4 files here'}
+      </div>*/}
     </main>
   );
 }

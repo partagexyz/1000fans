@@ -1,14 +1,3 @@
-# README
-# Phillip Long
-# September 5, 2023
-
-# Given a song, output its predicted tempo (in BPM).
-
-# python ./determine_tempo.py nn_filepath song_filepath
-
-
-# IMPORTS
-##################################################
 import sys
 from os.path import dirname, join, exists
 import torch
@@ -16,12 +5,7 @@ import torchaudio
 import torchvision
 import tempo_dataset as tempo_data
 from tempo_nn import tempo_nn
-# sys.argv = ("./determine_tempo.py", "/Users/philliplong/Desktop/Coding/artificial_dj/data/tempo_nn.pth", "")
-##################################################
 
-
-# MAIN FUNCTION
-##################################################
 
 class tempo_determiner():
 
@@ -32,8 +16,6 @@ class tempo_determiner():
     def __init__(self, nn_filepath = join(dirname(__file__), "tempo_nn.pth")):
         
         # IMPORT NEURAL NETWORK
-        ##################################################
-
         # preliminary check
         if not exists(nn_filepath):
             raise ValueError(f"Invalid nn_filepath argument: {nn_filepath} does not exist.")
@@ -42,15 +24,10 @@ class tempo_determiner():
         self.tempo_nn = tempo_nn().to(self.device)
         self.tempo_nn.load_state_dict(torch.load(nn_filepath, map_location = self.device)["state_dict"])
 
-        ##################################################
-
-
     # determine the tempo of a given song
     def determine_tempo(self, song_filepath):
 
         # LOAD AUDIO, RESAMPLE, CONVERT TO MONO
-        ##################################################
-
         # get waveform data by loading in audio
         signal, sample_rate = torchaudio.load(song_filepath, format = song_filepath.split(".")[-1]) # returns the waveform data and sample rate
         
@@ -62,13 +39,8 @@ class tempo_determiner():
 
         # convert from stereo to mono
         signal = tempo_data._mix_down_if_necessary(signal = signal)
-        
-        ##################################################
-
 
         # SPLIT SONG INTO CLIPS
-        ##################################################
-
         # determine where to chop audio up
         start_frame, end_frame = tempo_data._trim_silence(signal = signal, sample_rate = sample_rate, window_size = 0.1) # return frames for which audible audio begins and ends
         window_size = int(tempo_data.SAMPLE_DURATION * sample_rate) # convert window size from seconds to frames
@@ -80,12 +52,6 @@ class tempo_determiner():
             clip = torch.unsqueeze(input = self._transform(signal = signal[:, starting_frame:(starting_frame + window_size)], sample_rate = sample_rate), dim = 0).to(self.device)
             inputs = torch.cat(tensors = (inputs, clip), dim = 0)
 
-        ##################################################
-
-
-        # APPLY NEURAL NETWORK, MAKE PREDICTION
-        ##################################################
-
         # apply nn
         predictions = self.tempo_nn(inputs)
         predictions = torch.argmax(input = predictions, dim = 1, keepdim = True).view(-1) # convert to class indicies
@@ -93,9 +59,6 @@ class tempo_determiner():
 
         # make prediction
         predicted_tempo = float(torch.mode(input = predictions, dim = 0)[0].item())
-
-        ##################################################
-
         return predicted_tempo
     
 
@@ -134,12 +97,8 @@ class tempo_determiner():
         # return the signal as a transformed tensor registered to the correct device
         return signal
 
-##################################################
-
 
 # PROOF OF FUNCTION
-##################################################
-
 if __name__ == "__main__":
 
     song_filepath = sys.argv[2]
@@ -147,5 +106,3 @@ if __name__ == "__main__":
     tempo_determiner = tempo_determiner(nn_filepath = nn_filepath)
     predicted_tempo = tempo_determiner.determine_tempo(song_filepath = song_filepath)
     print(f"Predicted tempo of {song_filepath}: {predicted_tempo:.0f} BPM")
-
-##################################################

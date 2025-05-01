@@ -34,11 +34,10 @@
 /* Light Theme */
 [data-theme="light"] {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
+  --background-start-rgb: 255, 251, 240;
   --background-end-rgb: 240, 240, 255;
   --accent-color: #00FF00; /* Bright Green */
   --secondary-accent: #FF7F50; /* Coral */
-  
   --tile-start-rgb: 240, 240, 240;
   --tile-end-rgb: 255, 255, 255;
   --callout-rgb: 240, 240, 240;

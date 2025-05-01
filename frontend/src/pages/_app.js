@@ -46,6 +46,7 @@ export default function MyApp({ Component, pageProps }) {
         <title>Theosis Fans</title>
         <meta name="description" content="Exclusive content for Theosis fans" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon-square.ico" type="image/ico" />
       </Head>
       <NearContext.Provider value={{ wallet, signedAccountId }}>
         <Navigation isMobile={isMobile} />

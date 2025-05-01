@@ -15,6 +15,7 @@ yarn-error.log*
 /frontend/public/videos/*
 /frontend/public/audioMetadata.json
 /frontend/public/videoMetadata.json
+/frontend/.env*
 
 # backend .gitignore
 /contract/.pnp

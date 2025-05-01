@@ -3,8 +3,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 160px); /* minus the height of the navbar and footer */
-  position: relative; /* Required for pseudo-element positioning */
+  min-height: calc(100vh - 160px); /* minus navbar (80px) and footer (80px) */
+  position: relative;
   z-index: 1; /* Ensure content appears above the background */
 }
 
@@ -146,9 +146,10 @@
 }
 
 .navbar-icon {
-  height: 128px;
-  width: 96px;
-  clip-path: inset(35% 0% 35% 0%);
+  width: 160px;
+  height: 20px;
+  object-fit: contain; /* Ensure logo scales proportionally */
+  clip-path: none; /* Remove clipping to show full logo */
 }
 
 [data-theme="light"] .navbar-icon {
@@ -389,5 +390,210 @@
 
   to {
     transform: rotate(0deg);
+  }
+}
+
+/* Console-Specific Styles */
+.consoleMain {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: calc(100vh - 160px); /* Account for navbar (80px) and footer (80px) */
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+  background: transparent; /* Inherit body background from globals.css */
+}
+
+/* Override background image for console */
+.consoleMain::before {
+  content: none; /* Remove hero.jpg background for console */
+}
+
+/* Set console background for dark mode only */
+[data-theme="dark"] .consoleMain {
+  background-color: rgb(var(--background-start-rgb)); /* Dark grey background (30, 30, 30) */
+}
+
+/* Console Status Section */
+.consoleStatus {
+  text-align: center;
+  margin: 20px 0;
+  width: 100%;
+  max-width: var(--max-width);
+  padding: 0 1rem;
+}
+
+.consoleStatus p {
+  margin: 5px 0;
+  font-weight: bold;
+  color: rgb(var(--foreground-rgb));
+}
+
+/* Console Error Message */
+.consoleStatus .consoleError {
+  margin: 5px 0;
+  color: #ff0000; /* Red for errors in both themes */
+  font-weight: normal; /* Remove bold styling */
+  font-size: 0.9rem; /* Slightly smaller for emphasis */
+}
+
+/* Console Chat Container */
+.consoleChatContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  border: 1px solid rgba(var(--card-border-rgb), 0.5); /* Default border */
+  border-radius: var(--border-radius);
+  background: transparent; /* Transparent background */
+  overflow: hidden;
+}
+
+/* Enhance border visibility in light mode */
+[data-theme="light"] .consoleChatContainer {
+  border-color: rgba(120, 120, 120, 0.7); /* Darker grey for contrast with #FFFBF0 */
+}
+
+/* Console Chat Messages */
+.consoleChatMessages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: transparent; /* Transparent background */
+}
+
+.consolePlaceholder {
+  text-align: center;
+  color: rgba(var(--foreground-rgb), 0.6);
+}
+
+.consoleMessage {
+  max-width: 70%;
+  padding: 10px 15px;
+  border-radius: 15px;
+  margin: 5px;
+}
+
+.consoleUserMessage {
+  align-self: flex-end;
+  background-color: var(--accent-color);
+  color: rgb(var(--foreground-rgb));
+}
+
+.consoleAssistantMessage {
+  align-self: flex-start;
+  background-color: rgba(var(--card-rgb), 0.5);
+  color: rgb(var(--foreground-rgb));
+}
+
+/* Console Chat Input */
+.consoleChatInput {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-top: 1px solid rgba(var(--card-border-rgb), 0.5);
+  background: transparent; /* Transparent background */
+}
+
+.consoleChatInput input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid rgba(var(--card-border-rgb), 0.5);
+  border-radius: 20px;
+  margin-right: 10px;
+  outline: none;
+  background: transparent;
+  color: rgb(var(--foreground-rgb));
+}
+
+[data-theme="light"] .consoleChatInput input {
+  border-color: rgba(120, 120, 120, 0.7); /* Match chat container border */
+}
+
+.consoleChatInput input::placeholder {
+  color: rgba(var(--foreground-rgb), 0.6);
+}
+
+.consoleChatInput button {
+  padding: 10px 20px;
+  background-color: var(--accent-color);
+  color: rgb(var(--foreground-rgb));
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.consoleChatInput button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Console Drag and Drop Area */
+.consoleDragDrop {
+  border: 2px dashed rgba(var(--card-border-rgb), 0.5);
+  padding: 20px;
+  text-align: center;
+  margin: 20px 0;
+  width: 100%;
+  max-width: var(--max-width);
+  color: rgb(var(--foreground-rgb));
+}
+
+[data-theme="light"] .consoleDragDrop {
+  border-color: rgba(120, 120, 120, 0.7); /* Match chat container border */
+}
+
+/* Responsive Adjustments for Console */
+@media (max-width: 767px) {
+  .consoleMain {
+    min-height: calc(100vh - 160px);
+    padding: 10px;
+  }
+
+  .consoleStatus {
+    margin: 10px 0;
+  }
+
+  .consoleChatContainer {
+    margin: 0;
+    border: none; /* Optional: Remove border on mobile for cleaner look */
+  }
+
+  .consoleChatMessages {
+    padding: 10px;
+  }
+
+  .consoleChatInput {
+    padding: 5px;
+  }
+
+  .consoleChatInput input {
+    padding: 8px;
+    margin-right: 5px;
+  }
+
+  .consoleChatInput button {
+    padding: 8px 15px;
+  }
+
+  .consoleDragDrop {
+    margin: 10px 0;
+    padding: 15px;
+  }
+}
+
+/* Tablet and Smaller Desktop */
+@media (min-width: 768px) and (max-width: 1120px) {
+  .consoleChatContainer {
+    width: 90%;
   }
 }

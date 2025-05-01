@@ -1,4 +1,4 @@
-# a master script to execute them all 
+# a master script to extract features using AI, update the files metadata, and upload the files to the server 
 import os
 import subprocess
 import sys

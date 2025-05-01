@@ -1,7 +1,4 @@
 import { NetworkId, EVMWalletChain } from '../config';
-import { reconnect, http, createConfig } from "@wagmi/core";
-import { walletConnect, injected } from "@wagmi/connectors";
-import { createWeb3Modal } from "@web3modal/wagmi";
 
 // Config
 const near = {
@@ -28,17 +25,27 @@ const near = {
 // Get your projectId at https://cloud.reown.com
 const projectId = '5bb0fe33763b3bea40b8d69e4269b4ae';
 
-export const wagmiConfig = createConfig({
-  chains: [near],
-  transports: { [near.id]: http() },
-  connectors: [
-    walletConnect({ projectId, showQrModal: false }),
-    injected({ shimDisconnect: true }),
-  ],
-});
+// Initialize wagmiConfig and web3Modal only in the browser
+export let wagmiConfig = null;
+export let web3Modal = null;
 
-// Preserve login state on page reload
-reconnect(wagmiConfig);
+if (typeof window !== 'undefined') {
+  const { createConfig, http, reconnect } = await import('@wagmi/core');
+  const { walletConnect, injected } = await import('@wagmi/connectors');
+  const { createWeb3Modal } = await import('@web3modal/wagmi');
 
-// Modal for login
-export const web3Modal = createWeb3Modal({ wagmiConfig, projectId });
+  wagmiConfig = createConfig({
+    chains: [near],
+    transports: { [near.id]: http() },
+    connectors: [
+      walletConnect({ projectId, showQrModal: false }),
+      injected({ shimDisconnect: true }),
+    ],
+  });
+
+  // Preserve login state on page reload
+  reconnect(wagmiConfig);
+
+  // Modal for login
+  web3Modal = createWeb3Modal({ wagmiConfig, projectId });
+}

@@ -55,6 +55,9 @@ Upon wallet connection, the platform checks for the presence of a fan token:
 - Smart-contract update:  ~~Allow multiple token holding~~. ~~Remove 1-year-holding-before-sale rule~~. Add a paiement system: anyone can buy/sell tokens from their console. Add function listTokensForSale, and a buy function. Batch mint/transfer tokens? 
 - Console update: ~~on token ownership check : "claim your fans token" or "transfer your token"~~. ~~display the text lower on the page to match background~~.
 - Automate events metadata: fetch resident advisor API?
+- Storage update: move from AWS S3 to IPFS. 
+=> Update the smart contract for IPFS key management and access control: store group keys for content encryption, verify token ownershipo for key distribution, and handle revocation and re-encryption for each fans changes.
+=> Update the upload scripts to add file encryption post-AI processing, upload to IPFS instead of S3, and log hashes via NEAR blockchain for transparent records.
 - Test the platform with a closed group of users on testnet.
 - Update the platform on user feedback: 
   - music widget => a player for encrypted .mp3 that only this player can play (@vandigital).

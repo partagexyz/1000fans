@@ -83,6 +83,7 @@ def process_audio_files(audio_dir):
     processed_count = 0
     # Collect results
     for file, success in results:
+        print(f"Result for {file}: Success={success}")
         if success:
             if file not in processed_files:
                 new_processed_files[file] = True

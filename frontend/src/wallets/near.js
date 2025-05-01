@@ -17,43 +17,48 @@ import { setupBitteWallet } from '@near-wallet-selector/bitte-wallet';
 
 // ethereum wallets
 import { wagmiConfig, web3Modal } from './web3modal';
-import { setupEthereumWallets } from "@near-wallet-selector/ethereum-wallets";
 
 const THIRTY_TGAS = '30000000000000';
 const NO_DEPOSIT = '0';
 
 export class Wallet {
-  /**
-   * @constructor
-   * @param {Object} options - the options for the wallet
-   * @param {string} options.networkId - the network id to connect to
-   * @param {string} options.createAccessKeyFor - the contract to create an access key for
-   * @example
-   * const wallet = new Wallet({ networkId: 'testnet', createAccessKeyFor: 'contractId' });
-   * wallet.startUp((signedAccountId) => console.log(signedAccountId));
-   */
   constructor({ networkId = 'testnet', createAccessKeyFor = '1000fans.testnet' }) {
     this.createAccessKeyFor = createAccessKeyFor;
     this.networkId = networkId;
+    this.selector = null;
   }
 
   /**
    * To be called when the website loads
-   * @param {Function} accountChangeHook - a function that is called when the user signs in or out#
-   * @returns {Promise<string>} - the accountId of the signed-in user 
+   * @param {Function} accountChangeHook - a function that is called when the user signs in or out
+   * @returns {Promise<string>} - the accountId of the signed-in user
    */
   startUp = async (accountChangeHook) => {
+    // Initialize wallet selector modules
+    const modules = [
+      setupMyNearWallet(),
+      setupHereWallet(),
+      setupLedger(),
+      setupMeteorWallet(),
+      setupSender(),
+      setupBitteWallet(),
+    ];
+
+    // Dynamically import Ethereum wallets only in the browser
+    if (typeof window !== 'undefined') {
+      const { setupEthereumWallets } = await import('@near-wallet-selector/ethereum-wallets');
+      modules.push(
+        setupEthereumWallets({
+          wagmiConfig,
+          web3Modal,
+          alwaysOnboardDuringSignIn: true,
+        })
+      );
+    }
+
     this.selector = setupWalletSelector({
       network: this.networkId,
-      modules: [
-        setupMyNearWallet(),
-        setupHereWallet(),
-        setupLedger(),
-        setupMeteorWallet(),
-        setupSender(),
-        setupBitteWallet(),
-        setupEthereumWallets({ wagmiConfig, web3Modal, alwaysOnboardDuringSignIn: true }),
-      ],
+      modules,
     });
 
     const walletSelector = await this.selector;
@@ -61,7 +66,7 @@ export class Wallet {
     const accountId = isSignedIn ? walletSelector.store.getState().accounts[0].accountId : '';
 
     walletSelector.store.observable.subscribe(async (state) => {
-      const signedAccount = state?.accounts.find(account => account.active)?.accountId;
+      const signedAccount = state?.accounts.find((account) => account.active)?.accountId;
       accountChangeHook(signedAccount || '');
     });
 
@@ -117,7 +122,6 @@ export class Wallet {
    * @returns {Promise<Transaction>} - the resulting transaction
    */
   callMethod = async ({ contractId, method, args = {}, gas = THIRTY_TGAS, deposit = NO_DEPOSIT }) => {
-    // Sign a transaction with the "FunctionCall" action
     const selectedWallet = await (await this.selector).wallet();
     const outcome = await selectedWallet.signAndSendTransaction({
       receiverId: contractId,
@@ -156,7 +160,6 @@ export class Wallet {
    * Gets the balance of an account
    * @param {string} accountId - the account id to get the balance of
    * @returns {Promise<number>} - the balance of the account
-   *  
    */
   getBalance = async (accountId) => {
     const walletSelector = await this.selector;
@@ -177,7 +180,6 @@ export class Wallet {
    * Signs and sends transactions
    * @param {Object[]} transactions - the transactions to sign and send
    * @returns {Promise<Transaction[]>} - the resulting transactions
-   * 
    */
   signAndSendTransactions = async ({ transactions }) => {
     const selectedWallet = await (await this.selector).wallet();
@@ -185,9 +187,8 @@ export class Wallet {
   };
 
   /**
-   * 
    * @param {string} accountId
-   * @returns {Promise<Object[]>} - the access keys for the
+   * @returns {Promise<Object[]>} - the access keys for the account
    */
   getAccessKeys = async (accountId) => {
     const walletSelector = await this.selector;
@@ -224,13 +225,6 @@ export class Wallet {
   };
 }
 
-/**
- * @typedef NearContext
- * @property {import('./wallets/near').Wallet} wallet Current wallet
- * @property {string} signedAccountId The AccountId of the signed user
- */
-
-/** @type {import ('react').Context<NearContext>} */
 export const NearContext = createContext({
   wallet: undefined,
   signedAccountId: '',
