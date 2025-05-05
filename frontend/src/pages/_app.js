@@ -1,3 +1,4 @@
+// 1000fans/frontend/src/pages/_app.js
 import { useEffect, useState } from 'react';
 import Head from 'next/head'; // metadata
 import Footer from '../components/footer';

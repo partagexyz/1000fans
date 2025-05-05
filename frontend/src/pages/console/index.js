@@ -1,6 +1,7 @@
+// 1000fans/frontend/src/pages/console/index.js
 import { useState, useEffect, useContext } from 'react';
 import { NearContext } from '../../wallets/near';
-import styles from '../../styles/app.module.css';
+import styles from '../../styles/console.module.css';
 import OpenAI from 'openai';
 import * as nearAPI from 'near-api-js';
 
@@ -274,12 +275,12 @@ export default function Console() {
 
   // Welcoming text
   const welcomeText = `Hi! 👋 Welcome to 1000fans! 
-  1000fans is a private content platform used by Theosis to provide fans with exclusive content.
+  1000fans is a platform used by Theosis to provide fans with exclusive content.
   
-  You can access the artist's music or videos by saying 'spotify' or 'youtube', or contact him by saying 'contact'.
+  You can access the artist's music or videos by saying 'spotify' or 'youtube', or get in touch with the artist by saying 'contact'.
   
-  To access unreleased music and videos, connect your crypto wallet by typing 'connect wallet'.
-  If you do not have a crypto wallet and want to create one, type 'create wallet'.
+  To access unreleased music and videos, connect your wallet by saying 'connect wallet'.
+  If you do not have a crypto wallet yet and want to create one, type 'create wallet'.
   
   Type 'list' to view all available commands.`;
 
@@ -288,7 +289,7 @@ export default function Console() {
       {/* Wallet and Token Status */}
       <div className={styles.consoleStatus}>
         {!signedAccountId ? (
-          <p>Please log in with your NEAR wallet or use 'login with email' in the chat.</p>
+          <p>Please log in with your NEAR wallet or say 'login with email' in the chat.</p>
         ) : (
           <>
             <p>Connected as: {signedAccountId}</p>
@@ -327,7 +328,7 @@ export default function Console() {
             type="text"
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
-            placeholder="Type 'list' to view all available commands."
+            placeholder="Type 'list' for help."
             disabled={isLoading}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           />

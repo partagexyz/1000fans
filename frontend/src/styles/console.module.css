@@ -1,0 +1,215 @@
+/* styling rules for console */
+
+/* Main container for the console */
+.consoleMain {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: calc(100vh - 160px); /* Fallback for older browsers */
+    height: calc(100vh - 160px); /* Ensure it takes full height minus navbar and footer */
+    padding: 20px 20px 100px 20px; /* Add bottom padding to clear footer */
+    position: relative;
+    z-index: 1;
+    background: transparent; /* Inherit body background from globals.css */
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Remove background image for console */
+  .consoleMain::before {
+    content: none; /* Override hero.jpg from app.module.css */
+  }
+  
+  /* Dark mode background */
+  [data-theme="dark"] .consoleMain {
+    background-color: rgb(var(--background-start-rgb)); /* Dark grey (30, 30, 30) */
+  }
+  
+  /* Console Status Section */
+  .consoleStatus {
+    text-align: center;
+    margin: 20px 0;
+    width: 100%;
+    max-width: var(--max-width);
+    padding: 0 1rem;
+  }
+  
+  .consoleStatus p {
+    margin: 5px 0;
+    font-weight: bold;
+    color: rgb(var(--foreground-rgb));
+  }
+  
+  .consoleStatus .consoleError {
+    margin: 5px 0;
+    color: #ff0000; /* Red for errors */
+    font-weight: normal;
+    font-size: 0.9rem;
+  }
+  
+  /* Chat Container */
+  .consoleChatContainer {
+    flex: 1; /* Take remaining space */
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--max-width);
+    border: 1px solid rgba(var(--card-border-rgb), 0.5);
+    border-radius: var(--border-radius);
+    background: transparent;
+    overflow: hidden;
+  }
+  
+  /* Light mode border */
+  [data-theme="light"] .consoleChatContainer {
+    border-color: rgba(120, 120, 120, 0.7);
+  }
+  
+  /* Chat Messages */
+  .consoleChatMessages {
+    flex: 1; /* Fill available space */
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: transparent;
+  }
+  
+  .consolePlaceholder {
+    text-align: center;
+    color: rgba(var(--foreground-rgb), 0.6);
+  }
+  
+  .consoleMessage {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin: 5px;
+  }
+  
+  .consoleUserMessage {
+    align-self: flex-end;
+    background-color: var(--accent-color);
+    color: rgb(var(--foreground-rgb));
+  }
+  
+  .consoleAssistantMessage {
+    align-self: flex-start;
+    background-color: rgba(var(--card-rgb), 0.5);
+    color: rgb(var(--foreground-rgb));
+  }
+  
+  /* Chat Input */
+  .consoleChatInput {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-top: 1px solid rgba(var(--card-border-rgb), 0.5);
+    background: transparent;
+    position: sticky;
+    bottom: 0; /* Stick to bottom of chat container */
+    z-index: 2; /* Ensure it’s above messages */
+  }
+  
+  .consoleChatInput input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid rgba(var(--card-border-rgb), 0.5);
+    border-radius: 20px;
+    margin-right: 10px;
+    outline: none;
+    background: transparent;
+    color: rgb(var(--foreground-rgb));
+  }
+  
+  [data-theme="light"] .consoleChatInput input {
+    border-color: rgba(120, 120, 120, 0.7);
+  }
+  
+  .consoleChatInput input::placeholder {
+    color: rgba(var(--foreground-rgb), 0.6);
+  }
+  
+  .consoleChatInput button {
+    padding: 10px 20px;
+    background-color: var(--accent-color);
+    color: rgb(var(--foreground-rgb));
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  
+  .consoleChatInput button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Drag and Drop Area */
+  .consoleDragDrop {
+    border: 2px dashed rgba(var(--card-border-rgb), 0.5);
+    padding: 20px;
+    text-align: center;
+    margin: 20px 0;
+    width: 100%;
+    max-width: var(--max-width);
+    color: rgb(var(--foreground-rgb));
+  }
+  
+  [data-theme="light"] .consoleDragDrop {
+    border-color: rgba(120, 120, 120, 0.7);
+  }
+  
+  .consoleDragDropActive {
+    border-color: var(--accent-color);
+  }
+  
+  /* Mobile Adjustments */
+  @media (max-width: 767px) {
+    .consoleMain {
+      padding: 10px 10px 100px 10px; /* Ensure bottom padding clears footer */
+      min-height: calc(100vh - 160px);
+      height: auto; /* Allow dynamic height */
+    }
+  
+    .consoleStatus {
+      margin: 10px 0;
+    }
+  
+    .consoleChatContainer {
+      margin: 0;
+      border: none; /* Cleaner look on mobile */
+    }
+  
+    .consoleChatMessages {
+      padding: 10px;
+    }
+  
+    .consoleChatInput {
+      padding: 5px;
+    }
+  
+    .consoleChatInput input {
+      padding: 8px;
+      margin-right: 5px;
+      font-size: 0.9rem;
+    }
+  
+    .consoleChatInput button {
+      padding: 8px 15px;
+      font-size: 0.9rem;
+    }
+  
+    .consoleDragDrop {
+      margin: 10px 0;
+      padding: 15px;
+    }
+  }
+  
+  /* Tablet Adjustments */
+  @media (min-width: 768px) and (max-width: 1120px) {
+    .consoleChatContainer {
+      width: 90%;
+    }
+  }

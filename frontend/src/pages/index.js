@@ -1,3 +1,4 @@
+// 1000fans/frontend/src/pages/index.js
 import { useEffect, useState, useContext, useCallback } from 'react';
 import { NearContext } from '../wallets/near';
 import styles from '../styles/app.module.css';
