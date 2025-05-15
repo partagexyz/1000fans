@@ -1,7 +1,7 @@
 [package]
 name = "athousandfans"
 description = "A smart contract to mint and check ownership of 1000 fans tokens"
-version = "1.1.0"
+version = "1.2.0"
 authors = ["jcarbonnell.near"]
 edition = "2018"
 
@@ -9,12 +9,13 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-near-sdk = "5.5.0"
-near-contract-standards = "5.5.0"
+near-sdk = { version = "=5.6.0", features = [] }
+near-contract-standards = { version = "=5.6.0", features = [] }
 borsh = "1.1.0"
+serde_json = "1.0"
 
-[dev-dependencies] 
-near-sdk = { version = "5.5.0", features = ["unit-testing"] }
+[dev-dependencies]
+near-sdk = { version = "=5.6.0", features = ["unit-testing"] }
 near-workspaces = { version = "0.14.1", features = ["unstable"] }
 anyhow = "1.0"
 tokio = { version = "1.41.0", features = ["full"] }
