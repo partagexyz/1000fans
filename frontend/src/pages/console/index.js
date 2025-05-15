@@ -281,7 +281,7 @@ const welcomeText = `¡Hola amig@! Soy Theosis. 🎉 Gracias por tu interés en 
 🕙 Lineup:
 - 22:00-00:00: Liang
 - 00:00-01:00: Theosis (live)
-- 01:00-04:00: Deckars b2b Dafoe
+- 01:00-04:00: Deckard b2b Dafoe
 
 🎟️ Entrada: 15€ en puerta, antes de las 2.
 📍 Dirección: Pídela el mismo día por WhatsApp (+33624718164) o aquí.
