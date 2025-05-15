@@ -291,7 +291,7 @@ const welcomeText = `¡Hola amig@! Soy Theosis. 🎉 Gracias por tu interés en 
       {/* Wallet and Token Status */}
       <div className={styles.consoleStatus}>
         {!signedAccountId ? (
-          <p>Connect your crypto wallet for exclusive content.</p>
+          <p>Connect your wallet for exclusive content.</p>
         ) : (
           <>
             <p>Connected as: {signedAccountId}</p>
@@ -330,7 +330,7 @@ const welcomeText = `¡Hola amig@! Soy Theosis. 🎉 Gracias por tu interés en 
             type="text"
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
-            placeholder="Type 'list' for help."
+            placeholder="Type 'list' to chat with the AI."
             disabled={isLoading}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           />
