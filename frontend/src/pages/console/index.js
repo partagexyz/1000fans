@@ -284,16 +284,14 @@ const welcomeText = `¡Hola amig@! Soy Theosis. 🎉 Gracias por tu interés en 
 - 01:00-04:00: Deckard b2b Dafoe
 
 🎟️ Entrada: 15€ en puerta, antes de las 2.
-📍 Dirección: Pídela el mismo día por WhatsApp (+33624718164) o aquí.
-
-Conecta tu crypto wallet para contenido exclusivo.`;
+📍 Dirección: Pídela el mismo día por WhatsApp (+33624718164) o aquí.`;
 
   return (
     <main className={styles.consoleMain}>
       {/* Wallet and Token Status */}
       <div className={styles.consoleStatus}>
         {!signedAccountId ? (
-          <p>Please log in with your NEAR wallet or say 'login with email' in the chat.</p>
+          <p>Connect your crypto wallet for exclusive content.</p>
         ) : (
           <>
             <p>Connected as: {signedAccountId}</p>

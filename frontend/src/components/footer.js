@@ -31,7 +31,7 @@ const Footer = () => {
       </p>
       <p>
         ©{' '}
-        <a href="https://1000Fans.xyz" target="_blank" rel="noopener noreferrer">
+        <a href="https://theosis.1000Fans.xyz" target="_blank" rel="noopener noreferrer">
           1000Fans.xyz
         </a>
         , {new Date().getFullYear()}.
