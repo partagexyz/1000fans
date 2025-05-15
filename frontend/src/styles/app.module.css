@@ -284,10 +284,6 @@
     background-color: #FFFBF0;
   }
 
-  .main::before {
-    display: none;
-  }
-
   .footer {
     position: fixed;
     bottom: 0;
