@@ -16,7 +16,7 @@ export default function Index({ music, videos, events }) {
   useEffect(() => {
     const checkMembership = async () => {
       if (signedAccountId && wallet) {
-        const ownsToken = await wallet.ownsToken(signedAccountId, '1000fans.testnet');
+        const ownsToken = await wallet.ownsToken(signedAccountId, 'theosis.1000fans.near');
         setIsMember(ownsToken);
         if (ownsToken) {
           fetchChatHistory(); // Fetch chat history when user is a member

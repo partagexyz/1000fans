@@ -8,7 +8,7 @@ import { Wallet, NearContext } from '../wallets/near';
 import { NetworkId } from '../config';
 
 // wallet instance
-const wallet = new Wallet({ networkId: NetworkId });
+const wallet = new Wallet({ networkId: NetworkId, createAccessKeyFor: 'theosis.1000fans.near' });
 
 // optional: create an access key so the user doesnt need to sign transactions.
 /*

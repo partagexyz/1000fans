@@ -1,11 +1,12 @@
 // 1000fans/frontend/src/pages/console/index.js
 import { useState, useEffect, useContext } from 'react';
 import { NearContext } from '../../wallets/near';
+import { NetworkId } from '../../config';
 import styles from '../../styles/console.module.css';
 import OpenAI from 'openai';
 import * as nearAPI from 'near-api-js';
 
-const CONTRACT = '1000fans.testnet';
+const CONTRACT = 'theosis.1000fans.near';
 
 export default function Console() {
   const { signedAccountId, wallet, loginWithProvider, logout, keyPair } = useContext(NearContext);
@@ -52,11 +53,11 @@ export default function Console() {
           const { keyStores, connect } = nearAPI;
           const keyStore = new keyStores.BrowserLocalStorageKeyStore();
           const config = {
-            networkId: 'testnet',
+            networkId: 'NetworkId',
             keyStore,
-            nodeUrl: 'https://rpc.testnet.near.org',
-            walletUrl: 'https://wallet.testnet.near.org',
-            helperUrl: 'https://helper.testnet.near.org',
+            nodeUrl: 'https://rpc.${NetworkId}.near.org',
+            walletUrl: 'https://wallet.${NetworkId}.near.org',
+            helperUrl: 'https://helper.${NetworkId}.near.org',
           };
           const near = await connect(config);
           const account = await near.account(signedAccountId);
@@ -97,7 +98,7 @@ export default function Console() {
       if (!signedAccountId || !wallet) return;
       try {
         const tokenInfo = await wallet.viewMethod({
-          contractId: '1000fans.testnet',
+          contractId: CONTRACT,
           method: 'nft_tokens_for_owner',
           args: {
             account_id: signedAccountId,
@@ -207,8 +208,9 @@ export default function Console() {
         role: 'user',
         content: userInput,
       });
+      const managerAgentId = NetworkId === 'mainnet' ? 'theosis.devbot.near/manager-agent/latest' : 'devbot.near/manager-agent/latest';
       const run = await openai.beta.threads.runs.createAndPoll(threadId, {
-        assistant_id: 'devbot.near/manager-agent/latest',
+        assistant_id: managerAgentId,
       });
       if (run.status !== 'completed') {
         throw new Error('Run failed: ' + run.status);
@@ -274,15 +276,17 @@ export default function Console() {
   };
 
   // Welcoming text
-  const welcomeText = `Hi! 👋 Welcome to 1000fans! 
-  1000fans is a platform used by Theosis to provide fans with exclusive content.
-  
-  You can access the artist's music or videos by saying 'spotify' or 'youtube', or get in touch with the artist by saying 'contact'.
-  
-  To access unreleased music and videos, connect your wallet by saying 'connect wallet'.
-  If you do not have a crypto wallet yet and want to create one, type 'create wallet'.
-  
-  Type 'list' to view all available commands.`;
+const welcomeText = `¡Hola amig@! Soy Theosis. 🎉 Gracias por tu interés en la fiesta del 24 de mayo. ¡Es un evento súper especial! Por primera vez tocaré mis nuevas canciones en vivo, junto a 3 leyendas de la electrónica de Barcelona. 🫶
+
+🕙 Lineup:
+- 22:00-00:00: Liang
+- 00:00-01:00: Theosis (live)
+- 01:00-04:00: Deckars b2b Dafoe
+
+🎟️ Entrada: 15€ en puerta, antes de las 2.
+📍 Dirección: Pídela el mismo día por WhatsApp (+33624718164) o aquí.
+
+Conecta tu crypto wallet para contenido exclusivo.`;
 
   return (
     <main className={styles.consoleMain}>

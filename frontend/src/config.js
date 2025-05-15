@@ -1,5 +1,5 @@
 const contractPerNetwork = {
-  mainnet: '1000fans.near',
+  mainnet: 'theosis.1000fans.near',
   testnet: '1000fans.testnet',
 };
 
@@ -19,6 +19,6 @@ const evmWalletChains = {
   },
 }
 
-export const NetworkId = 'testnet';
+export const NetworkId = 'mainnet';
 export const HelloNearContract = contractPerNetwork[NetworkId];
 export const EVMWalletChain = evmWalletChains[NetworkId];

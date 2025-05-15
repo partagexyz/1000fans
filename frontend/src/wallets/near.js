@@ -22,7 +22,7 @@ const THIRTY_TGAS = '30000000000000';
 const NO_DEPOSIT = '0';
 
 export class Wallet {
-  constructor({ networkId = 'testnet', createAccessKeyFor = '1000fans.testnet' }) {
+  constructor({ networkId = 'mainnet', createAccessKeyFor = 'theosis.1000fans.near' }) {
     this.createAccessKeyFor = createAccessKeyFor;
     this.networkId = networkId;
     this.selector = null;
@@ -212,12 +212,12 @@ export class Wallet {
    */
   ownsToken = async (accountId, contractId) => {
     try {
-      const result = await this.viewMethod({
+      const tokens = await this.viewMethod({
         contractId: contractId,
-        method: 'owns_token',
-        args: { account_id: accountId },
+        method: 'nft_tokens_for_owner',
+        args: { account_id: accountId, from_index: null, limit: 1 },
       });
-      return result; // should be true or false from the contract
+      return tokens.length > 0; // should be more than 0 if token held
     } catch (error) {
       console.error('Failed to check token ownership:', error);
       return false; // Assume no ownership if there's an error
