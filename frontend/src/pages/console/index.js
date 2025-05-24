@@ -284,7 +284,7 @@ const welcomeText = `¡Hola amig@! Soy Theosis. 🎉 Gracias por tu interés en 
 - 01:00-04:00: Deckard b2b Dafoe
 
 🎟️ Entrada: 15€ en puerta, antes de las 2.
-📍 Dirección: Carrer de la Costa Brava 22, 08030 Barcelona. WhatsApp +33624718164.`;
+📍 Dirección: Carrer de la Costa Brava 22, 7b, 08030 Barcelona. WhatsApp +33624718164.`;
 
   return (
     <main className={styles.consoleMain}>
