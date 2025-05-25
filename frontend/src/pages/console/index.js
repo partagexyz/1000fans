@@ -276,15 +276,11 @@ export default function Console() {
   };
 
   // Welcoming text
-const welcomeText = `¡Hola amig@! Soy Theosis. 🎉 Gracias por tu interés en la fiesta del 24 de mayo. ¡Es un evento súper especial! Por primera vez tocaré mis nuevas canciones en vivo, junto a 3 leyendas de la electrónica de Barcelona. 🫶
-
-🕙 Lineup:
-- 22:00-00:00: Liang
-- 00:00-01:00: Theosis (live)
-- 01:00-04:00: Deckard b2b Dafoe
-
-🎟️ Entrada: 15€ en puerta, antes de las 2.
-📍 Dirección: Carrer de la Costa Brava 22, 7b, 08030 Barcelona. WhatsApp +33624718164.`;
+const welcomeText = `Hi ! Welcome to 1000fans!
+1000fans is a platform that allows producers to share their audio and video in private with their fans.
+It is built with blockchain encryption at core and AI agents to make it easy to use.
+You can chat with the AI assistant to get help with your account, upload files, or manage your content
+`;
 
   return (
     <main className={styles.consoleMain}>
