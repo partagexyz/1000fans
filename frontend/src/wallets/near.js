@@ -223,6 +223,27 @@ export class Wallet {
       return false; // Assume no ownership if there's an error
     }
   };
+
+  signMessage = async ({ message, nonce, recipient, callbackUrl }) => {
+    const selectedWallet = await (await this.selector).wallet();
+
+    if (!selectedWallet.signMessage) {
+      throw new Error('The selected wallet does not support message signing');
+    }
+
+    try {
+      const signedMessage = await selectedWallet.signMessage({
+        message,
+        nonce,
+        recipient,
+        callbackUrl,
+      });
+      return signedMessage;
+    } catch (error) {
+      console.error('Error signing message:', error);
+      throw error;
+    }
+  };
 }
 
 export const NearContext = createContext({

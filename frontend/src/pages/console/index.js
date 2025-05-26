@@ -7,9 +7,11 @@ import OpenAI from 'openai';
 import * as nearAPI from 'near-api-js';
 
 const CONTRACT = 'theosis.1000fans.near';
+const NEAR_AI_AUTH_OBJECT_STORAGE_KEY = 'NearAIAuthObject';
+const BASE_URL = 'https://api.near.ai';
 
 export default function Console() {
-  const { signedAccountId, wallet, loginWithProvider, logout, keyPair } = useContext(NearContext);
+  const { signedAccountId, wallet, loginWithProvider, logout } = useContext(NearContext);
   const [authToken, setAuthToken] = useState(null);
   const [threadId, setThreadId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -22,75 +24,89 @@ export default function Console() {
   const [agentTokenStatus, setAgentTokenStatus] = useState(null);
 
   const openai = new OpenAI({
-    baseURL: 'https://api.near.ai/v1',
+    baseURL: `${BASE_URL}/v1`,
     apiKey: authToken ? `Bearer ${authToken}` : '',
-    dangerouslyAllowBrowser: true, // Temporary for client-side testing
+    dangerouslyAllowBrowser: true, // Temporary, remove in production
   });
+
+  // Handle NEAR AI login callback
+  useEffect(() => {
+    async function handleNearAILoginCallback() {
+      try {
+        const callbackParams = new URLSearchParams(window.location.hash.replace('#', ''));
+        const accountId = callbackParams.get('accountId');
+        if (accountId) {
+          const authObject = JSON.parse(localStorage.getItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY) || '{}');
+          authObject.account_id = accountId;
+          authObject.signature = callbackParams.get('signature');
+          authObject.public_key = callbackParams.get('publicKey');
+          localStorage.setItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY, JSON.stringify(authObject));
+          setAuthToken(JSON.stringify(authObject));
+          window.location.hash = '';
+          console.log('Updated authToken from callback:', authObject);
+        }
+      } catch (e) {
+        console.error('Callback handling error:', e);
+        setError('Failed to process login callback: ' + e.message);
+      }
+    }
+    handleNearAILoginCallback();
+  }, []);
 
   // Generate NEAR AI auth token
   useEffect(() => {
     async function generateAuthToken() {
-      if (!signedAccountId) return;
+      if (!signedAccountId || !wallet) {
+        setError('Please connect your wallet to authenticate.');
+        return;
+      }
+      const storedAuth = localStorage.getItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY);
+      if (storedAuth) {
+        const authObject = JSON.parse(storedAuth);
+        if (authObject.account_id === signedAccountId && authObject.signature) {
+          setAuthToken(JSON.stringify(authObject));
+          console.log('Using stored authToken:', authObject);
+          return;
+        }
+      }
       try {
-        const nonce = String(Date.now());
+        if (!wallet.signMessage) {
+          throw new Error('Wallet does not support message signing. Please use MyNEARWallet or MeteorWallet.');
+        }
+        const nonce = String(Date.now()).padStart(32, '0');
         const recipient = 'ai.near';
         const callbackUrl = window.location.href;
-        const message = 'Login to NEAR AI';
-
-        let signedMessage;
-        if (keyPair) {
-          // Web3Auth user
-          const messageBuffer = Buffer.from(message);
-          const nonceBuffer = Buffer.from(nonce.padStart(32, '0'));
-          const signed = keyPair.sign(Buffer.concat([messageBuffer, nonceBuffer]));
-          signedMessage = {
-            signature: Buffer.from(signed.signature).toString('base64'),
-            publicKey: keyPair.getPublicKey().toString(),
-            accountId: signedAccountId,
-          };
-        } else if (wallet) {
-          // NEAR wallet user
-          const { keyStores, connect } = nearAPI;
-          const keyStore = new keyStores.BrowserLocalStorageKeyStore();
-          const config = {
-            networkId: 'NetworkId',
-            keyStore,
-            nodeUrl: 'https://rpc.${NetworkId}.near.org',
-            walletUrl: 'https://wallet.${NetworkId}.near.org',
-            helperUrl: 'https://helper.${NetworkId}.near.org',
-          };
-          const near = await connect(config);
-          const account = await near.account(signedAccountId);
-          const keyPair = await keyStore.getKey('testnet', signedAccountId);
-          if (!keyPair) throw new Error('No key pair found for account');
-          const messageBuffer = Buffer.from(message);
-          const nonceBuffer = Buffer.from(nonce.padStart(32, '0'));
-          const signed = keyPair.sign(Buffer.concat([messageBuffer, nonceBuffer]));
-          signedMessage = {
-            signature: Buffer.from(signed.signature).toString('base64'),
-            publicKey: keyPair.getPublicKey().toString(),
-            accountId: signedAccountId,
-          };
-        } else {
-          throw new Error('No valid signing method available');
-        }
-
-        const auth = JSON.stringify({
-          account_id: signedAccountId,
-          public_key: signedMessage.publicKey,
-          signature: signedMessage.signature,
+        const message = 'Welcome to NEAR AI Hub!';
+        const authObject = {
           message,
           nonce,
           recipient,
+          callback_url: callbackUrl,
+          signature: '',
+          account_id: signedAccountId,
+          public_key: '',
+        };
+        localStorage.setItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY, JSON.stringify(authObject));
+        const nonceBuffer = Buffer.from(new TextEncoder().encode(nonce));
+        const signedMessage = await wallet.signMessage({
+          message,
+          nonce: nonceBuffer,
+          recipient,
           callbackUrl,
         });
-        setAuthToken(auth);
+        authObject.signature = signedMessage.signature; // Assume base64
+        authObject.account_id = signedAccountId;
+        authObject.public_key = signedMessage.publicKey;
+        localStorage.setItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY, JSON.stringify(authObject));
+        setAuthToken(JSON.stringify(authObject));
+        console.log('Generated authToken:', authObject);
       } catch (e) {
+        console.error('Auth token generation error:', e);
         setError('Failed to authenticate with NEAR AI: ' + e.message);
       }
     }
     generateAuthToken();
-  }, [signedAccountId, wallet, keyPair]);
+  }, [signedAccountId, wallet]);
 
   // Primary token ownership check (NEAR blockchain)
   useEffect(() => {
@@ -123,31 +139,72 @@ export default function Console() {
     const interval = setInterval(async () => {
       try {
         console.log('Checking agent token status for threadId:', threadId);
-        const files = await openai.beta.threads.files.list(threadId);
+        const response = await fetch(`${BASE_URL}/v1/threads/${threadId}/files`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Accept': 'application/json',
+          },
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+        const files = await response.json();
         const authFile = files.data.find(f => f.filename === 'auth_status.json');
         if (authFile) {
-          const fileContent = await openai.files.content(authFile.id);
-          const authStatus = JSON.parse(await fileContent.text());
+          const fileResponse = await fetch(`${BASE_URL}/v1/files/${authFile.id}/content`, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Accept': 'application/json',
+            },
+          });
+          if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}: ${await fileResponse.text()}`);
+          const authStatus = JSON.parse(await fileResponse.text());
           setAgentTokenStatus(authStatus.authorized);
         } else {
           setAgentTokenStatus(false);
         }
       } catch (e) {
         console.error('Error checking agent token status:', e);
-        setAgentTokenStatus(null); // Indicate check failed
+        setAgentTokenStatus(null);
       }
-    }, 10000); // Run every 10 seconds to reduce load
+    }, 10000);
     return () => clearInterval(interval);
   }, [threadId, authToken]);
 
   // Create thread
   useEffect(() => {
     async function createThread() {
-      if (!authToken) return;
+      if (!authToken) {
+        console.log('No authtoken, skipping thread creation');
+        return;
+      }
       try {
-        const thread = await openai.beta.threads.create();
+        console.log('Creating NEAR AI thread with auth token:', authToken);
+        const response = await fetch(`${BASE_URL}/v1/threads`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                content: 'Initial message',
+                role: 'user',
+                metadata: {},
+              },
+            ],
+          }),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Thread creation response:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        const thread = await response.json();
+        console.log('Thread created, ID:', thread.id);
         setThreadId(thread.id);
       } catch (e) {
+        console.error('Thread creation error:', e);
         setError('Failed to create thread: ' + e.message);
       }
     }
@@ -159,9 +216,21 @@ export default function Console() {
     if (!threadId || !authToken) return;
     const interval = setInterval(async () => {
       try {
-        const threadMessages = await openai.beta.threads.messages.list(threadId);
-        setMessages(threadMessages.data.reverse());
+        const response = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages?order=desc`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Accept': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Failed to fetch messages:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        const threadMessages = await response.json();
+        setMessages(threadMessages.data);
       } catch (e) {
+        console.error('Message polling error:', e);
         setError('Failed to fetch messages: ' + e.message);
       }
     }, 2000);
@@ -174,7 +243,6 @@ export default function Console() {
     setIsLoading(true);
     setError(null);
     try {
-      // Handle email login command
       if (userInput.toLowerCase().includes('login with email')) {
         try {
           await loginWithProvider('email_passwordless', {
@@ -190,8 +258,6 @@ export default function Console() {
           throw new Error('Email login failed: ' + e.message);
         }
       }
-
-      // Handle logout command
       if (userInput.toLowerCase().includes('logout')) {
         await logout();
         setMessages([
@@ -199,33 +265,100 @@ export default function Console() {
           { role: 'assistant', content: [{ text: { value: 'Logged out successfully.' } }] },
         ]);
         setUserInput('');
+        localStorage.removeItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY);
+        setAuthToken(null);
+        setThreadId(null);
         return;
       }
-
-      // Send to NEAR AI
-      if (!threadId) throw new Error('No thread available');
-      await openai.beta.threads.messages.create(threadId, {
-        role: 'user',
-        content: userInput,
+      if (!threadId) throw new Error('No thread available.');
+      const managerAgentId = 'devbot.near/manager-agent/0.0.27';
+      const response = await fetch(`${BASE_URL}/v1/agent/runs`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          agent_id: managerAgentId,
+          thread_id: threadId,
+          new_message: userInput,
+          max_iterations: 1,
+          record_run: true,
+          tool_resources: {},
+          user_env_vars: {},
+        }),
       });
-      const managerAgentId = NetworkId === 'mainnet' ? 'theosis.devbot.near/manager-agent/latest' : 'devbot.near/manager-agent/latest';
-      const run = await openai.beta.threads.runs.createAndPoll(threadId, {
-        assistant_id: managerAgentId,
-      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Agent run error:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      let run = await response.json();
+      let attempts = 0;
+      while (run.status !== 'completed' && attempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const statusResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/runs/${run.id}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Accept': 'application/json',
+          },
+        });
+        if (!statusResponse.ok) {
+          const errorText = await statusResponse.text();
+          console.error('Run status error:', errorText);
+          throw new Error(`HTTP ${statusResponse.status}: ${errorText}`);
+        }
+        run = await statusResponse.json();
+        attempts++;
+      }
       if (run.status !== 'completed') {
+        console.error('Run failed with status:', run.status);
         throw new Error('Run failed: ' + run.status);
       }
       if (userInput.toLowerCase().includes('create wallet')) {
-        const threadMessages = await openai.beta.threads.messages.list(threadId);
+        const threadMessagesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages?order=desc`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Accept': 'application/json',
+          },
+        });
+        if (!threadMessagesResponse.ok) {
+          const errorText = await threadMessagesResponse.text();
+          console.error('Thread messages error:', errorText);
+          throw new Error(`HTTP ${threadMessagesResponse.status}: ${errorText}`);
+        }
+        const threadMessages = await threadMessagesResponse.json();
         const latestMessage = threadMessages.data.find(
           m => m.role === 'assistant' && m.content[0].text.value.includes('Wallet created')
         );
         if (latestMessage) {
-          const files = await openai.beta.threads.messages.files.list(threadId, latestMessage.id);
+          const filesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages/${latestMessage.id}/files`, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Accept': 'application/json',
+            },
+          });
+          if (!filesResponse.ok) {
+            const errorText = await filesResponse.text();
+            console.error('Files fetch error:', errorText);
+            throw new Error(`HTTP ${filesResponse.status}: ${errorText}`);
+          }
+          const files = await filesResponse.json();
           const credentialsFile = files.data.find(f => f.filename === 'wallet_credentials.json');
           if (credentialsFile) {
-            const fileContent = await openai.files.content(credentialsFile.id);
-            const credentials = JSON.parse(await fileContent.text());
+            const fileResponse = await fetch(`${BASE_URL}/v1/files/${credentialsFile.id}/content`, {
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Accept': 'application/json',
+              },
+            });
+            if (!fileResponse.ok) {
+              const errorText = await fileResponse.text();
+              console.error('File content error:', errorText);
+              throw new Error(`HTTP ${fileResponse.status}: ${errorText}`);
+            }
+            const credentials = JSON.parse(await fileResponse.text());
             alert(
               `New wallet created! Account ID: ${credentials.account_id}. Save your private key securely: ${credentials.private_key}`
             );
@@ -234,7 +367,8 @@ export default function Console() {
       }
       setUserInput('');
     } catch (e) {
-      setError('Failed to process request: ' + e.message);
+      console.error('Send message error:', e);
+      setError('Failed to send message: ' + e.message);
     } finally {
       setIsLoading(false);
     }
@@ -254,24 +388,38 @@ export default function Console() {
         return;
     }
     try {
-        for (const file of droppedFiles) {
-            const formData = new FormData();
-            formData.append('file', file);
-            const response = await fetch('https://api.near.ai/v1/files', {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${authToken}` },
-                body: formData,
-            });
-            const fileData = await response.json();
-            await openai.beta.threads.messages.create(threadId, {
-                role: 'user',
-                content: `Uploaded file: ${file.name}`,
-                file_ids: [fileData.id],
-            });
+      for (const file of droppedFiles) {
+          const formData = new FormData();
+          formData.append('file', file);
+          const response = await fetch('https://api.near.ai/v1/files', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${authToken}` },
+              body: formData,
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+          }
+          const fileData = await response.json();
+          const msgResponse = await fetch(`https://api.near.ai/v1/threads/${threadId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            role: 'user',
+            content: `Uploaded file: ${file.name}`,
+            file_ids: [fileData.id],
+          }),
+        });
+        if (!msgResponse.ok) {
+          throw new Error(`HTTP ${msgResponse.status}: ${await msgResponse.text()}`);
         }
-        await sendMessage('upload file');
+      }
+      await sendMessage('upload file');
     } catch (e) {
-        setError('Failed to upload files: ' + e.message);
+      setError('Failed to upload files: ' + e.message);
     }
   };
 
@@ -327,12 +475,12 @@ You can chat with the AI assistant to get help with your account, upload files, 
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             placeholder="Type 'list' to chat with the AI."
-            disabled={isLoading}
+            disabled={isLoading || !threadId}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           />
           <button
             onClick={sendMessage}
-            disabled={isLoading || !userInput.trim()}
+            disabled={isLoading || !userInput.trim() || !threadId}
           >
             {isLoading ? 'Sending...' : 'Send'}
           </button>
