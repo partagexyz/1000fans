@@ -21,7 +21,6 @@ export default function Console() {
   const [ownsToken, setOwnsToken] = useState(false);
   const [tokenId, setTokenId] = useState('');
   const [isDragActive, setIsDragActive] = useState(false);
-  const [agentTokenStatus, setAgentTokenStatus] = useState(null);
 
   const openai = new OpenAI({
     baseURL: `${BASE_URL}/v1`,
@@ -56,8 +55,9 @@ export default function Console() {
   // Generate NEAR AI auth token
   useEffect(() => {
     async function generateAuthToken() {
-      if (!signedAccountId || !wallet) {
-        setError('Please connect your wallet to authenticate.');
+      if (!wallet) return; // Wait for wallet initialization
+      if (!signedAccountId) {
+        setError(null);
         return;
       }
       const storedAuth = localStorage.getItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY);
@@ -71,20 +71,20 @@ export default function Console() {
       }
       try {
         if (!wallet.signMessage) {
-          throw new Error('Wallet does not support message signing. Please use MyNEARWallet or MeteorWallet.');
+          throw new Error('Wallet does not support message signing. Please use MyNEARWallet.');
         }
         const nonce = String(Date.now()).padStart(32, '0');
-        const recipient = 'ai.near';
-        const callbackUrl = window.location.href;
+        const recipient = 'near.ai'; // NEAR AI Hub recipient
+        const callbackUrl = window.location.href.split('?')[0];
         const message = 'Welcome to NEAR AI Hub!';
         const authObject = {
           message,
           nonce,
           recipient,
           callback_url: callbackUrl,
-          signature: '',
+          signature: null,
           account_id: signedAccountId,
-          public_key: '',
+          public_key: null,
         };
         localStorage.setItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY, JSON.stringify(authObject));
         const nonceBuffer = Buffer.from(new TextEncoder().encode(nonce));
@@ -94,8 +94,7 @@ export default function Console() {
           recipient,
           callbackUrl,
         });
-        authObject.signature = signedMessage.signature; // Assume base64
-        authObject.account_id = signedAccountId;
+        authObject.signature = signedMessage.signature;
         authObject.public_key = signedMessage.publicKey;
         localStorage.setItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY, JSON.stringify(authObject));
         setAuthToken(JSON.stringify(authObject));
@@ -108,7 +107,7 @@ export default function Console() {
     generateAuthToken();
   }, [signedAccountId, wallet]);
 
-  // Primary token ownership check (NEAR blockchain)
+  // Token ownership check (NEAR blockchain)
   useEffect(() => {
     const checkTokenOwnership = async () => {
       if (!signedAccountId || !wallet) return;
@@ -132,42 +131,6 @@ export default function Console() {
     };
     checkTokenOwnership();
   }, [signedAccountId, wallet]);
-
-  // Secondary token ownership check (NEAR AI agentic system)
-  useEffect(() => {
-    if (!threadId || !authToken) return;
-    const interval = setInterval(async () => {
-      try {
-        console.log('Checking agent token status for threadId:', threadId);
-        const response = await fetch(`${BASE_URL}/v1/threads/${threadId}/files`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Accept': 'application/json',
-          },
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-        const files = await response.json();
-        const authFile = files.data.find(f => f.filename === 'auth_status.json');
-        if (authFile) {
-          const fileResponse = await fetch(`${BASE_URL}/v1/files/${authFile.id}/content`, {
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-              'Accept': 'application/json',
-            },
-          });
-          if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}: ${await fileResponse.text()}`);
-          const authStatus = JSON.parse(await fileResponse.text());
-          setAgentTokenStatus(authStatus.authorized);
-        } else {
-          setAgentTokenStatus(false);
-        }
-      } catch (e) {
-        console.error('Error checking agent token status:', e);
-        setAgentTokenStatus(null);
-      }
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [threadId, authToken]);
 
   // Create thread
   useEffect(() => {
@@ -271,7 +234,7 @@ export default function Console() {
         return;
       }
       if (!threadId) throw new Error('No thread available.');
-      const managerAgentId = 'devbot.near/manager-agent/0.0.27';
+      const managerAgentId = NetworkId === 'mainnet' ? 'devbot.near/manager-agent/latest' : 'devbot.near/manager-agent/0.0.27';
       const response = await fetch(`${BASE_URL}/v1/agent/runs`, {
         method: 'POST',
         headers: {
@@ -294,28 +257,8 @@ export default function Console() {
         console.error('Agent run error:', errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      let run = await response.json();
-      let attempts = 0;
-      while (run.status !== 'completed' && attempts < 30) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const statusResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/runs/${run.id}`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Accept': 'application/json',
-          },
-        });
-        if (!statusResponse.ok) {
-          const errorText = await statusResponse.text();
-          console.error('Run status error:', errorText);
-          throw new Error(`HTTP ${statusResponse.status}: ${errorText}`);
-        }
-        run = await statusResponse.json();
-        attempts++;
-      }
-      if (run.status !== 'completed') {
-        console.error('Run failed with status:', run.status);
-        throw new Error('Run failed: ' + run.status);
-      }
+      const run = await response.json();
+      console.log('Agent run initiated:', run);
       if (userInput.toLowerCase().includes('create wallet')) {
         const threadMessagesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages?order=desc`, {
           headers: {
@@ -324,54 +267,54 @@ export default function Console() {
           },
         });
         if (!threadMessagesResponse.ok) {
-          const errorText = await threadMessagesResponse.text();
-          console.error('Thread messages error:', errorText);
-          throw new Error(`HTTP ${threadMessagesResponse.status}: ${errorText}`);
+        const errorText = await threadMessagesResponse.text();
+        console.error('Thread messages error:', errorText);
+        throw new Error(`HTTP ${threadMessagesResponse.status}: ${errorText}`);
+      }
+      const threadMessages = await threadMessagesResponse.json();
+      const latestMessage = threadMessages.data.find(
+        m => m.role === 'assistant' && m.content[0].text.value.includes('Wallet created')
+      );
+      if (latestMessage && latestMessage.file_ids?.length) {
+        const filesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages/${latestMessage.id}/files`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Accept': 'application/json',
+          },
+        });
+        if (!filesResponse.ok) {
+          const errorText = await filesResponse.text();
+          console.error('Files fetch error:', errorText);
+          throw new Error(`HTTP ${filesResponse.status}: ${errorText}`);
         }
-        const threadMessages = await threadMessagesResponse.json();
-        const latestMessage = threadMessages.data.find(
-          m => m.role === 'assistant' && m.content[0].text.value.includes('Wallet created')
-        );
-        if (latestMessage) {
-          const filesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages/${latestMessage.id}/files`, {
+        const files = await filesResponse.json();
+        const credentialsFile = files.data.find(f => f.filename === 'wallet_credentials.json');
+        if (credentialsFile) {
+          const fileResponse = await fetch(`${BASE_URL}/v1/files/${credentialsFile.id}/content`, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
               'Accept': 'application/json',
             },
           });
-          if (!filesResponse.ok) {
-            const errorText = await filesResponse.text();
-            console.error('Files fetch error:', errorText);
-            throw new Error(`HTTP ${filesResponse.status}: ${errorText}`);
+          if (!fileResponse.ok) {
+            const errorText = await fileResponse.text();
+            console.error('File content error:', errorText);
+            throw new Error(`HTTP ${fileResponse.status}: ${errorText}`);
           }
-          const files = await filesResponse.json();
-          const credentialsFile = files.data.find(f => f.filename === 'wallet_credentials.json');
-          if (credentialsFile) {
-            const fileResponse = await fetch(`${BASE_URL}/v1/files/${credentialsFile.id}/content`, {
-              headers: {
-                'Authorization': `Bearer ${authToken}`,
-                'Accept': 'application/json',
-              },
-            });
-            if (!fileResponse.ok) {
-              const errorText = await fileResponse.text();
-              console.error('File content error:', errorText);
-              throw new Error(`HTTP ${fileResponse.status}: ${errorText}`);
-            }
-            const credentials = JSON.parse(await fileResponse.text());
-            alert(
-              `New wallet created! Account ID: ${credentials.account_id}. Save your private key securely: ${credentials.private_key}`
-            );
-          }
+          const credentials = JSON.parse(await fileResponse.text());
+          alert(
+            `New wallet created! Account ID: ${credentials.account_id}. Save your private key securely: ${credentials.private_key}`
+          );
         }
       }
-      setUserInput('');
-    } catch (e) {
-      console.error('Send message error:', e);
-      setError('Failed to send message: ' + e.message);
-    } finally {
-      setIsLoading(false);
     }
+    setUserInput('');
+  } catch (e) {
+    console.error('Send message error:', e);
+    setError('Failed to send message: ' + e.message);
+  } finally {
+    setIsLoading(false);
+  }
   };
 
   // Drag and drop file upload
@@ -440,9 +383,6 @@ You can chat with the AI assistant to get help with your account, upload files, 
           <>
             <p>Connected as: {signedAccountId}</p>
             <p> Token Status: {ownsToken ? `Owns Token ID: ${tokenId}` : 'No token owned'}</p>
-            {agentTokenStatus !== null && (
-              <p>Agent Token Status: {agentTokenStatus ? 'Token Detected' : 'No token detected'}</p>
-            )}
           </>
         )}
         {error && <p className={styles.consoleError}>{error}</p>}
