@@ -226,7 +226,8 @@ export default function Console() {
         return;
       }
       if (!threadId) throw new Error('No thread available.');
-      const managerAgentId = NetworkId === 'mainnet' ? 'devbot.near/manager-agent/latest' : 'devbot.near/manager-agent/0.0.36';
+      const managerAgentId = 'devbot.near/manager-agent/latest';
+      console.log(`Running agent: ${managerAgentId}`);
       const response = await fetch(`${BASE_URL}/v1/agent/runs`, {
         method: 'POST',
         headers: {
