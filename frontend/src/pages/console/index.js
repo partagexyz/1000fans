@@ -3,8 +3,6 @@ import { useState, useEffect, useContext } from 'react';
 import { NearContext } from '../../wallets/near';
 import { NetworkId } from '../../config';
 import styles from '../../styles/console.module.css';
-import OpenAI from 'openai';
-import * as nearAPI from 'near-api-js';
 
 const CONTRACT = 'theosis.1000fans.near';
 const NEAR_AI_AUTH_OBJECT_STORAGE_KEY = 'NearAIAuthObject';
@@ -21,12 +19,6 @@ export default function Console() {
   const [ownsToken, setOwnsToken] = useState(false);
   const [tokenId, setTokenId] = useState('');
   const [isDragActive, setIsDragActive] = useState(false);
-
-  const openai = new OpenAI({
-    baseURL: `${BASE_URL}/v1`,
-    apiKey: authToken ? `Bearer ${authToken}` : '',
-    dangerouslyAllowBrowser: true, // Temporary, remove in production
-  });
 
   // Handle NEAR AI login callback
   useEffect(() => {
@@ -179,7 +171,7 @@ export default function Console() {
     if (!threadId || !authToken) return;
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages?order=desc`, {
+        const response = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages?order=asc`, {
           headers: {
             'Authorization': `Bearer ${authToken}`,
             'Accept': 'application/json',
@@ -260,7 +252,7 @@ export default function Console() {
       const run = await response.json();
       console.log('Agent run initiated:', run);
       if (userInput.toLowerCase().includes('create wallet')) {
-        const threadMessagesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages?order=desc`, {
+        const threadMessagesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages?order=asc`, {
           headers: {
             'Authorization': `Bearer ${authToken}`,
             'Accept': 'application/json',
