@@ -66,7 +66,7 @@ export default function Console() {
           throw new Error('Wallet does not support message signing. Please use MyNEARWallet.');
         }
         const nonce = String(Date.now()).padStart(32, '0');
-        const recipient = 'near.ai'; // NEAR AI Hub recipient
+        const recipient = 'near.ai';
         const callbackUrl = window.location.href.split('?')[0];
         const message = 'Welcome to NEAR AI Hub!';
         const authObject = {
@@ -259,54 +259,54 @@ export default function Console() {
           },
         });
         if (!threadMessagesResponse.ok) {
-        const errorText = await threadMessagesResponse.text();
-        console.error('Thread messages error:', errorText);
-        throw new Error(`HTTP ${threadMessagesResponse.status}: ${errorText}`);
-      }
-      const threadMessages = await threadMessagesResponse.json();
-      const latestMessage = threadMessages.data.find(
-        m => m.role === 'assistant' && m.content[0].text.value.includes('Wallet created')
-      );
-      if (latestMessage && latestMessage.file_ids?.length) {
-        const filesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages/${latestMessage.id}/files`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Accept': 'application/json',
-          },
-        });
-        if (!filesResponse.ok) {
-          const errorText = await filesResponse.text();
-          console.error('Files fetch error:', errorText);
-          throw new Error(`HTTP ${filesResponse.status}: ${errorText}`);
+          const errorText = await threadMessagesResponse.text();
+          console.error('Thread messages error:', errorText);
+          throw new Error(`HTTP ${threadMessagesResponse.status}: ${errorText}`);
         }
-        const files = await filesResponse.json();
-        const credentialsFile = files.data.find(f => f.filename === 'wallet_credentials.json');
-        if (credentialsFile) {
-          const fileResponse = await fetch(`${BASE_URL}/v1/files/${credentialsFile.id}/content`, {
+        const threadMessages = await threadMessagesResponse.json();
+        const latestMessage = threadMessages.data.find(
+          m => m.role === 'assistant' && m.content[0].text.value.includes('Wallet created')
+        );
+        if (latestMessage && latestMessage.file_ids?.length) {
+          const filesResponse = await fetch(`${BASE_URL}/v1/threads/${threadId}/messages/${latestMessage.id}/files`, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
               'Accept': 'application/json',
             },
           });
-          if (!fileResponse.ok) {
-            const errorText = await fileResponse.text();
-            console.error('File content error:', errorText);
-            throw new Error(`HTTP ${fileResponse.status}: ${errorText}`);
+          if (!filesResponse.ok) {
+            const errorText = await filesResponse.text();
+            console.error('Files fetch error:', errorText);
+            throw new Error(`HTTP ${filesResponse.status}: ${errorText}`);
           }
-          const credentials = JSON.parse(await fileResponse.text());
-          alert(
-            `New wallet created! Account ID: ${credentials.account_id}. Save your private key securely: ${credentials.private_key}`
-          );
+          const files = await filesResponse.json();
+          const credentialsFile = files.data.find(f => f.filename === 'wallet_credentials.json');
+          if (credentialsFile) {
+            const fileResponse = await fetch(`${BASE_URL}/v1/files/${credentialsFile.id}/content`, {
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Accept': 'application/json',
+              },
+            });
+            if (!fileResponse.ok) {
+              const errorText = await fileResponse.text();
+              console.error('File content error:', errorText);
+              throw new Error(`HTTP ${fileResponse.status}: ${errorText}`);
+            }
+            const credentials = JSON.parse(await fileResponse.text());
+            alert(
+              `New wallet created! Account ID: ${credentials.account_id}. Save your private key securely: ${credentials.private_key}`
+            );
+          }
         }
       }
+      setUserInput('');
+    } catch (e) {
+      console.error('Send message error:', e);
+      setError('Failed to send message: ' + e.message);
+    } finally {
+      setIsLoading(false);
     }
-    setUserInput('');
-  } catch (e) {
-    console.error('Send message error:', e);
-    setError('Failed to send message: ' + e.message);
-  } finally {
-    setIsLoading(false);
-  }
   };
 
   // Drag and drop file upload
@@ -359,10 +359,10 @@ export default function Console() {
   };
 
   // Welcoming text
-const welcomeText = `Hi ! Welcome to 1000fans!
+  const welcomeText = `Hi ! Welcome to 1000fans!
 1000fans is a platform that allows producers to share their audio and video in private with their fans.
 It is built with blockchain encryption at core and AI agents to make it easy to use.
-You can chat with the AI assistant to get help with your account, upload files, or manage your content
+You can chat with the AI assistant to get help with your account, upload files, or manage your content.
 `;
 
   return (
