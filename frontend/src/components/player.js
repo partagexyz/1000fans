@@ -16,12 +16,10 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
     useEffect(() => {
         const videos = url.filter(track => track.url && track.url.endsWith('.mp4'));
         const audios = url.filter(track => track.url && track.url.endsWith('.mp3'));
-
         // shuffle audio tracks but order video tracks
         const shuffledAudios = shuffleArray([...audios]);
         const sortedVideos = [...videos].sort((a, b) => a.title.localeCompare(b.title));
         setShuffledTracks([...sortedVideos, ...shuffledAudios]);
-        
         setTrackIndex(trackIndex);
         if (playOnLoad && url.length > 0) {
             setPlaying(true);
@@ -73,18 +71,21 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
     };
 
     // play/pause toggle
-    const toggle = () => {
+    const toggle = (e) => {
+        if (e) e.preventDefault();
         setPlaying(!playing);
     };
 
     // play next track
-    const toNextTrack = () => {
+    const toNextTrack = (e) => {
+        if (e) e.preventDefault();
         setTrackIndex((prevIndex) => (prevIndex + 1) % shuffledTracks.length);
         setPlaying(true);
     };
 
     // play previous track
-    const toPrevTrack = () => {
+    const toPrevTrack = (e) => {
+        if (e) e.preventDefault();
         setTrackIndex((prevIndex) => (prevIndex - 1 + shuffledTracks.length) % shuffledTracks.length);
         setPlaying(true);
     };
@@ -103,10 +104,18 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
     const renderNextFiveTracks = () => {
         const start = (trackIndexState + 1) % url.length;
         return Array.from({ length: 5 }, (_, i) => {
-            const index = (start + i) % url.length; // Circular playlist
+            const index = (start + i) % url.length; 
             const track = url[index];
             return (
-                <div key={track.id} className={styles.playlistItem} onClick={() => changeTrack(index)}>
+                <div 
+                    key={track.id} 
+                    className={styles.playlistItem} 
+                    onClick={() => changeTrack(index)}
+                    onTouchStart={(e) => {
+                        e.preventDefault();
+                        changeTrack(index);
+                    }}
+                >
                     <span>{track.artist ? `${track.artist} - ` : ''}{JSON.parse(track.metadata).title}</span>
                     <span>{track.duration}</span>
                 </div>
@@ -120,22 +129,29 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
 
     return (
         <div className={isVideo ? styles['video-player'] : styles['audio-player']}>
-            {isVideo ? 
+            {isVideo ? (
                 <div className={styles.videoContainer}>
-                    <ReactPlayer 
+                    <ReactPlayer
                         ref={playerRef}
                         url={currentTrack.url}
                         playing={playing}
                         onProgress={handleProgress}
                         onDuration={handleDuration}
                         onEnded={toNextTrack}
-                        width="640px"
-                        height="360px"
-                        controls
+                        width="100%"
+                        height="100%"
+                        controls={true} // Ensure built-in controls are touch-enabled
+                        config={{
+                            file: {
+                                attributes: {
+                                    onTouchStart: (e) => e.stopPropagation(), // Prevent drag interference
+                                },
+                            },
+                        }}
                     />
                 </div>
-            :
-                <ReactPlayer 
+            ) : (
+                <ReactPlayer
                     ref={playerRef}
                     url={currentTrack.url}
                     playing={playing}
@@ -146,22 +162,24 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                     width="0px"
                     height="0px"
                 />
-            }
+            )}
             <div className={styles.info}>
                 {isVideo && (
                     <div className={styles.controlsContainer}>
                         <span 
                             onClick={toPrevTrack}
+                            onTouchStart={toPrevTrack}
                             className={`${styles.forback} ${styles.icon}`}
-                            style={{fontSize: '24px', cursor: 'pointer'}}
+                            style={{fontSize: '24px'}}
                         >
                             ⏮️
                         </span>
                         <span className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</span>
                         <span 
                             onClick={toNextTrack}
+                            onTouchStart={toNextTrack}
                             className={`${styles.forback} ${styles.icon}`}
-                            style={{fontSize: '24px', cursor: 'pointer'}}
+                            style={{fontSize: '24px' }}
                         >
                             ⏭️
                         </span>
@@ -184,9 +202,7 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                     {/* Conditionally render artist and title only for audio */}
                     {!isVideo && (
                         <>
-                            {currentTrack.artist && 
-                                <span className={styles.songArtist}>{currentTrack.artist} - </span>
-                            }
+                            {currentTrack.artist && <span className={styles.songArtist}>{currentTrack.artist} - </span>}
                             <span className={styles.songTitle}>{JSON.parse(currentTrack.metadata).title}</span>
                         </>
                     )}
@@ -197,22 +213,25 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                     <div className={styles.buttons}>
                         <span 
                             onClick={toPrevTrack}
+                            onTouchStart={toPrevTrack}
                             className={`${styles.forback} ${styles.icon}`}
-                            style={{fontSize: '24px', cursor: 'pointer'}}
+                            style={{ fontSize: '24px' }}
                         >
                             ⏮️
                         </span>
                         <span 
                             onClick={toggle}
+                            onTouchStart={toggle}
                             className={`${styles.pauseplay} ${styles.icon}`}
-                            style={{fontSize: '40px', cursor: 'pointer'}} // Bigger than prev/next
+                            style={{ fontSize: '40px' }} // Bigger than prev/next
                         >
                             {playing ? '⏸️' : '⏯️'}
                         </span>
                         <span 
                             onClick={toNextTrack}
+                            onTouchStart={toNextTrack}
                             className={`${styles.forback} ${styles.icon}`}
-                            style={{fontSize: '24px', cursor: 'pointer'}}
+                            style={{ fontSize: '24px' }}
                         >
                             ⏭️
                         </span>
@@ -231,40 +250,49 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                                 handleSeekMouseUp(e);
                             }}
                             onMouseDown={(e) => e.stopPropagation()}
+                            onTouchEnd={(e) => {
+                                e.stopPropagation();
+                                handleSeekMouseUp(e);
+                            }}
                             className={styles.progress}
                         />
                         <div>{formatTime(duration)}</div> 
                     </div>
-                <div className={styles.soundDiv}>
-                    <label htmlFor="volume">Volume</label>
-                    <input 
-                        id="volume"
-                        type="range" 
-                        min="0" 
-                        max="100" 
-                        value={volume * 100}
-                        onChange={(e) => {
-                            e.stopPropagation();
-                            onVolume(e.target.value);
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        className={styles.volume}
-                    />
-                </div>
-                <button 
-                    onClick={togglePlaylist} 
-                    className={`${styles.hamburgerButton} ${styles.overlapPlaylist}`}
-                >
-                    ☰
-                </button>
-                {showPlaylist && (
-                    <div className={styles.miniPlaylist}>
-                        {renderNextFiveTracks()}
+                    <div className={styles.soundDiv}>
+                        <label htmlFor="volume">Volume</label>
+                        <input 
+                            id="volume"
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            value={volume * 100}
+                            onChange={(e) => {
+                                e.stopPropagation();
+                                onVolume(e.target.value);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchEnd={(e) => {
+                                e.stopPropagation();
+                                onVolume(e.target.value);
+                            }}
+                            className={styles.volume}
+                        />
                     </div>
-                )}
-            </div>
-        )}
-    </div>);
+                    <button 
+                        onClick={togglePlaylist}
+                        onTouchStart={(e) => {
+                            e.preventDefault();
+                            togglePlaylist();
+                        }}
+                        className={`${styles.hamburgerButton} ${styles.overlapPlaylist}`}
+                    >
+                        ☰
+                    </button>
+                    {showPlaylist && <div className={styles.miniPlaylist}>{renderNextFiveTracks()}</div>}
+                </div>
+            )}
+        </div>
+    );
 };
 
 function formatTime(seconds) {

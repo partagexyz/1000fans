@@ -1,37 +1,45 @@
-/* general styles for all widgets */
-.widget {
-    position: fixed;
-    width: 300px; /* default to music widget */
-    color: rgb(var(--foreground-rgb));
-    background: rgba(var(--background-start-rgb), 0.9);
-    border: 2px solid transparent;
-    border-radius: 10px;
-    border-image: linear-gradient(45deg, var(--accent-color), #0077B6) 1;
-    box-shadow: 0 4px 15px rgba(255, 0, 100, 0.4);
-    padding: 10px;
-    z-index: 1000;
-  }
+/* src/styles/widget.module.css */
 
-  .fullScreen {
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    margin: 0;
-    padding: 0;
-  }
+/* General styles for all widgets */
+.widget {
+  position: fixed;
+  width: 300px; /* Default to music widget */
+  color: rgb(var(--foreground-rgb));
+  background: rgba(var(--background-start-rgb), 0.9);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  border-image: linear-gradient(45deg, var(--accent-color), #0077B6) 1;
+  box-shadow: 0 4px 15px rgba(255, 0, 100, 0.4);
+  padding: 10px;
+  z-index: 1000;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  touch-action: none; /* Prevent default touch actions on widget (handled by react-draggable) */
+}
+
+.fullScreen {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  transform: none;
+  border-radius: 0;
+}
 
 .widget .cover {
-    width: 100%;
-    max-height: 200px; /* Or whatever height fits within your widget */
+  width: 100%;
+  max-height: 200px;
 }
 
 /* Video Widget Specific */
 .video-widget {
   width: 911px;
   max-width: 100%;
-  height: auto; /* Allow dynamic height adjustment */
+  height: auto;
   margin: 0 auto;
 }
 
@@ -41,38 +49,46 @@
 }
 
 .videoWidget .info {
-  margin-bottom: 20px; /* Space for title */
+  margin-bottom: 20px;
 }
 
 .widget:hover .closeButton {
-    transform: scale(1.1);
-    color: var(--accent-color);
-    text-shadow: 0 0 5px var(--accent-color);
-    background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+  color: var(--accent-color);
+  text-shadow: 0 0 5px var(--accent-color);
+  background: rgba(0, 0, 0, 0.7);
 }
-  
+
 .closeButton {
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    color: rgb(var(--foreground-rgb));
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  color: rgb(var(--foreground-rgb));
+  background: none;
+  border: none;
+  font-size: 18px;
+  padding: 5px;
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation; /* Prevent double-tap zoom */
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+  min-width: 44px; /* Minimum touch target size */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001; /* Ensure above other content */
 }
 
-  .overlapClose {
-    z-index: 1001; /* Ensure it's above other content */
+.overlapClose {
+  z-index: 1001;
 }
 
-  .widget h3, .songInfo {
-    color: rgb(var(--foreground-rgb))
-  }
+.widget h3, .songInfo {
+  color: rgb(var(--foreground-rgb));
+}
 
-  /* Video-Specific Layout */
+/* Video-Specific Layout */
 .video-player .info {
   margin-top: 20px;
 }
@@ -91,7 +107,7 @@
   height: 100%;
 }
 
-  /* events.module.css */
+/* Events Styles */
 .event {
   background: rgba(var(--background-start-rgb), 0.8);
   border: 1px solid var(--secondary-accent);
@@ -101,7 +117,7 @@
 }
 
 .event h3 {
-  font-size: 1em; 
+  font-size: 1em;
   margin: 0;
   font-weight: bold;
 }
@@ -138,13 +154,21 @@
   padding: 5px 10px;
   border: none;
   border-radius: 5px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .registerButton:hover {
   background: var(--secondary-accent);
 }
 
-/* chat.module.css */
+/* Chat Styles */
 .chatMessages {
   max-height: 200px;
   overflow-y: auto;
@@ -179,8 +203,77 @@
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sendButton:hover {
   background: var(--secondary-accent);
+}
+
+/* Video Player Wrapper */
+.video-player-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.video-player {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .widget {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .video-widget {
+    width: 100%;
+    height: auto;
+  }
+
+  .video-widget .cover {
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
+  }
+
+  .closeButton, .sendButton, .registerButton {
+    min-width: 48px; /* Larger touch target for mobile */
+    min-height: 48px;
+    padding: 8px;
+    font-size: 16px;
+  }
+
+  .chatMessages, .eventList {
+    max-height: 50vh; /* Adjusted for smaller screens */
+  }
+
+  .usernameInput, .messageInput {
+    padding: 8px;
+    font-size: 1rem;
+  }
+
+  .videoContainer {
+    padding-bottom: 56.25%; /* Maintain 16:9 aspect ratio */
+  }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .widget {
+  background: rgba(var(--background-start-rgb), 0.9);
+  color: rgb(var(--foreground-rgb));
+}
+
+[data-theme="dark"] .closeButton,
+[data-theme="dark"] .sendButton,
+[data-theme="dark"] .registerButton {
+  color: rgb(var(--foreground-rgb));
 }

@@ -1,183 +1,249 @@
+/* src/styles/player.module.css */
+
 /* General styles for both audio and video players */
 .volume, .progress {
-    width:100px;
-    margin: 0 auto;
-  }
-  
+  width: 100px;
+  margin: 0 auto;
+}
+
 .soundDiv {
-    display: flex;
-    gap: 0;
-    font-size: 20px;
-    align-items:center;
-    width: 100%;
-    justify-content: center;
-  }
+  display: flex;
+  gap: 0;
+  font-size: 20px;
+  align-items: center;
+  width: 100%;
+  justify-content: center;
+}
 
 .buttons {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 5px;
 }
 
 .cover {
-    /* audio files */
-    width: 100%;
-    height: 250px;
-    position: relative;
+  /* audio files */
+  width: 100%;
+  height: 250px;
+  position: relative;
 }
 
 .cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .audio-player, .video-player .cover {
-    background: linear-gradient(45deg, var(--background-start-rgb), var(--accent-color));
-}  
+  background: linear-gradient(45deg, var(--background-start-rgb), var(--accent-color));
+}
 
 .cover:hover::after {
-    content: '▶';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: opacity 0.3s ease;
-    opacity: 1;
-    color: var(--accent-color);
-    font-size: 80px;
+  content: '▶';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+  color: var(--accent-color);
+  font-size: 80px;
 }
 
 .songTitle {
-    font-size: 16px;
-    color: rgb(var(--foreground-rgb));
-    margin-left: 5px;
+  font-size: 16px;
+  color: rgb(var(--foreground-rgb));
+  margin-left: 5px;
 }
 
 .songArtist {
-    font-size: 16px;
-    color: rgb(var(--foreground-rgb));
+  font-size: 16px;
+  color: rgb(var(--foreground-rgb));
 }
 
 /* Styles specific to the audio player */
 .audio-player {
-    width: 100%;
+  width: 100%;
 }
 
 /* Styles for video player layout */
 .video-player .cover {
-    width: 911px;
-    height: 512px;
-    margin: 0 auto;
-    margin-right: 10px;
+  width: 911px;
+  height: 512px;
+  margin: 0 auto;
+  margin-right: 10px;
 }
 
 .videoContainer {
-    width: 100%;
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  width: 100%;
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
 }
 
 .videoContainer > div {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
 }
 
 .infoText {
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 10px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
 }
 
 .songTitle {
-    margin-right: 10px;
+  margin-right: 10px;
 }
 
 /* Adjustments for when playing video */
 .video-player .info {
-    margin-top: 0px; /* space after video for title */
+  margin-top: 0; /* space after video for title */
 }
 
 .icon {
-    display: inline-block;
-    padding: 0px;
-    border-radius: 50%; /* Makes the icon circular */
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    color: var(--accent-color); /* Example color, adjust as needed */
-    cursor: pointer;
+  display: inline-block;
+  padding: 0;
+  border-radius: 50%; /* Makes the icon circular */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: var(--accent-color);
+  cursor: pointer;
+  touch-action: manipulation; /* Prevent double-tap zoom */
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+  user-select: none; /* Prevent text selection */
+  min-width: 44px; /* Minimum touch target size */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 10px rgba(255, 0, 100, 0.5);
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255, 0, 100, 0.5);
 }
 
 /* If you want specific styles for different icons */
 .forback {
-    font-size: 24px; /* Smaller for prev and next */
+  font-size: 24px; /* Smaller for prev and next */
 }
 
 .pauseplay {
-    font-size: 40px; /* Larger for play/pause */
+  font-size: 40px; /* Larger for play/pause */
 }
 
 /* Styles for the playlist functionality */
 .hamburgerButton {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: transparent;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: rgb(var(--foreground-rgb));
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: rgb(var(--foreground-rgb));
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .overlapPlaylist {
-    z-index: 1001; /* Ensure it's above other content */
+  z-index: 1001; /* Ensure it's above other content */
 }
 
 .miniPlaylist {
-    position: absolute;
-    bottom: 40px; /* Position just above the hamburger button */
-    right: 10px;
-    background: rgba(var(--background-start-rgb), 0.9);
-    border: 1px solid var(--secondary-accent);
-    border-radius: 5px;
-    padding: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1002; /* Above the hamburger button */
+  position: absolute;
+  bottom: 40px; /* Position just above the hamburger button */
+  right: 10px;
+  background: rgba(var(--background-start-rgb), 0.9);
+  border: 1px solid var(--secondary-accent);
+  border-radius: 5px;
+  padding: 5px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1002; /* Above the hamburger button */
 }
 
 .playlistItem {
-    display: flex;
-    justify-content: space-between;
-    padding: 3px 0;
-    font-size: 12px;
-    color: rgb(var(--foreground-rgb));
-    cursor: pointer; /* Allow clicking to change track */
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 12px;
+  color: rgb(var(--foreground-rgb));
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px; /* Ensure touchable area */
+  align-items: center;
 }
 
 .playlistItem:hover {
-    background-color: rgba(var(--secondary-accent), 0.1);
+  background-color: rgba(var(--secondary-accent), 0.1);
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .audio-player, .video-player {
+    width: 100%;
+  }
+
+  .video-player .cover {
+    width: 100%;
+    height: auto;
+    margin-right: 0;
+  }
+
+  .videoContainer {
+    padding-bottom: 56.25%; /* Maintain 16:9 aspect ratio */
+  }
+
+  .infoText {
+    font-size: 18px; /* Slightly smaller for mobile */
+  }
+
+  .songTitle, .songArtist {
+    font-size: 14px;
+  }
+
+  .icon, .hamburgerButton {
+    min-width: 48px; /* Larger touch target for mobile */
+    min-height: 48px;
+  }
+
+  .volume, .progress {
+    width: 100%; /* Full width for easier interaction */
+    max-width: 200px;
+  }
+
+  .cover {
+    height: 200px; /* Adjust for smaller screens */
+  }
+
+  .playlistItem {
+    min-height: 48px; /* Larger touch target */
+    padding: 5px 0;
+    font-size: 14px;
+  }
 }
