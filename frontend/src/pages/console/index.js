@@ -6,7 +6,7 @@ import styles from '../../styles/console.module.css';
 const CONTRACT = 'theosis.1000fans.near';
 const NEAR_AI_AUTH_OBJECT_STORAGE_KEY = 'NearAIAuthObject';
 const NEAR_AI_BASE_URL = 'https://api.near.ai';
-const PROXY_BASE_URL = process.env.REACT_APP_PROXY_BASE_URL || 'https://proxy.1000fans.xyz/proxy';
+const PROXY_BASE_URL = 'https://proxy.1000fans.xyz/proxy';
 
 export default function Console() {
   const { signedAccountId, wallet, loginWithProvider, logout } = useContext(NearContext);
@@ -125,15 +125,17 @@ export default function Console() {
     async function createThread() {
       const isAuthenticated = !!authToken && !!signedAccountId;
       const baseUrl = isAuthenticated ? NEAR_AI_BASE_URL : PROXY_BASE_URL;
+      const endpoint = isAuthenticated ? '/v1/threads' : '/threads';
       try {
-        console.log(`Creating thread via ${baseUrl}/v1/threads`);
-        const response = await fetch(`${baseUrl}/v1/threads`, {
+        console.log(`Creating thread via ${baseUrl}${endpoint}`);
+        const response = await fetch(`${baseUrl}${endpoint}`, {
           method: 'POST',
           headers: {
             ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify({
             messages: [
               {
@@ -146,15 +148,16 @@ export default function Console() {
         });
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Thread creation response:', { status: response.status, errorText });
+          console.error('Thread creation response:', errorText);
           throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         const thread = await response.json();
         console.log('Thread created, ID:', thread.id);
         setThreadId(thread.id);
+        setError(null);
       } catch (e) {
         console.error('Thread creation error:', e);
-        setError(`Failed to create thread: ${e.message}. Please try again or check proxy server.`);
+        setError('Failed to create thread: ' + e.message + '. Please try again or check proxy server.');
       }
     }
     createThread();
@@ -165,13 +168,15 @@ export default function Console() {
     if (!threadId) return;
     const isAuthenticated = !!authToken && !!signedAccountId;
     const baseUrl = isAuthenticated ? NEAR_AI_BASE_URL : PROXY_BASE_URL;
+    const endpoint = isAuthenticated ? `/v1/threads/${threadId}/messages` : `/threads/${threadId}/messages`;
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${baseUrl}/v1/threads/${threadId}/messages`, {
+        const response = await fetch(`${baseUrl}${endpoint}`, {
           headers: {
             ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
             'Accept': 'application/json',
           },
+          credentials: 'include',
         });
         if (!response.ok) {
           const errorText = await response.text();
@@ -238,15 +243,17 @@ export default function Console() {
       if (!threadId) throw new Error('No thread available. Please wait for thread creation.');
       const isAuthenticated = !!authToken && !!signedAccountId;
       const baseUrl = isAuthenticated ? NEAR_AI_BASE_URL : PROXY_BASE_URL;
+      const endpoint = isAuthenticated ? '/v1/agent/runs' : '/agent/runs';
       const managerAgentId = 'devbot.near/manager-agent/latest';
-      console.log(`Running agent: ${managerAgentId} via ${baseUrl}/v1/agent/runs`);
-      const response = await fetch(`${baseUrl}/v1/agent/runs`, {
+      console.log(`Running agent: ${managerAgentId} via ${baseUrl}${endpoint}`);
+      const response = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           agent_id: managerAgentId,
           thread_id: threadId,
@@ -270,12 +277,14 @@ export default function Console() {
         const maxFileAttempts = 5;
         const retryInterval = 1000;
         let credentials = null;
+        const messagesEndpoint = isAuthenticated ? `/v1/threads/${threadId}/messages` : `/threads/${threadId}/messages`;
         while (fileAttempts < maxFileAttempts) {
-          const threadMessagesResponse = await fetch(`${baseUrl}/v1/threads/${threadId}/messages`, {
+          const threadMessagesResponse = await fetch(`${baseUrl}${messagesEndpoint}`, {
             headers: {
               ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
               'Accept': 'application/json',
             },
+            credentials: 'include',
           });
           if (!threadMessagesResponse.ok) {
             const errorText = await threadMessagesResponse.text();
@@ -287,11 +296,13 @@ export default function Console() {
             m => m.role === 'assistant' && m.content[0].text.value.toLowerCase().includes('wallet') && m.file_ids?.length,
           );
           if (latestMessage) {
-            const filesResponse = await fetch(`${baseUrl}/v1/threads/${threadId}/messages/${latestMessage.id}/files`, {
+            const filesEndpoint = isAuthenticated ? `/v1/threads/${threadId}/messages/${latestMessage.id}/files` : `/threads/${threadId}/messages/${latestMessage.id}/files`;
+            const filesResponse = await fetch(`${baseUrl}${filesEndpoint}`, {
               headers: {
                 ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
                 'Accept': 'application/json',
               },
+              credentials: 'include',
             });
             if (!filesResponse.ok) {
               const errorText = await filesResponse.text();
@@ -301,11 +312,13 @@ export default function Console() {
             const files = await filesResponse.json();
             const credentialsFile = files.data.find(f => f.filename === 'wallet_credentials.json');
             if (credentialsFile) {
-              const fileResponse = await fetch(`${baseUrl}/v1/files/${credentialsFile.id}/content`, {
+              const fileEndpoint = isAuthenticated ? `/v1/files/${credentialsFile.id}/content` : `/files/${credentialsFile.id}/content`;
+              const fileResponse = await fetch(`${baseUrl}${fileEndpoint}`, {
                 headers: {
                   ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
                   'Accept': 'application/json',
                 },
+                credentials: 'include',
               });
               if (!fileResponse.ok) {
                 const errorText = await fileResponse.text();
@@ -407,68 +420,68 @@ export default function Console() {
 It is built with blockchain encryption for privacy and AI agents for seamless control.
 Type 'commands' to explore, or use 'create wallet' to get started with your NEAR wallet!`;
 
- return (
-   <main className={styles.consoleMain}>
-     <div className={styles.consoleStatus}>
-       {!signedAccountId ? (
-         <p>Create or connect a wallet to access exclusive content.</p>
-       ) : (
-         <>
-           <p>Connected as: {signedAccountId}</p>
-           <p>Token Status: {ownsToken ? `Owns Token ID: ${tokenId}` : 'No token owned'}</p>
-         </>
-       )}
-       {error && <p className={styles.consoleError}>{error}</p>}
-     </div>
-     <div className={styles.consoleChatContainer}>
-       <div className={styles.consoleChatMessages}>
-         {messages.length === 0 ? (
-           <p className={styles.consolePlaceholder}>
-             {welcomeText.split('\n').map((line, index) => (
-               <span key={index} style={{ display: 'block', marginBottom: '0.5rem' }}>
-                 {line}
-               </span>
-             ))}
-           </p>
-         ) : (
-           messages.map((msg, index) => (
-             <div
-               key={index}
-               className={`${styles.consoleMessage} ${msg.role === 'user' ? styles.consoleUserMessage : styles.consoleAssistantMessage}`}
-             >
-               <strong>{msg.role === 'user' ? 'You' : 'Assistant'}:</strong> {msg.content[0].text.value}
-             </div>
-           ))
-         )}
-       </div>
-       <div className={styles.consoleChatInput}>
-         <input
-           type="text"
-           value={userInput}
-           onChange={(e) => setUserInput(e.target.value)}
-           placeholder="Type 'commands' to chat with the AI."
-           disabled={isLoading}
-           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-         />
-         <button
-           onClick={sendMessage}
-           disabled={isLoading || !userInput.trim()}
-         >
-           {isLoading ? 'Sending...' : 'Send'}
-         </button>
-       </div>
-     </div>
+  return (
+    <main className={styles.consoleMain}>
+      <div className={styles.consoleStatus}>
+        {!signedAccountId ? (
+          <p>Create or connect a wallet to access exclusive content.</p>
+        ) : (
+          <>
+            <p>Connected as: {signedAccountId}</p>
+            <p>Token Status: {ownsToken ? `Owns Token ID: ${tokenId}` : 'No token owned'}</p>
+          </>
+        )}
+        {error && <p className={styles.consoleError}>{error}</p>}
+      </div>
+      <div className={styles.consoleChatContainer}>
+        <div className={styles.consoleChatMessages}>
+          {messages.length === 0 ? (
+            <p className={styles.consolePlaceholder}>
+              {welcomeText.split('\n').map((line, index) => (
+                <span key={index} style={{ display: 'block', marginBottom: '0.5rem' }}>
+                  {line}
+                </span>
+              ))}
+            </p>
+          ) : (
+            messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`${styles.consoleMessage} ${msg.role === 'user' ? styles.consoleUserMessage : styles.consoleAssistantMessage}`}
+              >
+                <strong>{msg.role === 'user' ? 'You' : 'Assistant'}:</strong> {msg.content[0].text.value}
+              </div>
+            ))
+          )}
+        </div>
+        <div className={styles.consoleChatInput}>
+          <input
+            type="text"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            placeholder="Type 'commands' to chat with the AI."
+            disabled={isLoading}
+            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={isLoading || !userInput.trim()}
+          >
+            {isLoading ? 'Sending...' : 'Send'}
+          </button>
+        </div>
+      </div>
       {/* Uncomment the following block to enable drag and drop file upload */}
       {/*
-     <div
-       className={styles.consoleDragDrop}
-       onDragEnter={(e) => { e.preventDefault(); setIsDragActive(true); }}
-       onDragLeave={(e) => { e.preventDefault(); setIsDragActive(false); }}
-       onDragOver={(e) => e.preventDefault()}
-       onDrop={handleDrop}
-     >
-       {isDragActive ? 'Drop files here' : 'Drag and drop .mp3/.mp4 files here (authenticated users only)'}
-     </div>*/}
-   </main>
- );
+      <div
+        className={styles.consoleDragDrop}
+        onDragEnter={(e) => { e.preventDefault(); setIsDragActive(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setIsDragActive(false); }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
+        {isDragActive ? 'Drop files here' : 'Drag and drop .mp3/.mp4 files here (authenticated users only)'}
+      </div>*/}
+    </main>
+  );
 }
