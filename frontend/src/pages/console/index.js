@@ -417,14 +417,14 @@ export default function Console() {
   // Welcoming text
   const welcomeText = `Hi! 👋 Welcome to 1000fans!
 1000fans is a platform for producers to share their music and videos exclusively with their fans.
-It is built with blockchain encryption for privacy and AI agents for seamless control.
-Type 'commands' to explore, or use 'create wallet' to get started with your NEAR wallet!`;
+It is built with blockchain & AI for an enhanced privacy and a seamless control.
+Type 'commands' to explore available commands, or 'login' to connect your wallet!`;
 
   return (
     <main className={styles.consoleMain}>
       <div className={styles.consoleStatus}>
         {!signedAccountId ? (
-          <p>Create or connect a wallet to access exclusive content.</p>
+          <p>Connect your wallet for exclusive content.</p>
         ) : (
           <>
             <p>Connected as: {signedAccountId}</p>
