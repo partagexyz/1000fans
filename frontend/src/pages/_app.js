@@ -7,29 +7,29 @@ import { Navigation } from '../components/navigation';
 import { Wallet, NearContext } from '../wallets/near';
 import { NetworkId } from '../config';
 
-// wallet instance
 const wallet = new Wallet({ networkId: NetworkId, createAccessKeyFor: 'theosis.1000fans.near' });
-
-// optional: create an access key so the user doesnt need to sign transactions.
-/*
-const wallet = new Wallet({ 
-  networkId: NetworkId, // replace with your network id
-  createAccessKeyFor: HelloNearContract //replace with your contract name
-}); 
-*/
 
 export default function MyApp({ Component, pageProps }) {
   const [signedAccountId, setSignedAccountId] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [theme, setTheme] = useState('dark');
 
   useEffect(() => { 
     wallet.startUp(setSignedAccountId) 
   }, []);
 
   useEffect(() => {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    // Check for saved theme in localStorage, default to dark if none exists
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
   }, []);
+
+  useEffect(() => {
+    // Update localStorage and data-theme when theme changes
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   // remove logo on mobile
   useEffect(() => {
@@ -37,9 +37,14 @@ export default function MyApp({ Component, pageProps }) {
       setIsMobile(window.innerWidth <= 768);
     };
     window.addEventListener('resize', handleResize);
-    handleResize(); // Check on initial render
+    handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Expose toggleTheme to child components (e.g., Footer)
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+  };
 
   return (
     <>
@@ -52,9 +57,9 @@ export default function MyApp({ Component, pageProps }) {
       <NearContext.Provider value={{ wallet, signedAccountId }}>
         <Navigation isMobile={isMobile} />
         <div className="main">
-          <Component {...pageProps} />
+          <Component {...pageProps} theme={theme} toggleTheme={toggleTheme} />
         </div>
-        <Footer />
+        <Footer theme={theme} toggleTheme={toggleTheme} />
       </NearContext.Provider>
     </>
   );
