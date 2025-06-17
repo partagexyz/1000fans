@@ -424,14 +424,14 @@ Type 'commands' to explore available commands, or 'login' to connect your wallet
     <main className={styles.consoleMain}>
       <div className={styles.consoleStatus}>
         {!signedAccountId ? (
-          <p>Connect your wallet for exclusive content.</p>
+          <p>Login to chat with the AI and access exclusive content.</p>
         ) : (
           <>
             <p>Connected as: {signedAccountId}</p>
             <p>Token Status: {ownsToken ? `Owns Token ID: ${tokenId}` : 'No token owned'}</p>
           </>
         )}
-        {error && <p className={styles.consoleError}>{error}</p>}
+        {/*{error && <p className={styles.consoleError}>{error}</p>}*/}
       </div>
       <div className={styles.consoleChatContainer}>
         <div className={styles.consoleChatMessages}>
