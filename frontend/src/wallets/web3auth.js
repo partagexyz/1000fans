@@ -42,19 +42,19 @@ export function Web3AuthProvider({ children }) {
     if (storedKeyPair) {
       const restoredKeyPair = KeyPair.fromString(storedKeyPair);
       setKeyPair(restoredKeyPair);
-      console.log('Restored key pair from localStorage');
+      //console.log('Restored key pair from localStorage');
     }
   }, []);
 
   useEffect(() => {
     const initWeb3Auth = async () => {
       try {
-        console.log('Web3Auth Client ID:', WEB3AUTH_CLIENT_ID);
+        //console.log('Web3Auth Client ID:', WEB3AUTH_CLIENT_ID);
         if (!WEB3AUTH_CLIENT_ID) {
           throw new Error('Web3Auth Client ID is missing. Please set NEXT_PUBLIC_WEB3AUTH_CLIENT_ID in .env.local');
         }
-        console.log('Web3Auth Network:', NetworkId === 'testnet' ? 'SAPPHIRE_DEVNET' : 'SAPPHIRE_MAINNET'); // Debug
-        console.log('Chain Config:', chainConfig);
+        //console.log('Web3Auth Network:', NetworkId === 'testnet' ? 'SAPPHIRE_DEVNET' : 'SAPPHIRE_MAINNET'); // Debug
+        //console.log('Chain Config:', chainConfig);
         const web3authInstance = new Web3AuthNoModal({
           clientId: WEB3AUTH_CLIENT_ID,
           web3AuthNetwork: NetworkId === 'testnet' ? WEB3AUTH_NETWORK.SAPPHIRE_DEVNET : WEB3AUTH_NETWORK.SAPPHIRE_MAINNET,
@@ -70,12 +70,12 @@ export function Web3AuthProvider({ children }) {
             },
           },
         });
-        console.log('Configuring Web3Auth adapter');
+        //console.log('Configuring Web3Auth adapter');
         web3authInstance.configureAdapter(authAdapter);
-        console.log('Initializing Web3Auth instance');
+        //console.log('Initializing Web3Auth instance');
         await web3authInstance.init();
         setWeb3auth(web3authInstance);
-        console.log('Web3Auth initialized successfully');
+        //console.log('Web3Auth initialized successfully');
       } catch (error) {
         console.error('Web3Auth initialization failed:', {
           message: error.message,
@@ -153,7 +153,7 @@ export function Web3AuthProvider({ children }) {
 
   const loginWithProvider = async (loginProvider, extraLoginOptions = {}) => {
     try {
-      console.log('Logging in with provider:', loginProvider);
+      //console.log('Logging in with provider:', loginProvider);
       const web3authProvider = await web3auth.connectTo(WALLET_ADAPTERS.AUTH, {
         loginProvider,
         ...extraLoginOptions,

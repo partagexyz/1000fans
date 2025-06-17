@@ -29,7 +29,7 @@ export const Navigation = () => {
 
   useEffect(() => {
     const openLoginModal = () => {
-      console.log('Open login modal event triggered'); // Debug
+      //console.log('Open login modal event triggered');
       setIsLoginModalOpen(true);
     };
     window.addEventListener('openLoginModal', openLoginModal);
@@ -37,7 +37,7 @@ export const Navigation = () => {
   }, []);
 
   const handleLoginWithProvider = async (provider, options) => {
-    console.log('Attempting login with provider:', provider); // Debug
+    //console.log('Attempting login with provider:', provider);
     try {
       const result = await loginWithProvider(provider, options);
       setIsLoginModalOpen(false);
@@ -67,7 +67,7 @@ export const Navigation = () => {
   };
 
   const handleLoginClick = () => {
-    console.log('Login button clicked'); // Debug
+    //console.log('Login button clicked');
     setIsLoginModalOpen(true);
   };
 

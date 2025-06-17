@@ -27,9 +27,7 @@ export class Wallet {
       setupMyNearWallet(),
       setupHereWallet(),
       setupLedger(),
-      setupMeteorWallet(),
       setupSender(),
-      setupBitteWallet(),
     ];
 
     this.selector = setupWalletSelector({
@@ -66,7 +64,7 @@ export class Wallet {
   };
 
   signInWithProvider = async (loginWithProvider, provider, extraLoginOptions = {}) => {
-    console.log('signInWithProvider called with provider:', provider, 'loginWithProvider:', typeof loginWithProvider);
+    //console.log('signInWithProvider called with provider:', provider, 'loginWithProvider:', typeof loginWithProvider);
     if (typeof loginWithProvider !== 'function') {
       throw new Error('loginWithProvider is not a function');
     }
@@ -209,7 +207,7 @@ export function NearProvider({ children }) {
   const [isClientLoaded, setIsClientLoaded] = useState(false);
   const { web3auth, loginWithProvider: web3authLogin, logout: web3authLogout, accountId: web3authAccountId } = useWeb3Auth();
 
-  console.log('NearProvider: web3authLogin type:', typeof web3authLogin);
+  //console.log('NearProvider: web3authLogin type:', typeof web3authLogin);
 
   useEffect(() => {
     setIsClientLoaded(true);
@@ -259,7 +257,7 @@ export function NearProvider({ children }) {
   }, [isClientLoaded, web3authAccountId]);
 
   const loginWithProvider = async (provider, options) => {
-    console.log('NearProvider loginWithProvider called with provider:', provider);
+    //console.log('NearProvider loginWithProvider called with provider:', provider);
     if (!wallet) {
       throw new Error('Wallet is not initialized');
     }
