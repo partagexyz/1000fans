@@ -62,8 +62,8 @@ Upon wallet connection, the platform checks for the presence of a fan token:
 - Update the platform on user feedback: 
   - music widget => a player for encrypted .mp3 that only this player can play (@vandigital).
   - chat widget => link to near social and/or curate.news (@elliot_braem)
-  - login => allow login with email/social accounts (@ThePiVortex)
-  - upload.py => ~~drag and drop window in the console to upload new files with ai-extracted features for better file organization in storage. (@jcarbonnell)~~
+  - ~~login => allow login with email/social accounts (@ThePiVortex)~~
+  - ~~upload.py => drag and drop window in the console to upload new files with ai-extracted features for better file organization in storage. (@jcarbonnell)~~
   - video widget => live stream (@bandit_sonore)
 - ~~Deploy the contract on mainnet~~. 
 

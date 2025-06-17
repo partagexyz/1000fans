@@ -7,9 +7,7 @@ import { setupWalletSelector } from '@near-wallet-selector/core';
 import { setupHereWallet } from '@near-wallet-selector/here-wallet';
 import { setupMyNearWallet } from '@near-wallet-selector/my-near-wallet';
 import { setupLedger } from '@near-wallet-selector/ledger';
-import { setupMeteorWallet } from '@near-wallet-selector/meteor-wallet';
 import { setupSender } from '@near-wallet-selector/sender';
-import { setupBitteWallet } from '@near-wallet-selector/bitte-wallet';
 import { NetworkId } from '../config';
 import { useWeb3Auth } from '../wallets/web3auth';
 
