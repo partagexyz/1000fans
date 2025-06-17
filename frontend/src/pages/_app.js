@@ -4,19 +4,12 @@ import Head from 'next/head'; // metadata
 import Footer from '../components/footer';
 import '../styles/globals.css';
 import { Navigation } from '../components/navigation';
-import { Wallet, NearContext } from '../wallets/near';
-import { NetworkId } from '../config';
-
-const wallet = new Wallet({ networkId: NetworkId, createAccessKeyFor: 'theosis.1000fans.near' });
+import { NearProvider } from '../wallets/near';
+import { Web3AuthProvider } from "../wallets/web3auth";
 
 export default function MyApp({ Component, pageProps }) {
-  const [signedAccountId, setSignedAccountId] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [theme, setTheme] = useState('dark');
-
-  useEffect(() => { 
-    wallet.startUp(setSignedAccountId) 
-  }, []);
 
   useEffect(() => {
     // Check for saved theme in localStorage, default to dark if none exists
@@ -54,13 +47,15 @@ export default function MyApp({ Component, pageProps }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon-square.ico" type="image/ico" />
       </Head>
-      <NearContext.Provider value={{ wallet, signedAccountId }}>
-        <Navigation isMobile={isMobile} />
-        <div className="main">
-          <Component {...pageProps} theme={theme} toggleTheme={toggleTheme} />
-        </div>
-        <Footer theme={theme} toggleTheme={toggleTheme} />
-      </NearContext.Provider>
+      <Web3AuthProvider>
+        <NearProvider>
+          <Navigation isMobile={isMobile} />
+          <div className="main">
+            <Component {...pageProps} theme={theme} toggleTheme={toggleTheme} />
+          </div>
+          <Footer theme={theme} toggleTheme={toggleTheme} />
+          </NearProvider>
+      </Web3AuthProvider>
     </>
   );
 }

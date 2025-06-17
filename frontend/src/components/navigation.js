@@ -1,52 +1,122 @@
+// frontend/src/components/navigation.js
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useEffect, useState, useContext } from 'react';
-import { NearContext } from '../wallets/near';
+import React, { useEffect, useState } from 'react';
+import { NearContext, useNear } from '../wallets/near';
+import { useWeb3Auth } from '../wallets/web3auth';
+import { LoginModal } from './LoginModal';
+import { CreateAccountModal } from './CreateAccountModal';
 import styles from '../styles/app.module.css';
 
 export const Navigation = () => {
-  const { signedAccountId, wallet } = useContext(NearContext);
-  const [action, setAction] = useState(() => {});
-  const [label, setLabel] = useState('Loading...');
+  const { signedAccountId, wallet, loginWithProvider, logout: nearLogout } = useNear();
+  const { web3auth, logout: web3authLogout, accountId: web3authAccountId, keyPair } = useWeb3Auth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
+  const [isClientLoaded, setIsClientLoaded] = useState(false);
 
- // login/logout button using the signIn and signOut methods from the wallet selector
   useEffect(() => {
-    if (!wallet) return;
+    setIsClientLoaded(true);
+  }, []);
 
-    if (signedAccountId) {
-      setAction(() => wallet.signOut);
-      setLabel(`Logout`);
+  useEffect(() => {
+    if (isClientLoaded && keyPair && !web3authAccountId && !signedAccountId) {
+      setIsCreateAccountModalOpen(true);
     } else {
-      setAction(() => wallet.signIn);
-      setLabel('Login');
+      setIsCreateAccountModalOpen(false);
     }
-  }, [signedAccountId, wallet]);
+  }, [isClientLoaded, keyPair, web3authAccountId, signedAccountId]);
+
+  useEffect(() => {
+    const openLoginModal = () => {
+      console.log('Open login modal event triggered'); // Debug
+      setIsLoginModalOpen(true);
+    };
+    window.addEventListener('openLoginModal', openLoginModal);
+    return () => window.removeEventListener('openLoginModal', openLoginModal);
+  }, []);
+
+  const handleLoginWithProvider = async (provider, options) => {
+    console.log('Attempting login with provider:', provider); // Debug
+    try {
+      const result = await loginWithProvider(provider, options);
+      setIsLoginModalOpen(false);
+      if (result.needsAccountCreation) {
+        setIsCreateAccountModalOpen(true);
+      }
+    } catch (error) {
+      console.error(`Login with ${provider} failed:`, error);
+    }
+  };
+
+  const handleAccountCreated = (newAccountId) => {
+    setIsCreateAccountModalOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      if (web3auth?.connected) {
+        await web3authLogout();
+      }
+      if (signedAccountId) {
+        await nearLogout();
+      }
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const handleLoginClick = () => {
+    console.log('Login button clicked'); // Debug
+    setIsLoginModalOpen(true);
+  };
+
+  const isLoggedIn = isClientLoaded && (web3auth?.connected || signedAccountId);
+
+  if (!isClientLoaded) return null;
 
   return (
-    <nav className={styles.navbar}>
-      <div className={styles['navbar-content']}>
-        <Link href="/" passHref legacyBehavior>
-          <div className={styles['navbar-brand']}>
-            {/* Use a string path instead of importing the icon directly */}
-            <Image 
-              priority 
-              src="/favicon.ico" 
-              alt="Theosis Icon" 
-              width={80} 
-              height={10} 
-              className={styles['navbar-icon']} 
-              onError={(e) => { e.target.style.display = 'none'; }} // Hide if image fails to load
-            />
-            {/*<span className={`${styles['navbar-brand']} mb-0 h1 ms-2`}>1000 FANS</span>*/}
-          </div>
-        </Link>
-        <div className={styles['navbar-actions']}>
-          <Link href="/console" passHref legacyBehavior>
-            <a className={`${styles['nav-link']} ${styles['nav-link-shop']}`}>Console</a>
+    <>
+      <nav className={styles.navbar}>
+        <div className={styles['navbar-content']}>
+          <Link href="/" passHref legacyBehavior>
+            <div className={styles['navbar-brand']}>
+              <Image
+                priority
+                src="/favicon.ico"
+                alt="Theosis Icon"
+                width={80}
+                height={10}
+                className={styles['navbar-icon']}
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            </div>
           </Link>
-          <button className={styles['action-button']} onClick={action}>{label}</button>
+          <div className={styles['navbar-actions']}>
+            <Link href="/console" passHref legacyBehavior>
+              <a className={`${styles['nav-link']} ${styles['nav-link-shop']}`}>Console</a>
+            </Link>
+            <button
+              className={styles['action-button']}
+              onClick={isLoggedIn ? handleLogout : handleLoginClick}
+            >
+              {isLoggedIn ? `Logout ${signedAccountId || web3authAccountId}` : 'Login'}
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginWithProvider={handleLoginWithProvider}
+      />
+
+      <CreateAccountModal
+        isOpen={isCreateAccountModalOpen}
+        onClose={() => setIsCreateAccountModalOpen(false)}
+        onAccountCreated={handleAccountCreated}
+      />
+    </>
   );
 };

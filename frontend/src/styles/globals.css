@@ -82,3 +82,10 @@ button {
   padding: 0.5rem 1rem;
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
+
+button:not(.btn) {
+  font-family: var(--font-primary);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 1rem;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}

@@ -1,10 +1,6 @@
-// Contains wallet connection logic. Integrate membership token checks.
-import { createContext } from 'react';
-
-// near api js
+// frontend/src/wallets/near.js
+import { createContext, useState, useEffect, useContext } from 'react';
 import { providers, utils } from 'near-api-js';
-
-// wallet selector
 import '@near-wallet-selector/modal-ui/styles.css';
 import { setupModal } from '@near-wallet-selector/modal-ui';
 import { setupWalletSelector } from '@near-wallet-selector/core';
@@ -14,12 +10,12 @@ import { setupLedger } from '@near-wallet-selector/ledger';
 import { setupMeteorWallet } from '@near-wallet-selector/meteor-wallet';
 import { setupSender } from '@near-wallet-selector/sender';
 import { setupBitteWallet } from '@near-wallet-selector/bitte-wallet';
-
-// ethereum wallets
-import { wagmiConfig, web3Modal } from './web3modal';
+import { NetworkId } from '../config';
+import { useWeb3Auth } from '../wallets/web3auth';
 
 const THIRTY_TGAS = '30000000000000';
 const NO_DEPOSIT = '0';
+const Contract = 'theosis.1000fans.near';
 
 export class Wallet {
   constructor({ networkId = 'mainnet', createAccessKeyFor = 'theosis.1000fans.near' }) {
@@ -28,13 +24,7 @@ export class Wallet {
     this.selector = null;
   }
 
-  /**
-   * To be called when the website loads
-   * @param {Function} accountChangeHook - a function that is called when the user signs in or out
-   * @returns {Promise<string>} - the accountId of the signed-in user
-   */
   startUp = async (accountChangeHook) => {
-    // Initialize wallet selector modules
     const modules = [
       setupMyNearWallet(),
       setupHereWallet(),
@@ -43,18 +33,6 @@ export class Wallet {
       setupSender(),
       setupBitteWallet(),
     ];
-
-    // Dynamically import Ethereum wallets only in the browser
-    if (typeof window !== 'undefined') {
-      const { setupEthereumWallets } = await import('@near-wallet-selector/ethereum-wallets');
-      modules.push(
-        setupEthereumWallets({
-          wagmiConfig,
-          web3Modal,
-          alwaysOnboardDuringSignIn: true,
-        })
-      );
-    }
 
     this.selector = setupWalletSelector({
       network: this.networkId,
@@ -67,36 +45,60 @@ export class Wallet {
 
     walletSelector.store.observable.subscribe(async (state) => {
       const signedAccount = state?.accounts.find((account) => account.active)?.accountId;
+      if (signedAccount) {
+        try {
+          await fetch('/api/auth/create-wallet-user', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accountId: signedAccount }),
+          });
+        } catch (error) {
+          console.error('Error creating wallet account:', error);
+        }
+      }
       accountChangeHook(signedAccount || '');
     });
 
     return accountId;
   };
 
-  /**
-   * Displays a modal to login the user
-   */
   signIn = async () => {
     const modal = setupModal(await this.selector, { contractId: this.createAccessKeyFor });
     modal.show();
   };
 
-  /**
-   * Logout the user
-   */
-  signOut = async () => {
-    const selectedWallet = await (await this.selector).wallet();
-    selectedWallet.signOut();
+  signInWithProvider = async (loginWithProvider, provider, extraLoginOptions = {}) => {
+    console.log('signInWithProvider called with provider:', provider, 'loginWithProvider:', typeof loginWithProvider);
+    if (typeof loginWithProvider !== 'function') {
+      throw new Error('loginWithProvider is not a function');
+    }
+    try {
+      const providerInstance = await loginWithProvider(provider, extraLoginOptions);
+      const publicKey = providerInstance.keyPair?.getPublicKey().toString();
+      const response = await fetch('/api/auth/check-for-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicKey }),
+      });
+      const data = await response.json();
+
+      if (!data.exists) {
+        return { provider: providerInstance, needsAccountCreation: true };
+      }
+
+      await providerInstance.setupAccount(data.accountId);
+      return { provider: providerInstance, accountId: data.accountId };
+    } catch (error) {
+      console.error(`Web3Auth login with ${provider} failed:`, error);
+      throw error;
+    }
   };
 
-  /**
-   * Makes a read-only call to a contract
-   * @param {Object} options - the options for the call
-   * @param {string} options.contractId - the contract's account id
-   * @param {string} options.method - the method to call
-   * @param {Object} options.args - the arguments to pass to the method
-   * @returns {Promise<JSON.value>} - the result of the method call
-   */
+  signOut = async () => {
+    const selectedWallet = await (await this.selector).wallet();
+    await selectedWallet.signOut();
+  };
+
   viewMethod = async ({ contractId, method, args = {} }) => {
     const url = `https://rpc.${this.networkId}.near.org`;
     const provider = new providers.JsonRpcProvider({ url });
@@ -111,16 +113,6 @@ export class Wallet {
     return JSON.parse(Buffer.from(res.result).toString());
   };
 
-  /**
-   * Makes a call to a contract
-   * @param {Object} options - the options for the call
-   * @param {string} options.contractId - the contract's account id
-   * @param {string} options.method - the method to call
-   * @param {Object} options.args - the arguments to pass to the method
-   * @param {string} options.gas - the amount of gas to use
-   * @param {string} options.deposit - the amount of yoctoNEAR to deposit
-   * @returns {Promise<Transaction>} - the resulting transaction
-   */
   callMethod = async ({ contractId, method, args = {}, gas = THIRTY_TGAS, deposit = NO_DEPOSIT }) => {
     const selectedWallet = await (await this.selector).wallet();
     const outcome = await selectedWallet.signAndSendTransaction({
@@ -141,61 +133,38 @@ export class Wallet {
     return providers.getTransactionLastResult(outcome);
   };
 
-  /**
-   * Makes a call to a contract
-   * @param {string} txhash - the transaction hash
-   * @returns {Promise<JSON.value>} - the result of the transaction
-   */
   getTransactionResult = async (txhash) => {
     const walletSelector = await this.selector;
     const { network } = walletSelector.options;
     const provider = new providers.JsonRpcProvider({ url: network.nodeUrl });
 
-    // Retrieve transaction result from the network
-    const transaction = await provider.txStatus(txhash, 'unnused');
+    const transaction = await provider.txStatus(txhash, 'unused');
     return providers.getTransactionLastResult(transaction);
   };
 
-  /**
-   * Gets the balance of an account
-   * @param {string} accountId - the account id to get the balance of
-   * @returns {Promise<number>} - the balance of the account
-   */
   getBalance = async (accountId) => {
     const walletSelector = await this.selector;
     const { network } = walletSelector.options;
     const provider = new providers.JsonRpcProvider({ url: network.nodeUrl });
 
-    // Retrieve account state from the network
     const account = await provider.query({
       request_type: 'view_account',
       account_id: accountId,
       finality: 'final',
     });
-    // return amount on NEAR
     return account.amount ? Number(utils.format.formatNearAmount(account.amount)) : 0;
   };
 
-  /**
-   * Signs and sends transactions
-   * @param {Object[]} transactions - the transactions to sign and send
-   * @returns {Promise<Transaction[]>} - the resulting transactions
-   */
   signAndSendTransactions = async ({ transactions }) => {
     const selectedWallet = await (await this.selector).wallet();
     return selectedWallet.signAndSendTransactions({ transactions });
   };
 
-  /**
-   * @param {string} accountId
-   * @returns {Promise<Object[]>} - the access keys for the account
-   */
   getAccessKeys = async (accountId) => {
     const walletSelector = await this.selector;
     const { network } = walletSelector.options;
     const provider = new providers.JsonRpcProvider({ url: network.nodeUrl });
 
-    // Retrieve account state from the network
     const keys = await provider.query({
       request_type: 'view_access_key_list',
       account_id: accountId,
@@ -204,12 +173,6 @@ export class Wallet {
     return keys.keys;
   };
 
-  /**
-   * Check if an account owns a token from the specified contract
-   * @param {string} accountId - The account ID to check for token ownership
-   * @param {string} contractId - The contract ID where the token might be owned
-   * @returns {Promise<boolean>} - true if account owns a token, false otherwise
-   */
   ownsToken = async (accountId, contractId) => {
     try {
       const tokens = await this.viewMethod({
@@ -217,10 +180,10 @@ export class Wallet {
         method: 'nft_tokens_for_owner',
         args: { account_id: accountId, from_index: null, limit: 1 },
       });
-      return tokens.length > 0; // should be more than 0 if token held
+      return tokens.length > 0;
     } catch (error) {
       console.error('Failed to check token ownership:', error);
-      return false; // Assume no ownership if there's an error
+      return false;
     }
   };
 
@@ -231,22 +194,104 @@ export class Wallet {
       throw new Error('The selected wallet does not support message signing');
     }
 
-    try {
-      const signedMessage = await selectedWallet.signMessage({
-        message,
-        nonce,
-        recipient,
-        callbackUrl,
-      });
-      return signedMessage;
-    } catch (error) {
-      console.error('Error signing message:', error);
-      throw error;
-    }
+    return selectedWallet.signMessage({ message, nonce, recipient, callbackUrl });
   };
 }
 
 export const NearContext = createContext({
   wallet: undefined,
   signedAccountId: '',
+  loginWithProvider: () => Promise.resolve(),
+  logout: () => Promise.resolve(),
 });
+
+export function NearProvider({ children }) {
+  const [wallet, setWallet] = useState(null);
+  const [signedAccountId, setSignedAccountId] = useState('');
+  const [isClientLoaded, setIsClientLoaded] = useState(false);
+  const { web3auth, loginWithProvider: web3authLogin, logout: web3authLogout, accountId: web3authAccountId } = useWeb3Auth();
+
+  console.log('NearProvider: web3authLogin type:', typeof web3authLogin);
+
+  useEffect(() => {
+    setIsClientLoaded(true);
+    const storedAccountId = localStorage.getItem('near_signed_account_id') || localStorage.getItem('web3auth_accountId');
+    if (storedAccountId) {
+      setSignedAccountId(storedAccountId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isClientLoaded) return;
+
+    const initWallet = async () => {
+      const newWallet = new Wallet({
+        createAccessKeyFor: Contract,
+        networkId: NetworkId,
+      });
+
+      const accountId = await newWallet.startUp(async (newSignedAccountId) => {
+        const effectiveAccountId = newSignedAccountId || web3authAccountId || '';
+        setSignedAccountId(effectiveAccountId);
+        localStorage.setItem('near_signed_account_id', effectiveAccountId);
+        if (effectiveAccountId) {
+          try {
+            const response = await fetch('/api/auth/create-wallet-user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ accountId: effectiveAccountId }),
+            });
+            if (!response.ok) {
+              console.error('Failed to create wallet account in database');
+            }
+          } catch (error) {
+            console.error('Error creating wallet account:', error);
+          }
+        }
+      });
+
+      setWallet(newWallet);
+      setSignedAccountId(accountId || web3authAccountId || '');
+      if (accountId || web3authAccountId) {
+        localStorage.setItem('near_signed_account_id', accountId || web3authAccountId);
+      }
+    };
+
+    initWallet();
+  }, [isClientLoaded, web3authAccountId]);
+
+  const loginWithProvider = async (provider, options) => {
+    console.log('NearProvider loginWithProvider called with provider:', provider);
+    if (!wallet) {
+      throw new Error('Wallet is not initialized');
+    }
+    if (!web3authLogin) {
+      throw new Error('Web3Auth login function is not available');
+    }
+    const result = await wallet.signInWithProvider(web3authLogin, provider, options);
+    if (!result.needsAccountCreation) {
+      setSignedAccountId(result.accountId);
+      localStorage.setItem('near_signed_account_id', result.accountId);
+    }
+    return result;
+  };
+
+  const logout = async () => {
+    await wallet.signOut();
+    await web3authLogout();
+    setSignedAccountId('');
+    localStorage.removeItem('near_signed_account_id');
+    localStorage.removeItem('web3auth_accountId');
+    localStorage.removeItem('NearAIAuthObject');
+  };
+
+  return (
+    <NearContext.Provider value={{ wallet, signedAccountId, loginWithProvider, logout }}>
+      {children}
+    </NearContext.Provider>
+  );
+}
+
+export function useNear() {
+  return useContext(NearContext);
+}

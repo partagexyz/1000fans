@@ -43,7 +43,7 @@ export default function Index({ music, videos, events }) {
         alert('You need to a fans token to access this content. Visit the console to get one!');
       }
     } else {
-      wallet.signIn(); // trigger login when not logged in
+      window.dispatchEvent(new Event('openLoginModal'));
     }
   };
 

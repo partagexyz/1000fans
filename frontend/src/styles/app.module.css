@@ -159,7 +159,7 @@
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 20px; /* Space between Shop link and Login button */
+  gap: 20px; /* Space between console link and login button */
 }
 
 .action-button {
@@ -592,4 +592,77 @@
   .consoleChatContainer {
     width: 90%;
   }
+}
+
+.modal-content {
+  background-color: rgb(var(--background-start-rgb));
+  color: rgb(var(--foreground-rgb));
+  border: 1px solid rgba(var(--card-border-rgb), 0.5);
+  border-radius: var(--border-radius);
+}
+
+[data-theme="light"] .modal-content {
+  background-color: rgb(var(--background-start-rgb));
+  border-color: rgba(120, 120, 120, 0.7);
+}
+
+.modal-header,
+.modal-footer {
+  border-color: rgba(var(--card-border-rgb), 0.5);
+  background-color: transparent;
+}
+
+[data-theme="light"] .modal-header,
+[data-theme="light"] .modal-footer {
+  border-color: rgba(120, 120, 120, 0.7);
+}
+
+.modal-title {
+  color: rgb(var(--foreground-rgb));
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: rgb(var(--foreground-rgb));
+}
+
+.btn-primary:hover {
+  background-color: var(--secondary-accent);
+  border-color: var(--secondary-accent);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #5a6268;
+}
+
+.alert-danger {
+  background-color: rgba(255, 0, 0, 0.1);
+  color: #ff0000;
+  border-color: rgba(255, 0, 0, 0.3);
+}
+
+.form-control {
+  background-color: transparent;
+  color: rgb(var(--foreground-rgb));
+  border: 1px solid rgba(var(--card-border-rgb), 0.5);
+}
+
+[data-theme="light"] .form-control {
+  border-color: rgba(120, 120, 120, 0.7);
+}
+
+.form-control::placeholder {
+  color: rgba(var(--foreground-rgb), 0.6);
+}
+
+.form-text {
+  color: rgba(var(--foreground-rgb), 0.8);
 }
