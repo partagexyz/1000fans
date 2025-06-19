@@ -65,9 +65,6 @@ export function Web3AuthProvider({ children }) {
           adapterSettings: {
             network: NetworkId === 'testnet' ? WEB3AUTH_NETWORK.SAPPHIRE_DEVNET : WEB3AUTH_NETWORK.SAPPHIRE_MAINNET,
             uxMode: 'popup',
-            whiteLabel: {
-              appName: '1000fans',
-            },
           },
         });
         //console.log('Configuring Web3Auth adapter');
