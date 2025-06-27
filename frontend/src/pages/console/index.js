@@ -6,7 +6,7 @@ import styles from '../../styles/console.module.css';
 const CONTRACT = 'theosis.1000fans.near';
 const NEAR_AI_AUTH_OBJECT_STORAGE_KEY = 'NearAIAuthObject';
 const NEAR_AI_BASE_URL = 'https://api.near.ai';
-const PROXY_BASE_URL = 'https://proxy.1000fans.xyz/proxy';
+const PROXY_BASE_URL = 'https://proxy.1000fans.xyz';
 
 export default function Console() {
   const { signedAccountId, wallet, loginWithProvider, logout } = useContext(NearContext);
@@ -19,6 +19,7 @@ export default function Console() {
   const [ownsToken, setOwnsToken] = useState(false);
   const [tokenId, setTokenId] = useState('');
   const [isDragActive, setIsDragActive] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Handle NEAR AI login callback
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function Console() {
           authObject.public_key = callbackParams.get('publicKey');
           localStorage.setItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY, JSON.stringify(authObject));
           setAuthToken(JSON.stringify(authObject));
+          setShowLoginPrompt(false);
           window.location.hash = '';
           console.log('Updated authToken from callback:', { account_id: authObject.account_id });
         }
@@ -53,6 +55,7 @@ export default function Console() {
         const authObject = JSON.parse(storedAuth);
         if (authObject.account_id === signedAccountId && authObject.signature) {
           setAuthToken(JSON.stringify(authObject));
+          setShowLoginPrompt(false);
           console.log('Using stored authToken:', { account_id: authObject.account_id });
           return;
         }
@@ -86,6 +89,7 @@ export default function Console() {
         authObject.public_key = signedMessage.publicKey;
         localStorage.setItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY, JSON.stringify(authObject));
         setAuthToken(JSON.stringify(authObject));
+        setShowLoginPrompt(false);
         console.log('Generated authToken:', { account_id: authObject.account_id });
       } catch (e) {
         console.error('Auth token generation error:', e);
@@ -141,7 +145,7 @@ export default function Console() {
               {
                 content: 'Initial message',
                 role: 'user',
-                metadata: {},
+                metadata: { user_id: signedAccountId || 'anonymous.1000fans.near' },
               },
             ],
           }),
@@ -193,6 +197,9 @@ export default function Console() {
           return false;
         });
         setMessages(filteredMessages);
+        if (filteredMessages.some(msg => msg.content[0].text.value.includes('Please log in'))) {
+          setShowLoginPrompt(true);
+        }
       } catch (e) {
         console.error('Message polling error:', e);
         setError(`Failed to fetch messages: ${e.message}`);
@@ -208,10 +215,11 @@ export default function Console() {
     setError(null);
 
     const restrictedCommands = [
-      'mint token', 'transfer token', 'register group', 'join group', 'upload file',
+      'verify wallet', 'mint token', 'transfer token', 'register group', 'join group', 'upload file',
     ];
     if (!signedAccountId && restrictedCommands.some(cmd => userInput.toLowerCase().includes(cmd))) {
       setError('Please connect a wallet to use this command.');
+      setShowLoginPrompt(true);
       setIsLoading(false);
       return;
     }
@@ -226,6 +234,7 @@ export default function Console() {
           { role: 'assistant', content: [{ text: { value: 'Email login initiated. Account created or restored.' } }] },
         ]);
         setUserInput('');
+        setShowLoginPrompt(false);
         return;
       }
       if (userInput.toLowerCase().includes('logout')) {
@@ -238,6 +247,13 @@ export default function Console() {
         localStorage.removeItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY);
         setAuthToken(null);
         setThreadId(null);
+        setShowLoginPrompt(false);
+        return;
+      }
+      if (userInput.toLowerCase().includes('create wallet')) {
+        setError('Please create a wallet using Google, email, or NEAR Wallet via the login interface.');
+        setShowLoginPrompt(true);
+        setIsLoading(false);
         return;
       }
       if (!threadId) throw new Error('No thread available. Please wait for thread creation.');
@@ -261,7 +277,7 @@ export default function Console() {
           max_iterations: 1,
           record_run: true,
           tool_resources: {},
-          user_env_vars: {},
+          user_env_vars: { user_id: signedAccountId || 'anonymous.1000fans.near' },
         }),
       });
       if (!response.ok) {
@@ -271,87 +287,6 @@ export default function Console() {
       }
       const run = await response.json();
       console.log('Agent run initiated:', run);
-
-      if (userInput.toLowerCase().includes('create wallet')) {
-        let fileAttempts = 0;
-        const maxFileAttempts = 5;
-        const retryInterval = 1000;
-        let credentials = null;
-        const messagesEndpoint = isAuthenticated ? `/v1/threads/${threadId}/messages` : `/threads/${threadId}/messages`;
-        while (fileAttempts < maxFileAttempts) {
-          const threadMessagesResponse = await fetch(`${baseUrl}${messagesEndpoint}`, {
-            headers: {
-              ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
-              'Accept': 'application/json',
-            },
-            credentials: 'include',
-          });
-          if (!threadMessagesResponse.ok) {
-            const errorText = await threadMessagesResponse.text();
-            console.error('Thread messages error:', { status: threadMessagesResponse.status, errorText });
-            throw new Error(`HTTP ${threadMessagesResponse.status}: ${errorText}`);
-          }
-          const threadMessages = await threadMessagesResponse.json();
-          const latestMessage = threadMessages.data.find(
-            m => m.role === 'assistant' && m.content[0].text.value.toLowerCase().includes('wallet') && m.file_ids?.length,
-          );
-          if (latestMessage) {
-            const filesEndpoint = isAuthenticated ? `/v1/threads/${threadId}/messages/${latestMessage.id}/files` : `/threads/${threadId}/messages/${latestMessage.id}/files`;
-            const filesResponse = await fetch(`${baseUrl}${filesEndpoint}`, {
-              headers: {
-                ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
-                'Accept': 'application/json',
-              },
-              credentials: 'include',
-            });
-            if (!filesResponse.ok) {
-              const errorText = await filesResponse.text();
-              console.error('Files fetch error:', { status: filesResponse.status, errorText });
-              throw new Error(`HTTP ${filesResponse.status}: ${errorText}`);
-            }
-            const files = await filesResponse.json();
-            const credentialsFile = files.data.find(f => f.filename === 'wallet_credentials.json');
-            if (credentialsFile) {
-              const fileEndpoint = isAuthenticated ? `/v1/files/${credentialsFile.id}/content` : `/files/${credentialsFile.id}/content`;
-              const fileResponse = await fetch(`${baseUrl}${fileEndpoint}`, {
-                headers: {
-                  ...(isAuthenticated && { 'Authorization': `Bearer ${authToken}` }),
-                  'Accept': 'application/json',
-                },
-                credentials: 'include',
-              });
-              if (!fileResponse.ok) {
-                const errorText = await fileResponse.text();
-                console.error('File content error:', { status: fileResponse.status, errorText });
-                throw new Error(`HTTP ${fileResponse.status}: ${errorText}`);
-              }
-              credentials = JSON.parse(await fileResponse.text());
-              break;
-            }
-          }
-          fileAttempts++;
-          console.log(`Retry ${fileAttempts}/${maxFileAttempts} for wallet credentials`);
-          await new Promise(resolve => setTimeout(resolve, retryInterval));
-        }
-        if (credentials) {
-          const credentialsText = `Account ID: ${credentials.account_id}\nPrivate Key: ${credentials.private_key}\n\nSave this information securely and do not share it. Import to NEAR Wallet (https://wallet.near.org) and delete this file.`;
-          const blob = new Blob([credentialsText], { type: 'text/plain' });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `wallet_credentials_${credentials.account_id}.txt`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-          setMessages([
-            ...messages,
-            { role: 'assistant', content: [{ text: { value: 'Wallet created! Credentials downloaded as a file. Import to NEAR Wallet and connect with "connect wallet".' } }] },
-          ]);
-        } else {
-          setError('Failed to retrieve wallet credentials. Please try again.');
-        }
-      }
       setUserInput('');
     } catch (e) {
       console.error('Send message error:', e);
@@ -367,6 +302,7 @@ export default function Console() {
     setIsDragActive(false);
     if (!signedAccountId) {
       setError('Please connect a wallet to upload files.');
+      setShowLoginPrompt(true);
       return;
     }
     const droppedFiles = Array.from(e.dataTransfer.files);
@@ -454,6 +390,14 @@ Type 'commands' to explore available commands, or 'login' to connect your wallet
             ))
           )}
         </div>
+        {showLoginPrompt && !signedAccountId && (
+          <div className={styles.consolePrompt}>
+            Exploring as a guest? Log in with Google, email, or NEAR Wallet to access exclusive content!
+            <button onClick={() => window.dispatchEvent(new Event('openLoginModal'))}>
+              Login
+            </button>
+          </div>
+        )}
         <div className={styles.consoleChatInput}>
           <input
             type="text"

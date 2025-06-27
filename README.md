@@ -65,6 +65,7 @@ Upon wallet connection, the platform checks for the presence of a fan token:
   - ~~login => allow login with email/social accounts (@ThePiVortex)~~
   - ~~upload.py => drag and drop window in the console to upload new files with ai-extracted features for better file organization in storage. (@jcarbonnell)~~
   - video widget => live stream (@bandit_sonore)
+  - adding a card payment system for token mint? or account creation? (@normiedottech)
 - ~~Deploy the contract on mainnet~~. 
 
 ### Clone your own 1000fans - Step-by-Step Tutorial:
