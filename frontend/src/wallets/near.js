@@ -69,21 +69,30 @@ export class Wallet {
       throw new Error('loginWithProvider is not a function');
     }
     try {
-      const providerInstance = await loginWithProvider(provider, extraLoginOptions);
-      const publicKey = providerInstance.keyPair?.getPublicKey().toString();
+      const { provider: providerInstance, user, keyPair } = await loginWithProvider(provider, extraLoginOptions);
+      const publicKey = keyPair?.getPublicKey().toString();
+      const email = user?.email;
+      //console.log('signInWithProvider:', { email, publicKey });
+
+      if (!publicKey || !publicKey.startsWith('ed25519:') || publicKey.length !== 52) {
+        throw new Error(`Invalid public key: ${publicKey}`);
+      }
+      if (!email && provider === 'email_passwordless') {
+        throw new Error('Email not provided for email login');
+      }
+      
       const response = await fetch('/api/auth/check-for-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publicKey }),
+        body: JSON.stringify({ email, publicKey }),
       });
       const data = await response.json();
 
-      if (!data.exists) {
-        return { provider: providerInstance, needsAccountCreation: true };
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to check account');
       }
 
-      await providerInstance.setupAccount(data.accountId);
-      return { provider: providerInstance, accountId: data.accountId };
+      return { provider: providerInstance, needsAccountCreation: !data.exists, user, keyPair, accountId: data.exists ? data.accountId : null };
     } catch (error) {
       console.error(`Web3Auth login with ${provider} failed:`, error);
       throw error;
@@ -91,8 +100,12 @@ export class Wallet {
   };
 
   signOut = async () => {
-    const selectedWallet = await (await this.selector).wallet();
-    await selectedWallet.signOut();
+    const walletSelector = await this.selector;
+    const isSignedIn = walletSelector.isSignedIn();
+    if (isSignedIn) {
+      const selectedWallet = await walletSelector.wallet();
+      await selectedWallet.signOut();
+    }
   };
 
   viewMethod = async ({ contractId, method, args = {} }) => {
@@ -205,7 +218,7 @@ export function NearProvider({ children }) {
   const [wallet, setWallet] = useState(null);
   const [signedAccountId, setSignedAccountId] = useState('');
   const [isClientLoaded, setIsClientLoaded] = useState(false);
-  const { web3auth, loginWithProvider: web3authLogin, logout: web3authLogout, accountId: web3authAccountId } = useWeb3Auth();
+  const { web3auth, loginWithProvider: web3authLogin, logout: web3authLogout, accountId: web3authAccountId, setupAccount } = useWeb3Auth();
 
   //console.log('NearProvider: web3authLogin type:', typeof web3authLogin);
 
@@ -265,7 +278,8 @@ export function NearProvider({ children }) {
       throw new Error('Web3Auth login function is not available');
     }
     const result = await wallet.signInWithProvider(web3authLogin, provider, options);
-    if (!result.needsAccountCreation) {
+    if (!result.needsAccountCreation && result.accountId) {
+      await setupAccount(result.accountId, result.keyPair);
       setSignedAccountId(result.accountId);
       localStorage.setItem('near_signed_account_id', result.accountId);
     }
@@ -273,12 +287,22 @@ export function NearProvider({ children }) {
   };
 
   const logout = async () => {
-    await wallet.signOut();
-    await web3authLogout();
-    setSignedAccountId('');
-    localStorage.removeItem('near_signed_account_id');
-    localStorage.removeItem('web3auth_accountId');
-    localStorage.removeItem('NearAIAuthObject');
+    try {
+      const walletSelector = await wallet.selector;
+      const isSignedIn = walletSelector.isSignedIn();
+      if (isSignedIn) {
+        const selectedWallet = await walletSelector.wallet();
+        await selectedWallet.signOut();
+      }
+      await web3authLogout();
+      setSignedAccountId('');
+      localStorage.removeItem('near_signed_account_id');
+      localStorage.removeItem('web3auth_accountId');
+      localStorage.removeItem('NearAIAuthObject');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      throw error;
+    }
   };
 
   return (

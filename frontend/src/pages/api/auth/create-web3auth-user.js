@@ -7,61 +7,114 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { accountId, publicKey } = req.body;
+  const { accountId, publicKey, email } = req.body;
+  console.log("Request received:", { accountId, publicKey, email });
 
-  // Validate NEAR account ID format
-  if (!/^[a-z0-9_-]{2,64}\.near$/.test(accountId) && !/^[a-f0-9]{64}$/.test(accountId)) {
-    return res.status(400).json({ error: "Invalid NEAR account ID format" });
+  // Validate inputs
+  if (!accountId || !publicKey || !email) {
+    return res.status(400).json({ message: "Account ID, public key, and email are required" });
+  }
+  if (!/^[a-z0-9_-]{2,64}\.1000fans\.near$/.test(accountId) && !/^[a-f0-9]{64}$/.test(accountId)) {
+    return res.status(400).json({ message: "Invalid NEAR account ID format (e.g., user.1000fans.near or 64-char implicit ID)" });
+  }
+  if (!publicKey.startsWith('ed25519:') || publicKey.length !== 52) {
+    return res.status(400).json({ message: `Invalid public key format: ${publicKey} (must be ed25519:<44-char-base58>)` });
   }
 
+  let client;
   try {
-    const client = new MongoClient(process.env.MONGODB_URI);
+    // Validate environment variables
+    if (!process.env.MONGODB_URI) {
+      throw new Error("MONGODB_URI is not set");
+    }
+    if (!process.env.RELAYER_PRIVATE_KEY) {
+      throw new Error("RELAYER_PRIVATE_KEY is not set");
+    }
+    console.log("Environment variables validated");
+
+    // Connect to MongoDB
+    console.log("Attempting MongoDB connection...");
+    client = new MongoClient(process.env.MONGODB_URI, { connectTimeoutMS: 5000 });
     await client.connect();
+    console.log("MongoDB connected");
     const db = client.db("1000fans");
     const usersCollection = db.collection("users");
 
-    // Check if accountId already exists
-    const existingAccount = await usersCollection.findOne({ accountId });
+    // Check for duplicates
+    console.log("Checking for existing account...");
+    const existingAccount = await usersCollection.findOne({ $or: [{ accountId }, { publicKey }, { email }] });
     if (existingAccount) {
       await client.close();
-      return res.status(400).json({ error: "Account ID already exists" });
+      return res.status(400).json({ message: `Account already exists for ${existingAccount.email || existingAccount.accountId}` });
     }
 
-    // Create NEAR account
-    const myKeyStore = new keyStores.InMemoryKeyStore();
+    // Set up NEAR connection
+    console.log("Setting up NEAR connection...");
+    const keyStore = new keyStores.InMemoryKeyStore();
+    const relayerAccountId = "1000fans.near";
     const relayerKeyPair = KeyPair.fromString(process.env.RELAYER_PRIVATE_KEY);
-    await myKeyStore.setKey("mainnet", "anonymous.1000fans.near", relayerKeyPair);
+    await keyStore.setKey("mainnet", relayerAccountId, relayerKeyPair);
 
     const connectionConfig = {
       networkId: "mainnet",
-      keyStore: myKeyStore,
+      keyStore,
       nodeUrl: "https://rpc.mainnet.near.org",
       walletUrl: "https://wallet.mainnet.near.org",
       helperUrl: "https://helper.mainnet.near.org",
       explorerUrl: "https://explorer.mainnet.near.org",
     };
 
-    const near = await connect(connectionConfig);
-    const relayerAccount = await near.account("anonymous.1000fans.near");
+    let near;
+    try {
+      near = await connect(connectionConfig);
+      console.log("Connected to primary NEAR RPC");
+    } catch (error) {
+      console.error("Primary RPC failed, trying fallback:", error);
+      near = await connect({ ...connectionConfig, nodeUrl: connectionConfig.fallbackNodeUrl });
+      console.log("Connected to fallback NEAR RPC");
+    }
 
-    // Create account on NEAR blockchain
-    await relayerAccount.createAccount(
+    const relayerAccount = await near.account(relayerAccountId);
+    console.log("Relayer account loaded:", relayerAccount.accountId);
+
+    // Verify relayer balance
+    const state = await relayerAccount.state();
+    const balance = Number(state.amount) / 1e24;
+    console.log(`Relayer balance: ${balance} NEAR`);
+    if (balance < 0.1) {
+      throw new Error(`Insufficient balance in ${relayerAccountId}: ${balance} NEAR`);
+    }
+
+    // Create NEAR account
+    console.log("Creating NEAR account:", accountId);
+    try {
+      await relayerAccount.createAccount(
+        accountId,
+        publicKey,
+        utils.format.parseNearAmount("0.1")
+      );
+      console.log(`Created NEAR account: ${accountId}`);
+    } catch (error) {
+      console.error("NEAR account creation error:", { error: error.message, stack: error.stack });
+      throw new Error(`Failed to create NEAR account: ${error.message}`);
+    }
+
+    // Store in MongoDB
+    console.log("Storing user in MongoDB...");
+    const userDoc = {
       accountId,
       publicKey,
-      utils.format.parseNearAmount("0.1") // Initial balance
-    );
-
-    // Store in database
-    await usersCollection.insertOne({
-      accountId,
-      publicKey,
+      email,
       createdAt: new Date(),
-    });
+    };
+    const result = await usersCollection.insertOne(userDoc);
+    console.log(`User created: ${accountId}, MongoDB ID: ${result.insertedId}`);
 
     await client.close();
     return res.status(200).json({ success: true, accountId });
   } catch (error) {
-    console.error("Error creating account:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("Error in create-web3auth-user:", { error: error.message, stack: error.stack });
+    if (client) await client.close();
+    return res.status(500).json({ message: "Internal server error", error: error.message });
   }
 }

@@ -353,8 +353,7 @@ export default function Console() {
   // Welcoming text
   const welcomeText = `Hi! 👋 Welcome to 1000fans!
 1000fans is a platform for producers to share their music and videos exclusively with their fans.
-It is built with blockchain & AI for an enhanced privacy and a seamless control.
-Type 'commands' to explore available commands, or 'login' to connect your wallet!`;
+It is built with blockchain & AI for a seamless control of your enhanced privacy.`;
 
   return (
     <main className={styles.consoleMain}>
@@ -403,7 +402,7 @@ Type 'commands' to explore available commands, or 'login' to connect your wallet
             type="text"
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
-            placeholder="Type 'commands' to chat with the AI."
+            placeholder="Type 'commands' to explore available commands."
             disabled={isLoading}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           />

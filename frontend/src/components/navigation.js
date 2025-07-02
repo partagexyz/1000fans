@@ -14,6 +14,8 @@ export const Navigation = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] = useState(false);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
+  const [web3AuthUser, setWeb3AuthUser] = useState(null);
+  const [web3AuthKeyPair, setWeb3AuthKeyPair] = useState(null);
 
   useEffect(() => {
     setIsClientLoaded(true);
@@ -42,27 +44,35 @@ export const Navigation = () => {
       const result = await loginWithProvider(provider, options);
       setIsLoginModalOpen(false);
       if (result.needsAccountCreation) {
+        setWeb3AuthUser(result.user);
+        setWeb3AuthKeyPair(result.keyPair);
         setIsCreateAccountModalOpen(true);
       }
     } catch (error) {
       console.error(`Login with ${provider} failed:`, error);
+      alert(`Login failed: ${error.message}`);
     }
   };
 
   const handleAccountCreated = (newAccountId) => {
     setIsCreateAccountModalOpen(false);
+    setWeb3AuthUser(null);
+    setWeb3AuthKeyPair(null);
   };
 
   const handleLogout = async () => {
     try {
       if (web3auth?.connected) {
         await web3authLogout();
+        console.log('Web3Auth logged out');
       }
       if (signedAccountId) {
         await nearLogout();
+        console.log('NEAR wallet logged out');
       }
     } catch (error) {
       console.error('Logout failed:', error);
+      alert('Logout failed: ' + error.message);
     }
   };
 
@@ -116,6 +126,8 @@ export const Navigation = () => {
         isOpen={isCreateAccountModalOpen}
         onClose={() => setIsCreateAccountModalOpen(false)}
         onAccountCreated={handleAccountCreated}
+        user={web3AuthUser}
+        keyPair={web3AuthKeyPair}
       />
     </>
   );

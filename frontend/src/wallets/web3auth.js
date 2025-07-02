@@ -35,14 +35,19 @@ export function Web3AuthProvider({ children }) {
   const [web3auth, setWeb3auth] = useState(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
   const [keyPair, setKeyPair] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     setIsClientLoaded(true);
     const storedKeyPair = localStorage.getItem("web3auth_keypair");
+    const storedAccountId = localStorage.getItem("web3auth_accountId");
     if (storedKeyPair) {
       const restoredKeyPair = KeyPair.fromString(storedKeyPair);
       setKeyPair(restoredKeyPair);
-      //console.log('Restored key pair from localStorage');
+    }
+    if (storedAccountId) {
+      setAccountId(storedAccountId);
+      console.log('Restored accountId from localStorage:', { accountId: storedAccountId });
     }
   }, []);
 
@@ -73,14 +78,21 @@ export function Web3AuthProvider({ children }) {
         await web3authInstance.init();
         setWeb3auth(web3authInstance);
         //console.log('Web3Auth initialized successfully');
+
+        if (web3authInstance.connected) {
+          const web3authProvider = web3authInstance.provider;
+          setProvider(web3authProvider);
+          const userInfo = await web3authInstance.getUserInfo();
+          setUser(userInfo);
+          console.log('Web3Auth user info:', userInfo);
+          const { keyPair: newKeyPair } = await getNearCredentials(web3authProvider);
+          setKeyPair(newKeyPair);
+        }
       } catch (error) {
         console.error('Web3Auth initialization failed:', {
           message: error.message,
           code: error.code,
           stack: error.stack,
-          clientId: WEB3AUTH_CLIENT_ID,
-          network: NetworkId,
-          web3AuthNetwork: NetworkId === 'testnet' ? WEB3AUTH_NETWORK.SAPPHIRE_DEVNET : WEB3AUTH_NETWORK.SAPPHIRE_MAINNET,
         });
       }
     };
@@ -155,25 +167,13 @@ export function Web3AuthProvider({ children }) {
         loginProvider,
         ...extraLoginOptions,
       });
+      const userInfo = await web3auth.getUserInfo();
+      const { keyPair: newKeyPair } = await getNearCredentials(web3authProvider);
       setProvider(web3authProvider);
-
-      const { keyPair: theKeyPair } = await getNearCredentials(web3authProvider);
-      const publicKey = theKeyPair.getPublicKey().toString();
-
-      const response = await fetch("/api/auth/check-for-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
-      });
-
-      const data = await response.json();
-
-      if (data.exists) {
-        await setupAccount(data.accountId, theKeyPair);
-        return web3authProvider;
-      }
-
-      return web3authProvider;
+      setUser(userInfo);
+      setKeyPair(newKeyPair);
+      //console.log('Web3Auth login completed:', { provider: loginProvider, userInfo });
+      return { provider: web3authProvider, user: userInfo, keyPair: newKeyPair };
     } catch (error) {
       console.error(`Login with ${loginProvider} failed:`, error);
       throw error;
@@ -188,6 +188,7 @@ export function Web3AuthProvider({ children }) {
         setAccountId(null);
         setNearConnection(null);
         setKeyPair(null);
+        setUser(null);
         if (typeof window !== "undefined") {
           localStorage.removeItem("web3auth_keypair");
           localStorage.removeItem("web3auth_accountId");
@@ -228,6 +229,7 @@ export function Web3AuthProvider({ children }) {
         setAccountId,
         nearConnection,
         keyPair,
+        user,
         setupAccount,
         loginWithProvider,
         logout,
