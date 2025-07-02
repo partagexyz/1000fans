@@ -1,0 +1,259 @@
+/* src/styles/modal.module.css */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px); /* Subtle blur for overlay */
+}
+
+.modalDialog {
+  max-width: 500px;
+  width: 90%;
+  margin: 1rem;
+  font-family: var(--font-secondary);
+}
+
+.modalContent {
+  background-color: rgb(var(--background-start-rgb));
+  color: rgb(var(--foreground-rgb));
+  border: 1px solid rgba(var(--card-border-rgb), 0.5);
+  border-radius: var(--border-radius);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px); /* Match navbar/footer blur */
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="light"] .modalContent {
+  background-color: rgb(var(--background-start-rgb)); /* Light mode: #FFFBF0 */
+  border-color: rgba(120, 120, 120, 0.7); /* Stronger contrast */
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(var(--card-border-rgb), 0.5);
+  background-color: transparent;
+}
+
+[data-theme="light"] .modalHeader {
+  border-color: rgba(120, 120, 120, 0.7);
+}
+
+.modalTitle {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-weight: 600;
+  color: rgb(var(--foreground-rgb));
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: rgb(var(--foreground-rgb));
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.closeButton:hover {
+  color: var(--accent-color); /* Neon pink (dark) or green (light) */
+}
+
+.modalBody {
+  padding: 1.5rem;
+}
+
+.modalFooter {
+  padding: 1rem;
+  border-top: 1px solid rgba(var(--card-border-rgb), 0.5);
+  background-color: transparent;
+  display: flex;
+  justify-content: flex-end;
+}
+
+[data-theme="light"] .modalFooter {
+  border-color: rgba(120, 120, 120, 0.7);
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.centeredFormGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center "Connect Your Wallet" button */
+}
+
+.fullWidthForm {
+  width: 100%; /* Ensure email form takes full width */
+}
+
+.formLabel {
+  font-family: var(--font-primary);
+  color: rgb(var(--foreground-rgb));
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.formControl {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(var(--card-border-rgb), 0.5);
+  border-radius: var(--border-radius);
+  background-color: transparent;
+  color: rgb(var(--foreground-rgb));
+  font-family: var(--font-secondary);
+  transition: border-color 0.2s ease;
+}
+
+[data-theme="light"] .formControl {
+  border-color: rgba(120, 120, 120, 0.7);
+}
+
+.formControl::placeholder {
+  color: rgba(var(--foreground-rgb), 0.6);
+}
+
+.formControl:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 5px rgba(var(--accent-color), 0.5);
+}
+
+.formText {
+  font-size: 0.85rem;
+  color: rgba(var(--foreground-rgb), 0.8);
+  margin-top: 0.25rem;
+}
+
+.alertDanger {
+  background-color: rgba(255, 0, 0, 0.1);
+  color: #ff0000;
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.buttonPrimary {
+  background-color: var(--accent-color);
+  border: none;
+  color: rgb(var(--foreground-rgb));
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-family: var(--font-primary);
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  background-color: var(--secondary-accent);
+  transform: translateY(-1px);
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonSecondary {
+  background-color: #6c757d; /* Match .action-button */
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.buttonSecondary:hover:not(:disabled) {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.socialButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--accent-color);
+  border: none;
+  color: rgb(var(--foreground-rgb));
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-family: var(--font-primary);
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.socialButton:hover:not(:disabled) {
+  background-color: var(--secondary-accent);
+  transform: translateY(-1px);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  width: 100%;
+}
+
+.dividerLine {
+  flex-grow: 1;
+  border-top: 1px solid rgba(var(--card-border-rgb), 0.5);
+}
+
+[data-theme="light"] .dividerLine {
+  border-color: rgba(120, 120, 120, 0.7);
+}
+
+.dividerText {
+  margin: 0 1rem;
+  color: rgba(var(--foreground-rgb), 0.6);
+  font-size: 0.9rem;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 767px) {
+  .modalDialog {
+    width: 95%;
+    margin: 0.5rem;
+  }
+
+  .modalBody {
+    padding: 1rem;
+  }
+
+  .modalHeader,
+  .modalFooter {
+    padding: 0.75rem;
+  }
+
+  .buttonPrimary,
+  .buttonSecondary,
+  .socialButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}

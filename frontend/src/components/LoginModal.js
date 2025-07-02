@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNear } from '../wallets/near';
 import { useWeb3Auth } from '../wallets/web3auth';
-import styles from '../styles/app.module.css';
+import styles from '../styles/modal.module.css';
 
 export const LoginModal = ({ isOpen, onClose, onLoginWithProvider }) => {
   const { wallet } = useNear();
@@ -27,43 +27,42 @@ export const LoginModal = ({ isOpen, onClose, onLoginWithProvider }) => {
   };
 
   return (
-    <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Log in to 1000fans</h5>
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalDialog}>
+        <div className={styles.modalContent}>
+          <div className={styles.modalHeader}>
+            <h5 className={styles.modalTitle}>Log in to 1000fans</h5>
             <button
               type="button"
-              className="btn-close"
+              className={styles.closeButton}
               onClick={onClose}
               aria-label="Close"
-            ></button>
+            >
+              x
+            </button>
           </div>
-          <div className="modal-body">
-            <div className="mb-4">
-              <h6 className="mb-3">Login Options</h6>
+          <div className={styles.modalBody}>
+            <div className={`${styles.formGroup} ${styles.centeredFormGroup}`}>
               <button
-                className="btn btn-primary btn-lg w-100 mb-3 d-flex align-items-center justify-content-center gap-2"
+                className={styles.buttonSecondary}
                 onClick={() => {
-                  onLoginWithProvider('google');
+                  wallet?.signIn();
                   onClose();
                 }}
               >
-                <i className="bi bi-google"></i>
-                Continue with Google
+                <i className="bi bi-wallet2"></i>
+                Connect Your Wallet
               </button>
-              <div className="text-center my-4">
-                <div className="d-flex align-items-center">
-                  <div className="border-top flex-grow-1"></div>
-                  <div className="mx-3 text-muted">or</div>
-                  <div className="border-top flex-grow-1"></div>
-                </div>
+              <div className={styles.divider}>
+                <div className={styles.dividerLine}></div>
+                <div className={styles.dividerText}>or</div>
+                <div className={styles.dividerLine}></div>
               </div>
-              <form onSubmit={handleEmailLogin} className="mb-3">
-                <div className="mb-3">
+              <form className={styles.fullWidthForm} onSubmit={handleEmailLogin}>
+                <div className={styles.formGroup}>
                   <input
                     type="email"
-                    className="form-control"
+                    className={styles.formControl}
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -72,34 +71,17 @@ export const LoginModal = ({ isOpen, onClose, onLoginWithProvider }) => {
                 </div>
                 <button
                   type="submit"
-                  className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2"
+                  className={styles.buttonPrimary}
                   disabled={isLoading}
                 >
                   <i className="bi bi-envelope"></i>
-                  {isLoading ? 'Sending...' : 'Continue with Email'}
+                  {isLoading ? 'Sending...' : 'Login with Email'}
                 </button>
               </form>
-              <div className="text-center my-4">
-                <div className="d-flex align-items-center">
-                  <div className="border-top flex-grow-1"></div>
-                  <div className="mx-3 text-muted">or</div>
-                  <div className="border-top flex-grow-1"></div>
-                </div>
-              </div>
-              <button
-                className="btn btn-secondary btn-lg w-100 d-flex align-items-center justify-content-center gap-2"
-                onClick={() => {
-                  wallet?.signIn();
-                  onClose();
-                }}
-              >
-                <i className="bi bi-wallet2"></i>
-                Connect NEAR Wallet
-              </button>
             </div>
           </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+          <div className={styles.modalFooter}>
+            <button type="button" className={styles.buttonSecondary} onClick={onClose}>
               Close
             </button>
           </div>

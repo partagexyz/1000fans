@@ -1,7 +1,7 @@
 // src/components/CreateAccountModal.js
 import { useState, useEffect } from 'react';
 import { useWeb3Auth } from '../wallets/web3auth';
-import styles from '../styles/app.module.css';
+import styles from '../styles/modal.module.css';
 
 export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
   const { keyPair, setupAccount, logout, user } = useWeb3Auth();
@@ -145,45 +145,49 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">{existingAccount ? 'Welcome Back' : 'Create Your NEAR Account'}</h5>
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalDialog}>
+        <div className={styles.modalContent}>
+          <div className={styles.modalHeader}>
+            <h5 className={styles.modalTitle}>{existingAccount ? 'Welcome Back' : 'Create Your NEAR Account'}</h5>
             <button
               type="button"
-              className="btn-close"
+              className={styles.closeButton}
               onClick={handleClose}
               aria-label="Close"
-            ></button>
+            >
+              x
+            </button>
           </div>
-          <div className="modal-body">
+          <div className={styles.modalBody}>
             {checkLoading ? (
               <div>Loading account information...</div>
             ) : existingAccount ? (
               <div>
                 <p>Account {existingAccount} already exists!</p>
                 <p>Fund your wallet with NEAR to mint tokens and access exclusive content.</p>
-                <button className="btn btn-primary w-100" onClick={handleOnRamp}>
+                <button className={styles.buttonPrimary} onClick={handleOnRamp}>
                   Fund Wallet with MoonPay
                 </button>
               </div>
             ) : !isAccountCreated ? (
               <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">Choose your account ID</label>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Choose your account ID</label>
                   <input
                     type="text"
-                    className="form-control"
+                    className={styles.formControl}
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase())}
                     placeholder="e.g., user or user.1000fans.near"
                     required
                   />
-                  <div className="form-text">Your account will be: {username ? (username.includes('.') || /^[a-f0-9]{64}$/.test(username) ? username : `${username}.1000fans.near`) : '<username>.1000fans.near'}</div>
+                  <div className={styles.formText}>
+                    Your account will be: {username ? (username.includes('.') || /^[a-f0-9]{64}$/.test(username) ? username : `${username}.1000fans.near`) : '<username>.1000fans.near'}
+                    </div>
                 </div>
-                {error && <div className="alert alert-danger">{error}</div>}
-                <button type="submit" className="btn btn-primary w-100" disabled={isLoading || !keyPair}>
+                {error && <div className={styles.alertDanger}>{error}</div>}
+                <button type="submit" className={styles.buttonPrimary} disabled={isLoading || !keyPair}>
                   {isLoading ? 'Creating...' : 'Create Account'}
                 </button>
               </form>
@@ -191,7 +195,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
               <div>
                 <p>Account {username} created successfully!</p>
                 <p>Fund your wallet with NEAR to mint tokens and access exclusive content.</p>
-                <button className="btn btn-primary w-100" onClick={handleOnRamp}>
+                <button className={styles.buttonPrimary} onClick={handleOnRamp}>
                   Fund Wallet with MoonPay
                 </button>
               </div>
