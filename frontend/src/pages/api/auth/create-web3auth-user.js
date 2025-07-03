@@ -24,12 +24,8 @@ export default async function handler(req, res) {
   let client;
   try {
     // Validate environment variables
-    if (!process.env.MONGODB_URI) {
-      throw new Error("MONGODB_URI is not set");
-    }
-    if (!process.env.RELAYER_PRIVATE_KEY) {
-      throw new Error("RELAYER_PRIVATE_KEY is not set");
-    }
+    if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is not set");
+    if (!process.env.RELAYER_PRIVATE_KEY) throw new Error("RELAYER_PRIVATE_KEY is not set");
     console.log("Environment variables validated");
 
     // Connect to MongoDB
@@ -53,6 +49,7 @@ export default async function handler(req, res) {
     const keyStore = new keyStores.InMemoryKeyStore();
     const relayerAccountId = "1000fans.near";
     const relayerKeyPair = KeyPair.fromString(process.env.RELAYER_PRIVATE_KEY);
+    //console.log("Relayer public key:", relayerKeyPair.getPublicKey().toString());
     await keyStore.setKey("mainnet", relayerAccountId, relayerKeyPair);
 
     const connectionConfig = {
@@ -82,7 +79,7 @@ export default async function handler(req, res) {
     const state = await relayerAccount.state();
     const balance = Number(state.amount) / 1e24;
     console.log(`Relayer balance: ${balance} NEAR`);
-    if (balance < 0.132) { // 0.1 for account + 0.032 for mint
+    if (balance < 0.139) { // 0.1 for account + 0.007 for nft_mint + 0.007 for nft_mint_callback + 0.025 for add_group_member
       throw new Error(`Insufficient balance in ${relayerAccountId}: ${balance} NEAR`);
     }
 
@@ -118,7 +115,7 @@ export default async function handler(req, res) {
     };
     const groupId = "theosis";
     const contractId = "theosis.1000fans.near";
-    const mintDeposit = utils.format.parseNearAmount("0.032"); // 0.007 for mint + 0.025 for add_group_member
+    const mintDeposit = utils.format.parseNearAmount("0.039"); // 0.007 for mint + 0.007 for nft_mint_callback + 0.025 for add_group_member
     try {
       const mintResult = await relayerAccount.functionCall({
         contractId,
@@ -133,9 +130,16 @@ export default async function handler(req, res) {
       });
       console.log("Mint result:", mintResult);
       // Extract token ID from transaction logs
-      const token = mintResult.status.SuccessValue
-        ? JSON.parse(Buffer.from(mintResult.status.SuccessValue).toString())
-        : null;
+      if (!mintResult.status.SuccessValue) {
+        throw new Error("Mint transaction failed: No SuccessValue returned");
+      }
+      let token;
+      try {
+        token = JSON.parse(Buffer.from(mintResult.status.SuccessValue).toString());
+      } catch (parseError) {
+        console.error("Failed to parse mint result:", parseError, mintResult.status.SuccessValue);
+        throw new Error(`Failed to parse mint result: ${parseError.message}`);
+      }
       if (!token || !token.token_id) {
         throw new Error("Failed to retrieve token ID from mint result");
       }
@@ -148,7 +152,7 @@ export default async function handler(req, res) {
         accountId,
         publicKey,
         email,
-        tokenId, // Store token ID
+        tokenId,
         createdAt: new Date(),
       };
       const result = await usersCollection.insertOne(userDoc);
