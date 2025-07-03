@@ -126,8 +126,8 @@ export function Web3AuthProvider({ children }) {
   const getNearCredentials = async (web3authProvider) => {
     try {
       const privateKey = await web3authProvider.request({ method: "private_key" });
-      console.log('Web3Auth Private Key:', privateKey); // Log private key
-      console.log('Web3Auth Private Key (ed25519):', `ed25519:${utils.serialize.base_encode(Buffer.from(getED25519Key(privateKey).sk.toString("hex"), "hex"))}`); // Log NEAR-compatible private key
+      //console.log('Web3Auth Private Key:', privateKey); // WARNING: Log private key (never in production)
+      //console.log('Web3Auth Private Key (ed25519):', `ed25519:${utils.serialize.base_encode(Buffer.from(getED25519Key(privateKey).sk.toString("hex"), "hex"))}`); // WARNING: Log NEAR-compatible private key (never in production)
       const privateKeyEd25519 = getED25519Key(privateKey).sk.toString("hex");
       const privateKeyEd25519Buffer = Buffer.from(privateKeyEd25519, "hex");
       const bs58encode = utils.serialize.base_encode(privateKeyEd25519Buffer);
