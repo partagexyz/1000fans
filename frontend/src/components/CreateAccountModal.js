@@ -12,6 +12,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
   const [isAccountCreated, setIsAccountCreated] = useState(false);
   const [showOnRamp, setShowOnRamp] = useState(false);
   const [existingAccount, setExistingAccount] = useState(null);
+  const [tokenId, setTokenId] = useState(null);
 
   useEffect(() => {
     if (isOpen && user && keyPair) {
@@ -21,6 +22,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
       setShowOnRamp(false);
       //console.log('Web3Auth keyPair:', keyPair.getPublicKey().toString());
       //console.log('Web3Auth user:', user);
+      setTokenId(null);
       checkExistingAccount();
     }
   }, [isOpen, user, keyPair]);
@@ -77,6 +79,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
       logout();
     }
     setUsername('');
+    setTokenId(null);
     onClose();
   };
 
@@ -122,10 +125,11 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
         }
       }
 
-      const { accountId: createdAccountId } = JSON.parse(text);
+      const { accountId: createdAccountId, tokenId } = JSON.parse(text);
       await setupAccount(createdAccountId);
       setIsAccountCreated(true);
       setShowOnRamp(true);
+      setTokenId(tokenId);
       onAccountCreated(createdAccountId);
     } catch (err) {
       console.error('Error creating account:', err);
@@ -194,6 +198,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
             ) : (
               <div>
                 <p>Account {username} created successfully!</p>
+                <p>Fan token {tokenId} minted! You can now access exclusive content.</p>
                 <p>Fund your wallet with NEAR to mint tokens and access exclusive content.</p>
                 <button className={styles.buttonPrimary} onClick={handleOnRamp}>
                   Fund Wallet with MoonPay

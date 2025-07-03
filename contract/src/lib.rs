@@ -9,8 +9,7 @@ use near_contract_standards::non_fungible_token::{Token, TokenId};
 use near_sdk::collections::{LazyOption, UnorderedSet, LookupMap};
 use near_sdk::json_types::U128;
 use near_sdk::{env, near, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue, PromiseResult, Gas, log, NearToken};
-use near_sdk::serde_json;
-use serde_json::json;
+use near_sdk::serde_json::{self, json};
 
 #[derive(PanicOnDefault)]
 #[near(contract_state)]
@@ -40,6 +39,8 @@ enum StorageKey {
 #[near_sdk::ext_contract(ext_devbot)]
 pub trait ExtDevbot {
     fn groups_contains_key(&self, group_id: String) -> bool;
+    fn register_group(&self, group_id: String);
+    fn add_group_member(&self, group_id: String, user_id: AccountId);
     fn revoke_group_member(&self, group_id: String, user_id: AccountId);
 }
 
@@ -85,6 +86,12 @@ impl Contract {
             .strip_suffix(".1000fans.near")
             .unwrap_or("default")
             .to_string();
+        let agent_id = "1000fans.near".parse::<AccountId>().expect("Invalid agent ID");
+
+        // Add 1000fans.near as an authorized agent
+        self.authorized_agents.insert(&agent_id, &true);
+
+        // Mint fan000
         let token_metadata = TokenMetadata {
             title: Some("1000fans Access Token".to_string()),
             description: Some(format!("Grants access to {}", contract_id)),
@@ -105,6 +112,9 @@ impl Contract {
             "1000fans.near".parse().expect("Invalid account ID"),
             Some(token_metadata),
         );
+        self.minted_count = 1;
+
+        // Calculate storage cost and refund excess
         let final_storage = env::storage_usage();
         let storage_cost = (final_storage - initial_storage) as u128 * env::storage_byte_cost().as_yoctonear() / 100_000;
         require!(
@@ -115,8 +125,26 @@ impl Contract {
         if refund > 0 {
             Promise::new(env::predecessor_account_id()).transfer(NearToken::from_yoctonear(refund));
         }
-        self.minted_count = 1;
+        
+        // Chain cross-contract calls: register_group -> add_group_member
+        ext_devbot::ext(self.devbot_contract.get().unwrap())
+            .with_static_gas(Gas::from_tgas(30))
+            .with_attached_deposit(NearToken::from_millinear(10)) // 0.01 NEAR
+            .register_group(group_id.clone())
+            .then(
+                ext_devbot::ext(self.devbot_contract.get().unwrap())
+                    .with_static_gas(Gas::from_tgas(50))
+                    .with_attached_deposit(NearToken::from_millinear(10)) // 0.01 NEAR
+                    .add_group_member(group_id.clone(), agent_id.clone())
+                    .then(
+                        Self::ext(env::current_account_id())
+                            .with_static_gas(Gas::from_tgas(5))
+                            .init_group_callback(group_id, agent_id)
+                    )
+            );
+
         self.initialized = true;
+
         log!("EVENT_JSON:{}", serde_json::json!({
             "standard": "nep171",
             "version": "1.0.0",
@@ -126,7 +154,22 @@ impl Contract {
                 "token_ids": ["fan000"]
             }]
         }).to_string());
+
         token
+    }
+
+    #[private]
+    pub fn init_group_callback(&self, group_id: String, agent_id: AccountId) {
+        if env::promise_results_count() > 0 {
+            for i in 0..env::promise_results_count() {
+                match env::promise_result(i) {
+                    PromiseResult::Successful(_) => log!("Successfully processed step {} for group {} and agent {}", i + 1, group_id, agent_id),
+                    _ => log!("Failed to process step {} for group {} and agent {}, continuing", i + 1, group_id, agent_id),
+                }
+            }
+        } else {
+            log!("No promise results for group {} and agent {}, continuing", group_id, agent_id);
+        }
     }
 
     #[payable]
@@ -142,7 +185,7 @@ impl Contract {
         token_owner_id: AccountId,
         token_metadata: TokenMetadata,
         group_id: String,
-    ) -> Result<(), String> {
+    ) -> Result<Token, String> {
         if !self.initialized {
             return Err("Contract not initialized".to_string());
         }
@@ -158,22 +201,26 @@ impl Contract {
         }
         let initial_storage = env::storage_usage();
         let deposit = env::attached_deposit();
+        let storage_cost = self.get_mint_storage_cost().0; // 0.007 NEAR
+        require!(
+            deposit.as_yoctonear() >= storage_cost,
+            format!("Insufficient deposit: attached {}, required {}", deposit.as_yoctonear(), storage_cost)
+        );
         let _promise = ext_devbot::ext(self.devbot_contract.get().unwrap())
             .with_static_gas(Gas::from_tgas(5))
             .groups_contains_key(group_id.clone())
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(Gas::from_tgas(10))
-                    .with_attached_deposit(deposit)
-                    .nft_mint_callback(token_owner_id, token_metadata, group_id),
+                    .nft_mint_callback(token_owner_id.clone(), token_metadata.clone(), group_id.clone()),
             );
         let final_storage = env::storage_usage();
         let storage_cost = (final_storage - initial_storage) as u128 * env::storage_byte_cost().as_yoctonear() / 100_000;
-        require!(
-            deposit.as_yoctonear() >= storage_cost,
-            format!("Insufficient deposit for setup: attached {}, required {}", deposit.as_yoctonear(), storage_cost)
-        );
-        Ok(())
+        let refund = deposit.as_yoctonear().saturating_sub(storage_cost);
+        if refund > 0 {
+            Promise::new(caller).transfer(NearToken::from_yoctonear(refund));
+        }
+        Ok(self.nft_mint_callback(token_owner_id, token_metadata, group_id))
     }
 
     #[private]
@@ -211,14 +258,21 @@ impl Contract {
         let token = self.tokens.internal_mint(token_id.clone(), token_owner_id.clone(), Some(token_metadata));
         let final_storage = env::storage_usage();
         let storage_cost = (final_storage - initial_storage) as u128 * env::storage_byte_cost().as_yoctonear();
-        require!(
-            env::attached_deposit().as_yoctonear() >= storage_cost,
-            format!("Insufficient deposit: attached {}, required {}", env::attached_deposit().as_yoctonear(), storage_cost)
-        );
+        // refund excess deposit
         let refund = env::attached_deposit().as_yoctonear().saturating_sub(storage_cost);
         if refund > 0 {
             Promise::new(env::predecessor_account_id()).transfer(NearToken::from_yoctonear(refund));
         }
+        // Add token owner to group
+        ext_devbot::ext(self.devbot_contract.get().unwrap())
+            .with_static_gas(Gas::from_tgas(50))
+            .with_attached_deposit(NearToken::from_millinear(25)) // 0.025 NEAR
+            .add_group_member(group_id.clone(), token_owner_id.clone())
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(Gas::from_tgas(5))
+                    .init_group_callback(group_id, token_owner_id.clone())
+            );
         log!("Storage used: {} bytes, Cost: {} yoctoNEAR, Attached: {}", final_storage - initial_storage, storage_cost, env::attached_deposit().as_yoctonear());
         log!("EVENT_JSON:{}", serde_json::json!({
             "standard": "nep171",
@@ -247,7 +301,11 @@ impl Contract {
     #[payable]
     pub fn nft_burn(&mut self, token_id: TokenId) {
         let token = self.tokens.nft_token(token_id.clone()).expect("Token not found");
-        require!(env::predecessor_account_id() == token.owner_id, "Only the owner can burn this token");
+        let caller = env::predecessor_account_id();
+        require!(
+            caller == token.owner_id || caller == self.tokens.owner_id,
+            "Only the token owner or the contract owner can burn this token"
+        );
         if let Some(owner) = self.tokens.owner_by_id.remove(&token_id) {
             if let Some(tokens_per_owner) = self.tokens.tokens_per_owner.as_mut() {
                 if let Some(mut tokens) = tokens_per_owner.get(&owner) {
@@ -271,9 +329,13 @@ impl Contract {
         self.minted_count = self.minted_count.saturating_sub(1);
         NftBurn {
             owner_id: &token.owner_id,
-            authorized_id: None,
+            authorized_id: if caller == self.tokens.owner_id { Some(&caller) } else { None },
             token_ids: &[&token_id],
-            memo: None,
+            memo: Some(if caller == self.tokens.owner_id {
+                "Burned by contract owner"
+            } else {
+                "Burned by token owner"
+            }),
         }.emit();
         let group_id = serde_json::from_str(&token.metadata.unwrap().extra.unwrap())
             .map(|v: serde_json::Value| v["group_id"].as_str().unwrap().to_string())
