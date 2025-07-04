@@ -23,17 +23,26 @@
   margin-bottom: 5px;
 }
 
+.coverContainer {
+  width: 250px; /* Fixed square for desktop */
+  height: 250px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .cover {
   /* audio files */
   width: 100%;
-  height: 250px;
-  position: relative;
+  height: 100%;
+  object-fit: contain;;
 }
 
 .cover img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .audio-player, .video-player .cover {
@@ -60,7 +69,7 @@
 .songTitle {
   font-size: 16px;
   color: rgb(var(--foreground-rgb));
-  margin-left: 5px;
+  margin-left: 10px;
 }
 
 .songArtist {
@@ -110,8 +119,13 @@
   margin-top: 10px;
 }
 
-.songTitle {
-  margin-right: 10px;
+.controlsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* Space between buttons and title */
+  margin-top: 10px; /* Space below video */
+  width: 100%; /* Ensure full width within widget */
 }
 
 /* Adjustments for when playing video */
@@ -237,13 +251,13 @@
     max-width: 200px;
   }
 
-  .cover {
-    height: 200px; /* Adjust for smaller screens */
+  .coverContainer {
+    width: 400px;
+    height: 400px;
   }
 
-  .playlistItem {
-    min-height: 48px; /* Larger touch target */
-    padding: 5px 0;
-    font-size: 14px;
+  .controlsContainer {
+    gap: 8px; /* Slightly smaller gap for mobile */
+    margin-top: 8px;
   }
 }

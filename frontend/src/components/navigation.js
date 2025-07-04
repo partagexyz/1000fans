@@ -16,9 +16,16 @@ export const Navigation = () => {
   const [isClientLoaded, setIsClientLoaded] = useState(false);
   const [web3AuthUser, setWeb3AuthUser] = useState(null);
   const [web3AuthKeyPair, setWeb3AuthKeyPair] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setIsClientLoaded(true);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 767);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -39,7 +46,6 @@ export const Navigation = () => {
   }, []);
 
   const handleLoginWithProvider = async (provider, options) => {
-    //console.log('Attempting login with provider:', provider);
     try {
       const result = await loginWithProvider(provider, options);
       setIsLoginModalOpen(false);
@@ -77,7 +83,6 @@ export const Navigation = () => {
   };
 
   const handleLoginClick = () => {
-    //console.log('Login button clicked');
     setIsLoginModalOpen(true);
   };
 
@@ -110,7 +115,7 @@ export const Navigation = () => {
               className={styles['action-button']}
               onClick={isLoggedIn ? handleLogout : handleLoginClick}
             >
-              {isLoggedIn ? `Logout ${signedAccountId || web3authAccountId}` : 'Login'}
+              {isLoggedIn ? (isMobile ? 'Logout' : `Logout ${signedAccountId || web3authAccountId}`) : 'Login'}
             </button>
           </div>
         </div>

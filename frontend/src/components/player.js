@@ -194,7 +194,7 @@ const Player = ({ url = [], changeTrack, trackIndex = 0, playOnLoad, showPlaylis
                             // Use dynamic sizes for mobile
                             width={isMobile() ? 400 : 512} 
                             height={isMobile() ? 400 : 512}
-                            layout="responsive" // Ensures the image maintains its aspect ratio
+                            layout="intrinsic" // Ensures the image maintains its aspect ratio
                         />
                     </div>
                 )}

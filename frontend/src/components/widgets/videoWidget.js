@@ -24,18 +24,18 @@ const VideoWidget = ({ url, changeTrack, trackIndex, playOnLoad, closeWidget }) 
 
   const calculateVideoDimensions = () => {
     if (widgetSize === 'desktop') {
-      return { width: '665px', height: '430px' };
+      return { width: '911px', height: 'auto' };
     } else {
       const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-      if (screenWidth / screenHeight > 16/9) {
-        const height = screenHeight;
+      const availableHeight = window.innerHeight - 160; // Subtract header + footer
+      if (screenWidth / availableHeight > 16 / 9) {
+        const height = availableHeight;
         const width = height * 16 / 9;
-        return { width: `${width}px`, height: `${height}px` };
+        return { width: `${Math.min(width, screenWidth)}px`, height: `${height}px` };
       } else {
         const width = screenWidth;
         const height = width * 9 / 16;
-        return { width: `${width}px`, height: `${height}px` };
+        return { width: `${width}px`, height: `${Math.min(height, availableHeight)}px` };
       }
     }
   };
