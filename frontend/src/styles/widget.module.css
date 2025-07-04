@@ -62,7 +62,7 @@
 .closeButton {
   position: absolute;
   top: 5px;
-  right: 10px;
+  left: 10px;
   color: rgb(var(--foreground-rgb));
   background: none;
   border: none;
