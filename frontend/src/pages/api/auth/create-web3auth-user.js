@@ -85,6 +85,7 @@ export default async function handler(req, res) {
 
     // Create NEAR account
     console.log("Creating NEAR account:", accountId);
+    let createdAccountId = null;
     try {
       await relayerAccount.createAccount(
         accountId,
@@ -92,6 +93,7 @@ export default async function handler(req, res) {
         utils.format.parseNearAmount("0.1")
       );
       console.log(`Created NEAR account: ${accountId}`);
+      createdAccountId = accountId;
     } catch (error) {
       console.error("NEAR account creation error:", { error: error.message, stack: error.stack });
       throw new Error(`Failed to create NEAR account: ${error.message}`);
@@ -129,21 +131,24 @@ export default async function handler(req, res) {
         attachedDeposit: mintDeposit,
       });
       console.log("Mint result:", mintResult);
+
       // Extract token ID from transaction logs
-      if (!mintResult.status.SuccessValue) {
-        throw new Error("Mint transaction failed: No SuccessValue returned");
+      let tokenId;
+      if (mintResult.status && mintResult.status.SuccessValue) {
+        try {
+        const decodedValue = Buffer.from(mintResult.status.SuccessValue, 'base64').toString();
+          const token = JSON.parse(decodedValue);
+          tokenId = token.token_id;
+          if (!tokenId) {
+            throw new Error("Token ID missing in mint result");
+          }
+        } catch (parseError) {
+          console.error("Failed to parse mint result:", parseError);
+          throw new Error(`Failed to parse mint result: ${parseError.message}`);
+        }
+      } else {
+        throw new Error("Mint transaction failed or no SuccessValue");
       }
-      let token;
-      try {
-        token = JSON.parse(Buffer.from(mintResult.status.SuccessValue).toString());
-      } catch (parseError) {
-        console.error("Failed to parse mint result:", parseError, mintResult.status.SuccessValue);
-        throw new Error(`Failed to parse mint result: ${parseError.message}`);
-      }
-      if (!token || !token.token_id) {
-        throw new Error("Failed to retrieve token ID from mint result");
-      }
-      const tokenId = token.token_id;
       console.log(`Minted token: ${tokenId} for ${accountId}`);
 
       // Store in MongoDB
@@ -163,11 +168,19 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error("Token minting error:", { error: error.message, stack: error.stack });
       // Delete account if mint fails
-      try {
-        await relayerAccount.deleteAccount(accountId, "1000fans.near");
-        console.log(`Deleted account ${accountId} due to mint failure`);
-      } catch (deleteError) {
-        console.error("Failed to delete account:", deleteError);
+      if (createdAccountId) {
+        try {
+          await relayerAccount.functionCall({
+            contractId: createdAccountId,
+            methodName: "delete_account",
+            args: { beneficiary_id: relayerAccountId },
+            gas: "30000000000000", // 30 TGas
+            attachedDeposit: "0",
+          });
+          console.log(`Deleted account ${createdAccountId} due to mint failure`);
+        } catch (deleteError) {
+          console.error(`Failed to delete account ${createdAccountId}:`, deleteError);
+        }
       }
       throw new Error(`Failed to mint token: ${error.message}`);
     }
