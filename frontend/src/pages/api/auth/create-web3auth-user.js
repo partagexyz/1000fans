@@ -7,8 +7,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { accountId, publicKey, email } = req.body;
-  console.log("Request received:", { accountId, publicKey, email });
+  const { accountId, publicKey, email, paymentId, amount } = req.body;
+  console.log("Request received:", { accountId, publicKey, email, paymentId, amount });
 
   // Validate inputs
   if (!accountId || !publicKey || !email) {
@@ -19,6 +19,9 @@ export default async function handler(req, res) {
   }
   if (!publicKey.startsWith('ed25519:') || publicKey.length !== 52) {
     return res.status(400).json({ message: `Invalid public key format: ${publicKey} (must be ed25519:<44-char-base58>)` });
+  }
+  if (amount && (isNaN(amount) || amount < 5 || amount > 20)) {
+    return res.status(400).json({ message: "Amount must be between 5 and 20 USD" });
   }
 
   let client;
@@ -42,6 +45,15 @@ export default async function handler(req, res) {
     if (existingAccount) {
       await client.close();
       return res.status(400).json({ message: `Account already exists for ${existingAccount.email || existingAccount.accountId}` });
+    }
+
+    // If paymentId provided, verify payment status
+    if (paymentId) {
+      const payment = await usersCollection.findOne({ paymentId });
+      if (!payment || payment.status !== 'confirmed') {
+        await client.close();
+        return res.status(400).json({ message: 'Payment not confirmed' });
+      }
     }
 
     // Set up NEAR connection
@@ -137,12 +149,12 @@ export default async function handler(req, res) {
       if (mintResult.status && mintResult.status.SuccessValue) {
         try {
         const decodedValue = Buffer.from(mintResult.status.SuccessValue, 'base64').toString();
-          const token = JSON.parse(decodedValue);
-          tokenId = token.token_id;
-          if (!tokenId) {
-            throw new Error("Token ID missing in mint result");
-          }
-        } catch (parseError) {
+        const token = JSON.parse(decodedValue);
+        tokenId = token.token_id;
+        if (!tokenId) {
+          throw new Error("Token ID missing in mint result");
+        }
+      } catch (parseError) {
           console.error("Failed to parse mint result:", parseError);
           throw new Error(`Failed to parse mint result: ${parseError.message}`);
         }
@@ -158,6 +170,7 @@ export default async function handler(req, res) {
         publicKey,
         email,
         tokenId,
+        payment: paymentId ? Number(amount) : null,
         createdAt: new Date(),
       };
       const result = await usersCollection.insertOne(userDoc);
