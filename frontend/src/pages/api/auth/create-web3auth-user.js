@@ -34,35 +34,54 @@ export default async function handler(req, res) {
     // Connect to MongoDB
     console.log("Attempting MongoDB connection...");
     client = new MongoClient(process.env.MONGODB_URI, { connectTimeoutMS: 5000 });
-    await client.connect();
-    console.log("MongoDB connected");
+    try {
+      await client.connect();
+      console.log('MongoDB connected');
+    } catch (error) {
+      throw new Error(`MongoDB connection failed: ${error.message}`);
+    }
     const db = client.db("1000fans");
     const usersCollection = db.collection("users");
+    const paymentsCollection = db.collection('payments');
 
     // Check for duplicates
     console.log("Checking for existing account...");
-    const existingAccount = await usersCollection.findOne({ $or: [{ accountId }, { publicKey }, { email }] });
-    if (existingAccount) {
-      await client.close();
-      return res.status(400).json({ message: `Account already exists for ${existingAccount.email || existingAccount.accountId}` });
+    try {
+      const existingAccount = await usersCollection.findOne({ $or: [{ accountId }, { publicKey }, { email }] });
+      if (existingAccount) {
+        return res.status(400).json({ message: `Account already exists for ${existingAccount.email || existingAccount.accountId}` });
+      }
+    } catch (error) {
+      throw new Error(`Failed to check for existing account: ${error.message}`);
     }
 
-    // If paymentId provided, verify payment status
+    // Verify payment status
     if (paymentId) {
-      const payment = await usersCollection.findOne({ paymentId });
-      if (!payment || payment.status !== 'confirmed') {
-        await client.close();
-        return res.status(400).json({ message: 'Payment not confirmed' });
+      console.log('Verifying payment:', paymentId);
+      try {
+        const payment = await paymentsCollection.findOne({ paymentId });
+        if (!payment || payment.status !== 'confirmed') {
+          return res.status(400).json({ message: 'Payment not confirmed' });
+        }
+      } catch (error) {
+        throw new Error(`Failed to verify payment: ${error.message}`);
       }
+    } else {
+      console.log('No paymentId provided, skipping payment verification');
     }
 
     // Set up NEAR connection
     console.log("Setting up NEAR connection...");
     const keyStore = new keyStores.InMemoryKeyStore();
     const relayerAccountId = "1000fans.near";
-    const relayerKeyPair = KeyPair.fromString(process.env.RELAYER_PRIVATE_KEY);
-    //console.log("Relayer public key:", relayerKeyPair.getPublicKey().toString());
-    await keyStore.setKey("mainnet", relayerAccountId, relayerKeyPair);
+    let relayerKeyPair;
+    try {
+      relayerKeyPair = KeyPair.fromString(process.env.RELAYER_PRIVATE_KEY);
+      console.log('Relayer public key:', relayerKeyPair.getPublicKey().toString());
+      await keyStore.setKey('mainnet', relayerAccountId, relayerKeyPair);
+    } catch (error) {
+      throw new Error(`Invalid RELAYER_PRIVATE_KEY: ${error.message}`);
+    }
 
     const connectionConfig = {
       networkId: "mainnet",
@@ -80,19 +99,32 @@ export default async function handler(req, res) {
       console.log("Connected to primary NEAR RPC");
     } catch (error) {
       console.error("Primary RPC failed, trying fallback:", error);
-      near = await connect({ ...connectionConfig, nodeUrl: connectionConfig.fallbackNodeUrl });
-      console.log("Connected to fallback NEAR RPC");
+      try {
+        near = await connect({ ...connectionConfig, nodeUrl: connectionConfig.fallbackNodeUrl });
+        console.log('Connected to fallback NEAR RPC');
+      } catch (fallbackError) {
+        throw new Error(`NEAR connection failed: ${fallbackError.message}`);
+      }
     }
 
-    const relayerAccount = await near.account(relayerAccountId);
-    console.log("Relayer account loaded:", relayerAccount.accountId);
+    let relayerAccount;
+    try {
+      relayerAccount = await near.account(relayerAccountId);
+      console.log('Relayer account loaded:', relayerAccountId);
+    } catch (error) {
+      throw new Error(`Failed to load relayer account: ${error.message}`);
+    }
 
     // Verify relayer balance
-    const state = await relayerAccount.state();
-    const balance = Number(state.amount) / 1e24;
-    console.log(`Relayer balance: ${balance} NEAR`);
-    if (balance < 0.139) { // 0.1 for account + 0.007 for nft_mint + 0.007 for nft_mint_callback + 0.025 for add_group_member
-      throw new Error(`Insufficient balance in ${relayerAccountId}: ${balance} NEAR`);
+    try {
+      const state = await relayerAccount.state();
+      const balance = Number(state.amount) / 1e24;
+      console.log(`Relayer balance: ${balance} NEAR`);
+      if (balance < 0.139) {
+        throw new Error(`Insufficient balance in ${relayerAccountId}: ${balance} NEAR`);
+      }
+    } catch (error) {
+      throw new Error(`Failed to check relayer balance: ${error.message}`);
     }
 
     // Create NEAR account
@@ -104,8 +136,8 @@ export default async function handler(req, res) {
         publicKey,
         utils.format.parseNearAmount("0.1")
       );
-      console.log(`Created NEAR account: ${accountId}`);
       createdAccountId = accountId;
+      console.log(`Created NEAR account: ${accountId}`);
     } catch (error) {
       console.error("NEAR account creation error:", { error: error.message, stack: error.stack });
       throw new Error(`Failed to create NEAR account: ${error.message}`);
@@ -148,14 +180,15 @@ export default async function handler(req, res) {
       let tokenId;
       if (mintResult.status && mintResult.status.SuccessValue) {
         try {
-        const decodedValue = Buffer.from(mintResult.status.SuccessValue, 'base64').toString();
-        const token = JSON.parse(decodedValue);
-        tokenId = token.token_id;
-        if (!tokenId) {
-          throw new Error("Token ID missing in mint result");
-        }
-      } catch (parseError) {
-          console.error("Failed to parse mint result:", parseError);
+          const decodedValue = Buffer.from(mintResult.status.SuccessValue, 'base64').toString();
+          console.log('Decoded mint result:', decodedValue);
+          const token = JSON.parse(decodedValue);
+          tokenId = token.token_id;
+          if (!tokenId) {
+            throw new Error('Token ID missing in mint result');
+          }
+        } catch (parseError) {
+          console.error('Failed to parse mint result:', parseError);
           throw new Error(`Failed to parse mint result: ${parseError.message}`);
         }
       } else {
@@ -165,18 +198,21 @@ export default async function handler(req, res) {
 
       // Store in MongoDB
       console.log("Storing user in MongoDB...");
-      const userDoc = {
-        accountId,
-        publicKey,
-        email,
-        tokenId,
-        payment: paymentId ? Number(amount) : null,
-        createdAt: new Date(),
-      };
-      const result = await usersCollection.insertOne(userDoc);
-      console.log(`User created: ${accountId}, MongoDB ID: ${result.insertedId}`);
-
-      await client.close();
+      try {
+        const userDoc = {
+          accountId,
+          publicKey,
+          email,
+          tokenId,
+          payment: paymentId ? Number(amount) : null,
+          createdAt: new Date(),
+        };
+        const result = await usersCollection.insertOne(userDoc);
+        console.log(`User created: ${accountId}, MongoDB ID: ${result.insertedId}`);
+      } catch (error) {
+        throw new Error(`Failed to store user in MongoDB: ${error.message}`);
+      }
+      //await client.close();
       return res.status(200).json({ success: true, accountId, tokenId });
     } catch (error) {
       console.error("Token minting error:", { error: error.message, stack: error.stack });
@@ -201,5 +237,14 @@ export default async function handler(req, res) {
     console.error("Error in create-web3auth-user:", { error: error.message, stack: error.stack });
     if (client) await client.close();
     return res.status(500).json({ message: "Internal server error", error: error.message });
+  } finally {
+    if (client) {
+      try {
+        await client.close();
+        console.log('MongoDB connection closed');
+      } catch (closeError) {
+        console.error('Failed to close MongoDB connection:', closeError);
+      }
+    }
   }
 }

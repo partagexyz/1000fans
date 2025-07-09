@@ -1,3 +1,4 @@
+// frontend/src/wallets/web3modal.js
 import { NetworkId, EVMWalletChain } from '../config';
 
 // Config

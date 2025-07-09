@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.726.1",
-    "@circle-fin/circle-sdk": "^2.9.0",
     "@near-js/providers": "^1.0.0",
     "@near-wallet-selector/core": "^8.9.13",
     "@near-wallet-selector/ethereum-wallets": "^8.9.13",
@@ -23,6 +22,8 @@
     "@near-wallet-selector/modal-ui": "^8.9.13",
     "@near-wallet-selector/my-near-wallet": "^8.9.13",
     "@near-wallet-selector/sender": "^8.9.13",
+    "@noble/secp256k1": "^2.3.0",
+    "@stripe/crypto": "^0.0.4",
     "@web3auth/auth-adapter": "^9.5.3",
     "@web3auth/base": "^9.5.3",
     "@web3auth/base-provider": "^9.5.3",
@@ -42,7 +43,8 @@
     "react-player": "^2.16.0",
     "sharp": "^0.33.5",
     "uuid": "^11.1.0",
-    "wagmi": "^2.12.16"
+    "wagmi": "^2.12.16",
+    "winston": "^3.17.0"
   },
   "overrides": {
     "@near-wallet-selector/ethereum-wallets": {

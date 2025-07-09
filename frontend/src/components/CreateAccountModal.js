@@ -99,7 +99,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
       ? username 
       : `${username}.1000fans.near`;
     if (!/^[a-z0-9_-]{2,64}\.1000fans\.near$/.test(accountId) && !/^[a-f0-9]{64}$/.test(accountId)) {
-      setError('Invalid account ID format (e.g., user.1000fans.near or 64-char implicit ID)');
+      setError('Invalid account ID format (format: user.1000fans.near)');
       setIsLoading(false);
       return;
     }
@@ -109,17 +109,14 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
       const publicKey = keyPair?.getPublicKey().toString();
       const email = user?.email;
       console.log('Submitting:', { accountId, publicKey, email });
-      if (!publicKey || !publicKey.startsWith('ed25519:') || publicKey.length !== 52) {
-        throw new Error(`Invalid or missing public key: ${publicKey}`);
-      }
-      if (!email) {
-        throw new Error('User email not available');
+      if (!publicKey || !email) {
+        throw new Error('Missing public key or email');
       }
 
       const response = await fetch('/api/auth/check-for-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId }),
+        body: JSON.stringify({ accountId, email, publicKey }),
       });
 
       const text = await response.text();
@@ -159,7 +156,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
         throw new Error('Missing public key or email');
       }
       const idempotencyKey = uuidv4();
-      const response = await fetch('/api/auth/process-payment', {
+      const response = await fetch('/api/payments/create-card-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -177,8 +174,9 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
       if (!response.ok) {
         throw new Error(JSON.parse(text).message || 'Payment processing failed');
       }
+      const { paymentId } = JSON.parse(text);
       // Proceed to account creation after payment
-      await createAccount(pendingAccountId, publicKey, email, PaymentInfoCancelDescriptionEnum, amount);
+      await createAccount(pendingAccountId, publicKey, email, paymentId, amount);
     } catch (err) {
       console.error('Payment error:', err);
       throw err;
@@ -192,7 +190,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
       if (!publicKey || !email) {
         throw new Error('Missing public key or email');
       }
-      await createAccount(pendingAccountId, publicKey, email);
+      await createAccount(pendingAccountId, publicKey, email, null, null);
     } catch (err) {
       console.error('Skip payment error:', err);
       setError(`Failed to create account: ${err.message}`);
@@ -258,7 +256,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
                       className={styles.formControl}
                       value={username}
                       onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                      placeholder="e.g., user or user.1000fans.near"
+                      placeholder="format: user or user.1000fans.near"
                       required
                     />
                     <div className={styles.formText}>

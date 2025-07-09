@@ -159,6 +159,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  flex: 1;
 }
 
 .buttonPrimary:hover:not(:disabled) {
@@ -184,11 +185,20 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  flex: 1;
 }
 
 .buttonSecondary:hover:not(:disabled) {
   background-color: #5a6268;
   transform: translateY(-1px);
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.5rem; /* Space between buttons */
+  justify-content: space-between; /* Align buttons to the left */
+  margin-top: 1rem;
+  width: 100%;
 }
 
 .socialButton {
