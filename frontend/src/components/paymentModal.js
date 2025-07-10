@@ -1,54 +1,58 @@
 // src/components/paymentModal.js
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { loadStripeOnramp } from '@stripe/crypto';
 import styles from '../styles/modal.module.css';
 
-export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip }) => {
+const stripeOnrampPromise = loadStripeOnramp(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
+export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, email, theme }) => {
   const [amount, setAmount] = useState('10.00');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [clientSecret, setClientSecret] = useState(null);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const onrampSessionRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && amount) {
+      // Create onramp session when modal opens
+      const createSession = async () => {
+        setIsLoading(true);
+        setError('');
+        try {
+          const response = await fetch('/api/payments/create-onramp-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              accountId,
+              email,
+              amount,
+              destinationAddress: '0x9a1761ca62c0f3fe06D508Ba335aD0eBdA690b45', // Replace with actual Ethereum address if needed
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || 'Failed to create onramp session');
+          }
+          setClientSecret(data.clientSecret);
+          onrampSessionRef.current = { sessionId: data.sessionId, amount: parseFloat(amount) };
+        } catch (err) {
+          setError(`Failed to initialize payment: ${err.message}`);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      createSession();
+    }
+  }, [isOpen, amount, accountId, email]);
+
+  useEffect(() => {
+    // Update theme when it changes
+    if (onrampSessionRef.current?.session && theme) {
+      onrampSessionRef.current.session.setAppearance({ theme });
+    }
+  }, [theme]);
 
   if (!isOpen) return null;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    // Validate inputs
-    if (!cardNumber || !/^\d{16}$/.test(cardNumber.replace(/\s/g, ''))) {
-      setError('Invalid card number (16 digits required)');
-      setIsLoading(false);
-      return;
-    }
-    if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) {
-      setError('Invalid expiry date (MM/YY)');
-      setIsLoading(false);
-      return;
-    }
-    if (!cvv || !/^\d{3,4}$/.test(cvv)) {
-      setError('Invalid CVV (3-4 digits required)');
-      setIsLoading(false);
-      return;
-    }
-    const amountNum = parseFloat(amount);
-    /*
-    if (isNaN(amountNum) || amountNum < 5 || amountNum > 20) {
-      setError('Amount must be between 5 and 20 USD');
-      setIsLoading(false);
-      return;
-    }
-    */
-    try {
-      await onSubmit({ amount: amountNum.toFixed(2), cardNumber, expiry, cvv });
-      onClose();
-    } catch (err) {
-      setError(`Payment failed: ${err.message}`);
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className={styles.modalOverlay}>
@@ -66,81 +70,117 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip }) => {
             </button>
           </div>
           <div className={styles.modalBody}>
-            <form onSubmit={handleSubmit}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Amount (USD)</label>
-                <select
-                  className={styles.formControl}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                >
-                  <option value="5.00">5.00 USD</option>
-                  <option value="10.00">10.00 USD</option>
-                  <option value="20.00">20.00 USD</option>
-                </select>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Card Number</label>
-                <input
-                  type="text"
-                  className={styles.formControl}
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ''))}
-                  placeholder="1234 5678 9012 3456"
-                  maxLength="16"
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Expiry (MM/YY)</label>
-                <input
-                  type="text"
-                  className={styles.formControl}
-                  value={expiry}
-                  onChange={(e) => setExpiry(e.target.value)}
-                  placeholder="12/25"
-                  maxLength="5"
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>CVV</label>
-                <input
-                  type="text"
-                  className={styles.formControl}
-                  value={cvv}
-                  onChange={(e) => setCvv(e.target.value)}
-                  placeholder="123"
-                  maxLength="4"
-                  required
-                />
-              </div>
-              {error && <div className={styles.alertDanger}>{error}</div>}
-              <div className={styles.buttonGroup}>
-                <button
-                  type="submit"
-                  className={styles.buttonPrimary}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Processing...' : 'Send Funds'}
-                </button>
-                <button
-                  type="button"
-                  className={styles.buttonSecondary}
-                  onClick={() => {
-                    onSkip();
-                    onClose();
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Amount (USD)</label>
+              <select
+                className={styles.formControl}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="5.00">5.00 USD</option>
+                <option value="10.00">10.00 USD</option>
+                <option value="20.00">20.00 USD</option>
+              </select>
+            </div>
+            {error && <div className={styles.alertDanger}>{error}</div>}
+            {isLoading ? (
+              <div>Loading payment interface...</div>
+            ) : clientSecret ? (
+              <CryptoElements stripeOnramp={stripeOnrampPromise}>
+                <OnrampElement
+                  clientSecret={clientSecret}
+                  appearance={{ theme: theme || 'dark' }}
+                  style={{ maxWidth: '500px', height: '600px' }}
+                  onSessionUpdate={({ payload }) => {
+                    console.log('Onramp session updated:', payload.session.status);
+                    if (payload.session.status === 'fulfillment_complete') {
+                      onSubmit(onrampSessionRef.current.sessionId, onrampSessionRef.current.amount);
+                      onClose();
+                    }
                   }}
-                  disabled={isLoading}
-                >
-                  Skip Funding
-                </button>
-              </div>
-            </form>
+                />
+              </CryptoElements>
+            ) : (
+              <div>Initializing payment...</div>
+            )}
+            <button
+              type="button"
+              className={styles.buttonSecondary}
+              onClick={() => {
+                onSkip();
+                onClose();
+              }}
+              disabled={isLoading}
+              style={{ marginTop: '10px' }}
+            >
+              Skip Funding
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
+};
+
+// React context for StripeOnramp
+const CryptoElementsContext = React.createContext(null);
+
+export const CryptoElements = ({ stripeOnramp, children }) => {
+  const [ctx, setContext] = React.useState(() => ({ onramp: null }));
+
+  React.useEffect(() => {
+    let isMounted = true;
+    Promise.resolve(stripeOnramp).then((onramp) => {
+      if (onramp && isMounted) {
+        setContext((ctx) => (ctx.onramp ? ctx : { onramp }));
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [stripeOnramp]);
+
+  return <CryptoElementsContext.Provider value={ctx}>{children}</CryptoElementsContext.Provider>;
+};
+
+export const useStripeOnramp = () => {
+  const context = React.useContext(CryptoElementsContext);
+  return context?.onramp;
+};
+
+export const OnrampElement = ({ clientSecret, appearance, onSessionUpdate, ...props }) => {
+  const stripeOnramp = useStripeOnramp();
+  const onrampElementRef = useRef(null);
+
+  useEffect(() => {
+    const containerRef = onrampElementRef.current;
+    if (!containerRef || !clientSecret || !stripeOnramp) {
+      console.warn('OnrampElement: Missing container, clientSecret, or stripeOnramp');
+      return;
+    }
+
+    // Ensure container is a valid DOM node
+    if (!(containerRef instanceof HTMLElement)) {
+      console.error('OnrampElement: containerRef is not an HTMLElement');
+      return;
+    }
+
+    containerRef.innerHTML = '';
+    const session = stripeOnramp.createSession({ clientSecret, appearance });
+    try {
+      session.mount(containerRef);
+      onrampElementRef.current.session = session; // Store session for theme updates
+      // Listen for session updates
+      session.addEventListener('onramp_session_updated', onSessionUpdate);
+    } catch (err) {
+      console.error('Failed to mount Stripe onramp:', err);
+    }
+
+    return () => {
+      session.removeEventListener('onramp_session_updated', onSessionUpdate);
+    };
+  }, [clientSecret, stripeOnramp, appearance, onSessionUpdate]);
+
+  return <div {...props} ref={onrampElementRef}></div>;
 };

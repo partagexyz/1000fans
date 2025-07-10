@@ -5,7 +5,7 @@ import { PaymentModal } from './paymentModal';
 import { v4 as uuidv4 } from 'uuid';
 import styles from '../styles/modal.module.css';
 
-export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
+export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated, theme, toggleTheme }) => {
   const { keyPair, setupAccount, logout, user } = useWeb3Auth();
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -148,35 +148,15 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
     }
   };
 
-  const handlePayment = async ({ amount, cardNumber, expiry, cvv }) => {
+  const handlePayment = async (sessionId, amount) => {
     try {
       const publicKey = keyPair?.getPublicKey().toString();
       const email = user?.email;
       if (!publicKey || !email) {
         throw new Error('Missing public key or email');
       }
-      const idempotencyKey = uuidv4();
-      const response = await fetch('/api/payments/create-card-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accountId: pendingAccountId,
-          publicKey,
-          email,
-          amount,
-          cardNumber,
-          expiry,
-          cvv,
-          idempotencyKey,
-        }),
-      });
-      const text = await response.text();
-      if (!response.ok) {
-        throw new Error(JSON.parse(text).message || 'Payment processing failed');
-      }
-      const { paymentId } = JSON.parse(text);
       // Proceed to account creation after payment
-      await createAccount(pendingAccountId, publicKey, email, paymentId, amount);
+      await createAccount(pendingAccountId, publicKey, email, sessionId, amount);
     } catch (err) {
       console.error('Payment error:', err);
       throw err;
@@ -197,13 +177,13 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
     }
   };
 
-  const createAccount = async (accountId, publicKey, email, paymentId, amount) => {
+  const createAccount = async (accountId, publicKey, email, sessionId, amount) => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/auth/create-web3auth-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId, publicKey, email, paymentId, amount }),
+        body: JSON.stringify({ accountId, publicKey, email, paymentId: sessionId, amount }),
       });
       const text = await response.text();
       if (!response.ok) {
@@ -283,6 +263,9 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated }) => {
         onClose={() => setShowPaymentModal(false)}
         onSubmit={handlePayment}
         onSkip={handleSkipPayment}
+        accountId={pendingAccountId}
+        email={user?.email}
+        theme={theme}
       />
     </>
   );

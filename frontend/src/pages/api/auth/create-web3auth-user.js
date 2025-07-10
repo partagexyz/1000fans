@@ -1,13 +1,16 @@
 // pages/api/auth/create-web3auth-user.js
 import { MongoClient } from "mongodb";
 import { connect, KeyPair, keyStores, utils } from "near-api-js";
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { accountId, publicKey, email, paymentId, amount } = req.body;
+  const { accountId, publicKey, email, paymentId: sessionId, amount } = req.body;
   console.log("Request received:", { accountId, publicKey, email, paymentId, amount });
 
   // Validate inputs
@@ -49,18 +52,20 @@ export default async function handler(req, res) {
     try {
       const existingAccount = await usersCollection.findOne({ $or: [{ accountId }, { publicKey }, { email }] });
       if (existingAccount) {
+        await client.close();
         return res.status(400).json({ message: `Account already exists for ${existingAccount.email || existingAccount.accountId}` });
       }
     } catch (error) {
       throw new Error(`Failed to check for existing account: ${error.message}`);
     }
 
-    // Verify payment status
-    if (paymentId) {
+    // Verify onramp session status
+    if (sessionId) {
       console.log('Verifying payment:', paymentId);
       try {
-        const payment = await paymentsCollection.findOne({ paymentId });
-        if (!payment || payment.status !== 'confirmed') {
+        const payment = await paymentsCollection.findOne({ sessionId });
+        if (!payment || payment.status !== 'fulfillment_complete') {
+          await client.close();
           return res.status(400).json({ message: 'Payment not confirmed' });
         }
       } catch (error) {
@@ -205,6 +210,7 @@ export default async function handler(req, res) {
           email,
           tokenId,
           payment: paymentId ? Number(amount) : null,
+          onrampSessionId: sessionId,
           createdAt: new Date(),
         };
         const result = await usersCollection.insertOne(userDoc);
@@ -212,10 +218,11 @@ export default async function handler(req, res) {
       } catch (error) {
         throw new Error(`Failed to store user in MongoDB: ${error.message}`);
       }
-      //await client.close();
+
+      await client.close();
       return res.status(200).json({ success: true, accountId, tokenId });
     } catch (error) {
-      console.error("Token minting error:", { error: error.message, stack: error.stack });
+      console.error("Token minting error:", error);
       // Delete account if mint fails
       if (createdAccountId) {
         try {

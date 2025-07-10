@@ -1,15 +1,10 @@
 // pages/api/webhooks/payment-notifications.js
 import { MongoClient } from 'mongodb';
-import { Circle, CircleEnvironments } from '@circle-fin/circle-sdk';
-import { createHmac } from 'crypto';
-import { verify } from '@noble/secp256k1';
-import { v4 as uuidv4 } from 'uuid';
+import { buffer } from 'micro';
+import Stripe from 'stripe';
 import winston from 'winston';
 
-const circle = new Circle(
-  process.env.CIRCLE_API_KEY,
-  CircleEnvironments.production
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
 // Configure Winston logger
 const logger = winston.createLogger({
@@ -24,99 +19,55 @@ const logger = winston.createLogger({
   ],
 });
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     logger.warn('Invalid method for webhook', { method: req.method });
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  // Verify webhook signature
-  const signature = req.headers['x-circle-signature'];
-  const keyId = req.headers['x-circle-key-id'];
-  if (!signature || !keyId) {
-    logger.error('Missing signature or key ID', { headers: req.headers });
-    return res.status(401).json({ message: 'Missing signature or key ID' });
-  }
-
   let client;
   try {
-    // Fetch public key for signature verification
-    const publicKeyResponse = await circle.notifications.getPublicKey(keyId);
-    const publicKey = publicKeyResponse.data.publicKey;
-
-    // Verify ECDSA signature
-    const message = JSON.stringify(req.body);
-    const messageHash = createHmac('sha256', Buffer.from(message)).digest('hex');
-    const isValid = verify(
-      Buffer.from(signature, 'base64'),
-      Buffer.from(messageHash, 'hex'),
-      Buffer.from(publicKey, 'base64')
-    );
-    if (!isValid) {
-      logger.error('Invalid webhook signature', { keyId, signature });
-      return res.status(401).json({ message: 'Invalid signature' });
+    // Verify webhook signature
+    const rawBody = await buffer(req);
+    const signature = req.headers['stripe-signature'];
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    } catch (err) {
+      logger.error('Webhook signature verification failed', { error: err.message });
+      return res.status(400).json({ message: 'Webhook signature verification failed' });
     }
 
     // Handle webhook notification
-    const { notificationType, payment, payout } = req.body;
-    logger.info('Received webhook', { notificationType, paymentId: payment?.id, payoutId: payout?.id });
+    logger.info('Received webhook', { type: event.type, id: event.id });
 
     client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
     const db = client.db('1000fans');
     const paymentsCollection = db.collection('payments');
 
-    if (notificationType === 'payments') {
-      const { id: paymentId, status } = payment;
-      logger.info(`Processing payment webhook: ${paymentId}, status: ${status}`);
+    if (event.type === 'crypto.onramp_session_updated') {
+      const session = event.data.object;
+      const { id: sessionId, status, transaction_details } = session;
+      logger.info(`Processing onramp session webhook: ${sessionId}, status: ${status}`);
 
       // Update payment status
       const updateResult = await paymentsCollection.updateOne(
-        { paymentId },
-        { $set: { status, updatedAt: new Date() } }
+        { sessionId },
+        { $set: { status, transactionId: transaction_details.transaction_id, updatedAt: new Date() } }
       );
       if (updateResult.matchedCount === 0) {
-        logger.warn(`Payment ${paymentId} not found in MongoDB`);
-      }
-
-      if (status === 'confirmed' || status === 'paid') {
-        const paymentDoc = await paymentsCollection.findOne({ paymentId });
-        if (!paymentDoc) {
-          throw new Error(`Payment ${paymentId} not found`);
-        }
-        const { amount, accountId } = paymentDoc;
-
-        // Trigger USDC transfer
-        const transferResponse = await fetch(`${process.env.NEXT_PUBLIC_PROXY_BASE_URL}/api/payments/transfer-usdc`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            paymentId,
-            amount,
-            destinationAddress: '1000fans.near',
-            idempotencyKey: uuidv4(),
-          }),
-        });
-        if (!transferResponse.ok) {
-          const errorData = await transferResponse.json();
-          throw new Error(`USDC transfer failed: ${errorData.message}`);
-        }
-        logger.info(`Initiated transfer for payment ${paymentId}`);
-      }
-    } else if (notificationType === 'payouts') {
-      const { id: payoutId, status, paymentIntentId } = payout;
-      logger.info(`Processing payout webhook: ${payoutId}, status: ${status}`);
-
-      // Update payout status
-      const updateResult = await paymentsCollection.updateOne(
-        { paymentId: paymentIntentId },
-        { $set: { payoutStatus: status, updatedAt: new Date() } }
-      );
-      if (updateResult.matchedCount === 0) {
-        logger.warn(`Payment for payout ${payoutId} not found in MongoDB`);
+        logger.warn(`Session ${sessionId} not found in MongoDB`);
       }
     } else {
-      logger.warn(`Unhandled notification type: ${notificationType}`);
+      logger.warn(`Unhandled webhook type: ${event.type}`);
     }
 
     await client.close();

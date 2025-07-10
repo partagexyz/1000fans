@@ -24,6 +24,7 @@
     "@near-wallet-selector/sender": "^8.9.13",
     "@noble/secp256k1": "^2.3.0",
     "@stripe/crypto": "^0.0.4",
+    "@stripe/stripe-js": "^1.54.2",
     "@web3auth/auth-adapter": "^9.5.3",
     "@web3auth/base": "^9.5.3",
     "@web3auth/base-provider": "^9.5.3",
@@ -33,6 +34,7 @@
     "bootstrap-icons": "^1.11.3",
     "borsh": "^2.0.0",
     "crypto": "^1.0.1",
+    "micro": "^10.0.1",
     "mongodb": "^6.13.0",
     "near-api-js": "^4.0.3",
     "next": "14.2.13",
@@ -42,6 +44,7 @@
     "react-draggable": "^4.4.6",
     "react-player": "^2.16.0",
     "sharp": "^0.33.5",
+    "stripe": "^18.3.0",
     "uuid": "^11.1.0",
     "wagmi": "^2.12.16",
     "winston": "^3.17.0"
