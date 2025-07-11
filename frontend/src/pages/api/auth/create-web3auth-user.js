@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   const { accountId, publicKey, email, paymentId: sessionId, amount } = req.body;
-  console.log("Request received:", { accountId, publicKey, email, paymentId, amount });
+  console.log("Request received:", { accountId, publicKey, email, sessionId, amount });
 
   // Validate inputs
   if (!accountId || !publicKey || !email) {
@@ -32,6 +32,7 @@ export default async function handler(req, res) {
     // Validate environment variables
     if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is not set");
     if (!process.env.RELAYER_PRIVATE_KEY) throw new Error("RELAYER_PRIVATE_KEY is not set");
+    if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not set');
     console.log("Environment variables validated");
 
     // Connect to MongoDB
@@ -60,19 +61,39 @@ export default async function handler(req, res) {
     }
 
     // Verify onramp session status
+    let paymentStatus = 'pending';
     if (sessionId) {
-      console.log('Verifying payment:', paymentId);
+      console.log('Verifying payment:', sessionId);
       try {
         const payment = await paymentsCollection.findOne({ sessionId });
+        // Check MongoDB first
+        if (payment) {
+          paymentStatus = payment.status;
+          console.log(`Payment status in MongoDB: ${paymentStatus}`);
+        }
         if (!payment || payment.status !== 'fulfillment_complete') {
-          await client.close();
-          return res.status(400).json({ message: 'Payment not confirmed' });
+          const session = await stripe.crypto.onrampSessions.retrieve(sessionId);
+          paymentStatus = session.status;
+          console.log(`Payment status from Stripe: ${paymentStatus}`);
+          if (paymentStatus === 'cancelled') {
+            return res.status(400).json({ message: 'Payment was cancelled, cannot create account' });
+          }
+          // Update MongoDB with latest status
+          await paymentsCollection.updateOne(
+            { sessionId },
+            { $set: { status: paymentStatus, updatedAt: new Date() } },
+            { upsert: true }
+          );
+          if (paymentStatus !== 'fulfillment_complete') {
+            console.log(`Payment not yet complete: ${paymentStatus}, proceeding with account creation`);
+          }
         }
       } catch (error) {
+        console.error('Payment verification error:', { message: error.message, stack: error.stack });
         throw new Error(`Failed to verify payment: ${error.message}`);
       }
     } else {
-      console.log('No paymentId provided, skipping payment verification');
+      console.log('No sessionId provided, skipping payment verification');
     }
 
     // Set up NEAR connection
@@ -167,6 +188,7 @@ export default async function handler(req, res) {
     const groupId = "theosis";
     const contractId = "theosis.1000fans.near";
     const mintDeposit = utils.format.parseNearAmount("0.039"); // 0.007 for mint + 0.007 for nft_mint_callback + 0.025 for add_group_member
+    let tokenId;
     try {
       const mintResult = await relayerAccount.functionCall({
         contractId,
@@ -179,10 +201,9 @@ export default async function handler(req, res) {
         gas: "100000000000000", // 100 TGas
         attachedDeposit: mintDeposit,
       });
-      console.log("Mint result:", mintResult);
+      console.log("Mint result:", JSON.stringify(mintResult, null, 2));
 
       // Extract token ID from transaction logs
-      let tokenId;
       if (mintResult.status && mintResult.status.SuccessValue) {
         try {
           const decodedValue = Buffer.from(mintResult.status.SuccessValue, 'base64').toString();
@@ -194,44 +215,33 @@ export default async function handler(req, res) {
           }
         } catch (parseError) {
           console.error('Failed to parse mint result:', parseError);
-          throw new Error(`Failed to parse mint result: ${parseError.message}`);
+          // Fallback: Check transaction logs for token_id
+          const logs = mintResult.transaction_outcome?.outcome?.logs || [];
+          const tokenLog = logs.find(log => log.includes('token_id'));
+          if (tokenLog) {
+            const match = tokenLog.match(/"token_id":"([^"]+)"/);
+            tokenId = match ? match[1] : null;
+          }
+          if (!tokenId) {
+            throw new Error(`Failed to parse mint result: ${parseError.message}`);
+          }
         }
       } else {
+        console.error('Mint transaction failed:', JSON.stringify(mintResult, null, 2));
         throw new Error("Mint transaction failed or no SuccessValue");
       }
       console.log(`Minted token: ${tokenId} for ${accountId}`);
-
-      // Store in MongoDB
-      console.log("Storing user in MongoDB...");
-      try {
-        const userDoc = {
-          accountId,
-          publicKey,
-          email,
-          tokenId,
-          payment: paymentId ? Number(amount) : null,
-          onrampSessionId: sessionId,
-          createdAt: new Date(),
-        };
-        const result = await usersCollection.insertOne(userDoc);
-        console.log(`User created: ${accountId}, MongoDB ID: ${result.insertedId}`);
-      } catch (error) {
-        throw new Error(`Failed to store user in MongoDB: ${error.message}`);
-      }
-
-      await client.close();
-      return res.status(200).json({ success: true, accountId, tokenId });
     } catch (error) {
-      console.error("Token minting error:", error);
+      console.error('Token minting error:', { message: error.message, stack: error.stack });
       // Delete account if mint fails
       if (createdAccountId) {
         try {
           await relayerAccount.functionCall({
             contractId: createdAccountId,
-            methodName: "delete_account",
+            methodName: 'delete_account',
             args: { beneficiary_id: relayerAccountId },
-            gas: "30000000000000", // 30 TGas
-            attachedDeposit: "0",
+            gas: '30000000000000',
+            attachedDeposit: '0',
           });
           console.log(`Deleted account ${createdAccountId} due to mint failure`);
         } catch (deleteError) {
@@ -240,10 +250,49 @@ export default async function handler(req, res) {
       }
       throw new Error(`Failed to mint token: ${error.message}`);
     }
+
+    // Store in MongoDB
+    console.log("Storing user in MongoDB...");
+    try {
+      const userDoc = {
+        accountId,
+        publicKey,
+        email,
+        tokenId,
+        payment: sessionId ? Number(amount) : null,
+        onrampSessionId: sessionId || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const result = await usersCollection.insertOne(userDoc);
+      console.log(`User created: ${accountId}, MongoDB ID: ${result.insertedId}`);
+    } catch (error) {
+      // Delete account if MongoDB insert fails
+      if (createdAccountId) {
+        try {
+          await relayerAccount.functionCall({
+            contractId: createdAccountId,
+            methodName: 'delete_account',
+            args: { beneficiary_id: relayerAccountId },
+            gas: '30000000000000',
+            attachedDeposit: '0',
+          });
+          console.log(`Deleted account ${createdAccountId} due to MongoDB failure`);
+        } catch (deleteError) {
+          console.error(`Failed to delete account ${createdAccountId}:`, deleteError);
+        }
+      }
+      throw new Error(`Failed to store user in MongoDB: ${error.message}`);
+    }
+
+    return res.status(200).json({ success: true, accountId, tokenId });
   } catch (error) {
-    console.error("Error in create-web3auth-user:", { error: error.message, stack: error.stack });
-    if (client) await client.close();
-    return res.status(500).json({ message: "Internal server error", error: error.message });
+    console.error('Error in create-web3auth-user:', {
+      message: error.message,
+      stack: error.stack,
+      requestBody: req.body,
+    });
+    return res.status(500).json({ message: 'Failed to create NEAR account', error: error.message });
   } finally {
     if (client) {
       try {
