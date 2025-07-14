@@ -23,20 +23,27 @@
 }
 
 .modalContent {
-  min-height: 700px;
   position: relative;
   background-color: rgb(var(--background-start-rgb));
   color: rgb(var(--foreground-rgb));
   border: 1px solid rgba(var(--card-border-rgb), 0.5);
   border-radius: var(--border-radius);
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px); /* Match navbar/footer blur */
+  backdrop-filter: blur(10px);
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+.paymentModal {
+  min-height: 750px;
+}
+
+.accountModal {
+  min-height: 400px;
+}
+
 [data-theme="light"] .modalContent {
-  background-color: rgb(var(--background-start-rgb)); /* Light mode: #FFFBF0 */
-  border-color: rgba(120, 120, 120, 0.7); /* Stronger contrast */
+  background-color: rgb(var(--background-start-rgb));
+  border-color: rgba(120, 120, 120, 0.7);
 }
 
 .modalHeader {
@@ -75,7 +82,7 @@
 .modalBody {
   padding: 1.5rem;
   position: relative;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
 }
 
 .modalFooter {
@@ -97,11 +104,11 @@
 .centeredFormGroup {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center "Connect Your Wallet" button */
+  align-items: center;
 }
 
 .fullWidthForm {
-  width: 100%; /* Ensure email form takes full width */
+  width: 100%; 
 }
 
 .formLabel {
@@ -191,7 +198,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  flex: 1;
+  z-index: 1000;
 }
 
 .buttonSecondary:hover:not(:disabled) {
@@ -201,8 +208,8 @@
 
 .buttonGroup {
   display: flex;
-  gap: 0.5rem; /* Space between buttons */
-  justify-content: space-between; /* Align buttons to the left */
+  gap: 0.5rem;
+  justify-content: space-between;
   margin-top: 1rem;
   width: 100%;
 }
@@ -259,6 +266,7 @@
 
   .modalBody {
     padding: 1rem;
+    padding-bottom: 70px;
   }
 
   .modalHeader,

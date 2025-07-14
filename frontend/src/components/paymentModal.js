@@ -57,7 +57,7 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalDialog}>
-        <div className={styles.modalContent}>
+        <div className={`${styles.modalContent} ${styles.paymentModal}`}>
           <div className={styles.modalHeader}>
             <h5 className={styles.modalTitle}>Fund Your Wallet (optional)</h5>
             <button
@@ -76,7 +76,7 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
                 className={styles.formControl}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || error.includes('not available') || error.includes('local development') || error.includes('API key')}
               >
                 <option value="5.00">5.00 USD</option>
                 <option value="10.00">10.00 USD</option>
@@ -91,12 +91,12 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
             {isLoading ? (
               <div>Loading payment interface...</div>
             ) : clientSecret ? (
-              <div style={{ position: 'relative', minHeight: '750px' }}>
+              <div style={{ position: 'relative' }}>
                 <CryptoElements stripeOnramp={stripeOnrampPromise}>
                   <OnrampElement
                     clientSecret={clientSecret}
                     appearance={{ theme: theme || 'dark' }}
-                    style={{ maxWidth: '500px', height: '500px' }}
+                    style={{ maxWidth: '500px', height: '500px', zIndex: 1 }}
                     onSessionUpdate={({ payload }) => {
                       console.log('Onramp session updated:', payload.session.status);
                       if (payload.session.status === 'fulfillment_complete') {
@@ -115,7 +115,8 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
                   }}
                   disabled={isLoading}
                   style={{ 
-                    marginTop: '10px' 
+                    marginTop: '10px',
+                    width: '100%'
                   }}
                 >
                   Skip Funding

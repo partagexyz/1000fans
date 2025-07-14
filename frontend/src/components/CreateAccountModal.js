@@ -207,7 +207,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated, theme, t
     <>
       <div className={styles.modalOverlay}>
         <div className={styles.modalDialog}>
-          <div className={styles.modalContent}>
+          <div className={`${styles.modalContent} ${styles.accountModal}`}>
             <div className={styles.modalHeader}>
               <h5 className={styles.modalTitle}>{existingAccount ? 'Welcome Back' : 'Create Your NEAR Account'}</h5>
               <button
@@ -236,7 +236,7 @@ export const CreateAccountModal = ({ isOpen, onClose, onAccountCreated, theme, t
                       className={styles.formControl}
                       value={username}
                       onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                      placeholder="format: user or user.1000fans.near"
+                      placeholder="username"
                       required
                     />
                     <div className={styles.formText}>
