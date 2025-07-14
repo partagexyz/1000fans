@@ -97,7 +97,7 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
                   <OnrampElement
                     clientSecret={clientSecret}
                     appearance={{ theme: theme || 'dark' }}
-                    style={{ maxWidth: '540px', width: '100%', height: '500px', zIndex: 1 }}
+                    style={{ maxWidth: '540px', height: '500px', zIndex: 1 }}
                     onSessionUpdate={({ payload }) => {
                       console.log('Onramp session updated:', payload.session.status);
                       if (payload.session.status === 'fulfillment_complete') {
