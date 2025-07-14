@@ -77,6 +77,7 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 disabled={isLoading || error.includes('not available') || error.includes('local development') || error.includes('API key')}
+                style={{ maxWidth: '540px' }}
               >
                 <option value="5.00">5.00 USD</option>
                 <option value="10.00">10.00 USD</option>
@@ -115,9 +116,9 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
                   }}
                   disabled={isLoading}
                   style={{ 
-                    marginTop: '10px',
+                    marginTop: '15px',
                     width: '100%',
-                    maxWidth: '500px'
+                    maxWidth: '540px'
                   }}
                 >
                   Skip Funding
