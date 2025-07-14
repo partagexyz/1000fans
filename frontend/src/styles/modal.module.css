@@ -34,7 +34,7 @@
 }
 
 .paymentModal {
-  min-height: 750px;
+  min-height: 800px;
 }
 
 .accountModal {
@@ -82,7 +82,7 @@
 .modalBody {
   padding: 1.5rem;
   position: relative;
-  padding-bottom: 80px;
+  padding-bottom: 100px;
 }
 
 .modalFooter {
