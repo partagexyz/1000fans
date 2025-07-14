@@ -83,7 +83,11 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
                 <option value="20.00">20.00 USD</option>
               </select>
             </div>
-            {error && <div className={styles.alertDanger}>{error}</div>}
+            {error && (
+              <div className={styles.alertDanger}>
+                {error}
+              </div>
+            )}
             {isLoading ? (
               <div>Loading payment interface...</div>
             ) : clientSecret ? (

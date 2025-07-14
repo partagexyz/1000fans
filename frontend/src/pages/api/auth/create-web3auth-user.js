@@ -4,6 +4,7 @@ import { connect, KeyPair, keyStores, utils } from "near-api-js";
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+const COMPANY_WALLET = '0x9a1761ca62c0f3fe06D508Ba335aD0eBdA690b45';
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -38,45 +39,42 @@ export default async function handler(req, res) {
     // Connect to MongoDB
     console.log("Attempting MongoDB connection...");
     client = new MongoClient(process.env.MONGODB_URI, { connectTimeoutMS: 5000 });
-    try {
-      await client.connect();
-      console.log('MongoDB connected');
-    } catch (error) {
-      throw new Error(`MongoDB connection failed: ${error.message}`);
-    }
+    await client.connect();
+    console.log('MongoDB connected');
     const db = client.db("1000fans");
     const usersCollection = db.collection("users");
     const paymentsCollection = db.collection('payments');
 
     // Check for duplicates
     console.log("Checking for existing account...");
-    try {
-      const existingAccount = await usersCollection.findOne({ $or: [{ accountId }, { publicKey }, { email }] });
-      if (existingAccount) {
-        await client.close();
-        return res.status(400).json({ message: `Account already exists for ${existingAccount.email || existingAccount.accountId}` });
-      }
-    } catch (error) {
-      throw new Error(`Failed to check for existing account: ${error.message}`);
+    const existingAccount = await usersCollection.findOne({ $or: [{ accountId }, { publicKey }, { email }] });
+    if (existingAccount) {
+      return res.status(400).json({ message: `Account already exists for ${existingAccount.email || existingAccount.accountId}` });
     }
 
-    // Verify onramp session status
+    // Verify onramp session status and destination address
     let paymentStatus = 'pending';
     if (sessionId) {
       console.log('Verifying payment:', sessionId);
       try {
-        const payment = await paymentsCollection.findOne({ sessionId });
         // Check MongoDB first
+        const payment = await paymentsCollection.findOne({ sessionId });
         if (payment) {
           paymentStatus = payment.status;
           console.log(`Payment status in MongoDB: ${paymentStatus}`);
         }
+        // If not 'fulfillment_complete', check Stripe directly
         if (!payment || payment.status !== 'fulfillment_complete') {
           const session = await stripe.crypto.onrampSessions.retrieve(sessionId);
           paymentStatus = session.status;
           console.log(`Payment status from Stripe: ${paymentStatus}`);
-          if (paymentStatus === 'cancelled') {
-            return res.status(400).json({ message: 'Payment was cancelled, cannot create account' });
+          // Verify destination address
+          const destinationAddress = session.transaction_details?.destination_address;
+          if (destinationAddress && destinationAddress.toLowerCase() !== COMPANY_WALLET.toLowerCase()) {
+            return res.status(400).json({ message: `Invalid destination address: ${destinationAddress}. Must be company wallet.` });
+          }
+          if (paymentStatus === 'cancelled' || paymentStatus === 'expired') {
+            return res.status(400).json({ message: 'Payment ${paymentStatus}, cannot create account' });
           }
           // Update MongoDB with latest status
           await paymentsCollection.updateOne(

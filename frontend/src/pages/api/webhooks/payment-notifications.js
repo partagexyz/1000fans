@@ -69,6 +69,7 @@ export default async function handler(req, res) {
         sessionId,
         status,
         transactionId: transaction_details?.transaction_id || 'none',
+        destinationAddress: transaction_details?.destination_address || 'none',
       });
 
       try {
@@ -78,6 +79,7 @@ export default async function handler(req, res) {
             $set: {
               status,
               transactionId: transaction_details?.transaction_id || null,
+              destinationAddress: transaction_details?.destination_address || null,
               updatedAt: new Date(),
             },
           },
