@@ -91,7 +91,7 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
             {isLoading ? (
               <div>Loading payment interface...</div>
             ) : clientSecret ? (
-              <div style={{ position: 'relative', minHeight: '650px' }}>
+              <div style={{ position: 'relative', minHeight: '550px' }}>
                 <CryptoElements stripeOnramp={stripeOnrampPromise}>
                   <OnrampElement
                     clientSecret={clientSecret}
