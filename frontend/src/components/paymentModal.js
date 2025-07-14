@@ -91,35 +91,39 @@ export const PaymentModal = ({ isOpen, onClose, onSubmit, onSkip, accountId, ema
             {isLoading ? (
               <div>Loading payment interface...</div>
             ) : clientSecret ? (
-              <CryptoElements stripeOnramp={stripeOnrampPromise}>
-                <OnrampElement
-                  clientSecret={clientSecret}
-                  appearance={{ theme: theme || 'dark' }}
-                  style={{ maxWidth: '500px', height: '600px' }}
-                  onSessionUpdate={({ payload }) => {
-                    console.log('Onramp session updated:', payload.session.status);
-                    if (payload.session.status === 'fulfillment_complete') {
-                      onSubmit(onrampSessionRef.current.sessionId, onrampSessionRef.current.amount);
-                      onClose();
-                    }
+              <div style={{ position: 'relative', minHeight: '650px' }}>
+                <CryptoElements stripeOnramp={stripeOnrampPromise}>
+                  <OnrampElement
+                    clientSecret={clientSecret}
+                    appearance={{ theme: theme || 'dark' }}
+                    style={{ maxWidth: '500px', height: '600px' }}
+                    onSessionUpdate={({ payload }) => {
+                      console.log('Onramp session updated:', payload.session.status);
+                      if (payload.session.status === 'fulfillment_complete') {
+                        onSubmit(onrampSessionRef.current.sessionId, onrampSessionRef.current.amount);
+                        onClose();
+                      }
+                    }}
+                  />
+                </CryptoElements>
+                <button
+                  type="button"
+                  className={styles.buttonSecondary}
+                  onClick={() => {
+                    onSkip();
+                    onClose();
                   }}
-                />
-              </CryptoElements>
+                  disabled={isLoading}
+                  style={{ 
+                    marginTop: '10px' 
+                  }}
+                >
+                  Skip Funding
+                </button>
+              </div>
             ) : (
-              <div>Initializing payment...</div>
+              !error && <div>Initializing payment...</div>
             )}
-            <button
-              type="button"
-              className={styles.buttonSecondary}
-              onClick={() => {
-                onSkip();
-                onClose();
-              }}
-              disabled={isLoading}
-              style={{ marginTop: '10px' }}
-            >
-              Skip Funding
-            </button>
           </div>
         </div>
       </div>

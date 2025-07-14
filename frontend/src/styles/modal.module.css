@@ -14,13 +14,17 @@
 }
 
 .modalDialog {
-  max-width: 500px;
-  width: 90%;
+  max-width: 600px;
+  width: 100%;
   margin: 1rem;
   font-family: var(--font-secondary);
+  max-height: 90vh; /* Allow scrolling */
+  overflow-y: auto;
 }
 
 .modalContent {
+  min-height: 700px;
+  position: relative;
   background-color: rgb(var(--background-start-rgb));
   color: rgb(var(--foreground-rgb));
   border: 1px solid rgba(var(--card-border-rgb), 0.5);
@@ -70,6 +74,8 @@
 
 .modalBody {
   padding: 1.5rem;
+  position: relative;
+  padding-bottom: 60px;
 }
 
 .modalFooter {
