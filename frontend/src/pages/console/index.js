@@ -18,6 +18,7 @@ export default function Console() {
   const [error, setError] = useState(null);
   const [ownsToken, setOwnsToken] = useState(false);
   const [tokenId, setTokenId] = useState('');
+  const [isGroupMember, setIsGroupMember] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
@@ -99,29 +100,37 @@ export default function Console() {
     generateAuthToken();
   }, [signedAccountId, wallet]);
 
-  // Token ownership check
+  // Check user status (token ownership and group membership)
   useEffect(() => {
-    const checkTokenOwnership = async () => {
+    const checkUserStatus = async () => {
       if (!signedAccountId || !wallet) return;
+      setIsCheckingToken(true);
       try {
-        const tokenInfo = await wallet.viewMethod({
-          contractId: CONTRACT,
-          method: 'nft_tokens_for_owner',
-          args: {
-            account_id: signedAccountId,
-            from_index: null,
-            limit: 1,
-          },
+        const response = await fetch('/api/auth/check-for-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accountId: signedAccountId }),
         });
-        const ownsToken = tokenInfo.length > 0;
-        setOwnsToken(ownsToken);
-        setTokenId(ownsToken ? tokenInfo[0].token_id : '');
-      } catch (e) {
-        console.error('Error checking token ownership:', e);
-        setError('Failed to check token ownership: ' + e.message);
+        const data = await response.json();
+        if (data.exists) {
+          setOwnsToken(!!data.tokenId);
+          setTokenId(data.tokenId || '');
+          setShowLoginPrompt(!data.isGroupMember);
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: [{ text: { value: `Welcome! Account ${signedAccountId} ${data.tokenId ? `owns token ${data.tokenId}` : 'has no token'}${data.isGroupMember ? ' and is a member of theosis group.' : '.'}` } }],
+          }]);
+        } else {
+          setError('User not found in database. Please log out and log in again.');
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+        setError('Failed to verify user status: ' + error.message);
+      } finally {
+        setIsCheckingToken(false);
       }
     };
-    checkTokenOwnership();
+    checkUserStatus();
   }, [signedAccountId, wallet]);
 
   // Create thread (authenticated or anonymous)
@@ -215,7 +224,7 @@ export default function Console() {
     setError(null);
 
     const restrictedCommands = [
-      'verify wallet', 'mint token', 'transfer token', 'register group', 'join group', 'upload file',
+      'verify wallet', 'transfer token', 'register group', 'upload file', 'list files', 'retrieve file',
     ];
     if (!signedAccountId && restrictedCommands.some(cmd => userInput.toLowerCase().includes(cmd))) {
       setError('Please connect a wallet to use this command.');

@@ -49,6 +49,7 @@ export const LoginModal = ({ isOpen, onClose, onLoginWithProvider }) => {
                   wallet?.signIn();
                   onClose();
                 }}
+                disabled={isLoading}
               >
                 <i className="bi bi-wallet2"></i>
                 Connect Your Wallet

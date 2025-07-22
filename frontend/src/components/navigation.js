@@ -2,10 +2,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
-import { NearContext, useNear } from '../wallets/near';
+import { useNear } from '../wallets/near';
 import { useWeb3Auth } from '../wallets/web3auth';
-import { LoginModal } from './LoginModal';
-import { CreateAccountModal } from './CreateAccountModal';
+import { LoginModal } from './loginModal';
+import { CreateAccountModal } from './createAccountModal';
 import styles from '../styles/app.module.css';
 
 export const Navigation = () => {
@@ -17,6 +17,7 @@ export const Navigation = () => {
   const [web3AuthUser, setWeb3AuthUser] = useState(null);
   const [web3AuthKeyPair, setWeb3AuthKeyPair] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [welcomeMessage, setWelcomeMessage] = useState('');
 
   useEffect(() => {
     setIsClientLoaded(true);
@@ -37,10 +38,8 @@ export const Navigation = () => {
   }, [isClientLoaded, keyPair, web3authAccountId, signedAccountId]);
 
   useEffect(() => {
-    const openLoginModal = () => {
-      //console.log('Open login modal event triggered');
-      setIsLoginModalOpen(true);
-    };
+    const openLoginModal = () => setIsLoginModalOpen(true);
+    //console.log('Open login modal event triggered');  
     window.addEventListener('openLoginModal', openLoginModal);
     return () => window.removeEventListener('openLoginModal', openLoginModal);
   }, []);
@@ -53,6 +52,16 @@ export const Navigation = () => {
         setWeb3AuthUser(result.user);
         setWeb3AuthKeyPair(result.keyPair);
         setIsCreateAccountModalOpen(true);
+      } else {
+        const response = await fetch('/api/auth/check-for-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accountId: result.accountId }),
+        });
+        const data = await response.json();
+        if (data.exists) {
+          setWelcomeMessage(`Welcome! Account ${data.accountId} ${data.tokenId ? `owns token ${data.tokenId}` : 'has no token'}${data.isGroupMember ? ' and is a member of theosis group.' : '.'}`);
+        }
       }
     } catch (error) {
       console.error(`Login with ${provider} failed:`, error);
@@ -64,6 +73,7 @@ export const Navigation = () => {
     setIsCreateAccountModalOpen(false);
     setWeb3AuthUser(null);
     setWeb3AuthKeyPair(null);
+    setWelcomeMessage(`Account ${newAccountId} created with fan token! You are now a member of theosis group.`);
   };
 
   const handleLogout = async () => {
@@ -76,6 +86,7 @@ export const Navigation = () => {
         await nearLogout();
         console.log('NEAR wallet logged out');
       }
+      setWelcomeMessage('');
     } catch (error) {
       console.error('Logout failed:', error);
       alert('Logout failed: ' + error.message);
@@ -120,13 +131,12 @@ export const Navigation = () => {
           </div>
         </div>
       </nav>
-
+      {welcomeMessage && <div className={styles.alertSuccess}>{welcomeMessage}</div>}
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLoginWithProvider={handleLoginWithProvider}
       />
-
       <CreateAccountModal
         isOpen={isCreateAccountModalOpen}
         onClose={() => setIsCreateAccountModalOpen(false)}

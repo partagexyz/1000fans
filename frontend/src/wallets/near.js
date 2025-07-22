@@ -37,19 +37,36 @@ export class Wallet {
 
     const walletSelector = await this.selector;
     const isSignedIn = walletSelector.isSignedIn();
-    const accountId = isSignedIn ? walletSelector.store.getState().accounts[0].accountId : '';
+    let accountId = isSignedIn ? walletSelector.store.getState().accounts[0].accountId : '';
+
+    if (accountId) {
+      try {
+        const response = await fetch('/api/auth/create-wallet-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accountId }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to onboard user');
+        accountId = data.accountId; // Update with returned accountId
+      } catch (error) {
+        console.error('Error onboarding NEAR Wallet user:', error);
+      }
+    }
 
     walletSelector.store.observable.subscribe(async (state) => {
       const signedAccount = state?.accounts.find((account) => account.active)?.accountId;
       if (signedAccount) {
         try {
-          await fetch('/api/auth/create-wallet-user', { 
+          const response = await fetch('/api/auth/create-wallet-user', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ accountId: signedAccount }),
           });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'Failed to onboard user');
         } catch (error) {
-          console.error('Error creating wallet account:', error);
+          console.error('Error onboarding NEAR Wallet user:', error);
         }
       }
       accountChangeHook(signedAccount || '');
@@ -198,7 +215,7 @@ export class Wallet {
 
   signMessage = async ({ message, nonce, recipient, callbackUrl }) => {
     const selectedWallet = await (await this.selector).wallet();
-
+    
     if (!selectedWallet.signMessage) {
       throw new Error('The selected wallet does not support message signing');
     }
@@ -239,24 +256,10 @@ export function NearProvider({ children }) {
         networkId: NetworkId,
       });
 
-      const accountId = await newWallet.startUp(async (newSignedAccountId) => {
+      const accountId = await newWallet.startUp(async (newSignedAccountId, status) => {
         const effectiveAccountId = newSignedAccountId || web3authAccountId || '';
         setSignedAccountId(effectiveAccountId);
         localStorage.setItem('near_signed_account_id', effectiveAccountId);
-        if (effectiveAccountId) {
-          try {
-            const response = await fetch('/api/auth/create-wallet-user', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ accountId: effectiveAccountId }),
-            });
-            if (!response.ok) {
-              console.error('Failed to create wallet account in database');
-            }
-          } catch (error) {
-            console.error('Error creating wallet account:', error);
-          }
-        }
       });
 
       setWallet(newWallet);
