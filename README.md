@@ -1,7 +1,7 @@
 ## Private Fans Clubs on the NEAR Blockchain
 1000fans is a token-gated content platform for artists, creators, producers, music labels and distributors to connect with their 1000 most dedicated fans. This platform provides fans with exclusive content, music and video players, link to private events and a private chat for fans and their favorite artist. All secured by crypto tokens technology.
 
-The idea behind the name 1000fans is coming from a [2008 essay](https://kk.org/thetechnium/1000-true-fans/) saying that to make a living as an artist or a craftsperson, you don't need millions of clients or millions of fans. You need only a thousand of true fans, and create enough each year that you can earn $100 profit from each true fan.
+The idea behind the name 1000fans is coming from a [2008 essay](https://kk.org/thetechnium/1000-true-fans/) saying that to make a living as an artist or a craftsperson, you don't need millions of clients or millions of fans. You need a thousand true fans, who appreciate your art enough to spend $100 for you every year.
 
 An example of a deployed 1000fans fan club is available at https://theosis.1000fans.xyz
 

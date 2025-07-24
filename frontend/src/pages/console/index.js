@@ -4,9 +4,11 @@ import { NearContext } from '../../wallets/near';
 import styles from '../../styles/console.module.css';
 
 const CONTRACT = 'theosis.1000fans.near';
+const ACCESS_CONTROL_CONTRACT = 'theosis.devbot.near';
 const NEAR_AI_AUTH_OBJECT_STORAGE_KEY = 'NearAIAuthObject';
 const NEAR_AI_BASE_URL = 'https://api.near.ai';
 const PROXY_BASE_URL = 'https://proxy.1000fans.xyz';
+const CONTRACT_OWNERS = ['1000fans.near', 'theosis.1000fans.near'];
 
 export default function Console() {
   const { signedAccountId, wallet, loginWithProvider, logout } = useContext(NearContext);
@@ -21,6 +23,8 @@ export default function Console() {
   const [isGroupMember, setIsGroupMember] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [lastSent, setLastSent] = useState(0);
+  const [isContractOwner, setIsContractOwner] = useState(false);
 
   // Handle NEAR AI login callback
   useEffect(() => {
@@ -28,15 +32,17 @@ export default function Console() {
       try {
         const callbackParams = new URLSearchParams(window.location.hash.replace('#', ''));
         const accountId = callbackParams.get('accountId');
-        if (accountId) {
+        const publicKey = callbackParams.get('publicKey');
+        if (accountId && publicKey) {
           const authObject = JSON.parse(localStorage.getItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY) || '{}');
           authObject.account_id = accountId;
           authObject.signature = callbackParams.get('signature');
-          authObject.public_key = callbackParams.get('publicKey');
+          authObject.public_key = publicKey;
           localStorage.setItem(NEAR_AI_AUTH_OBJECT_STORAGE_KEY, JSON.stringify(authObject));
           setAuthToken(JSON.stringify(authObject));
           setShowLoginPrompt(false);
-          window.location.hash = '';
+          // Clear query parameters to reduce page data
+          window.history.replaceState({}, document.title, window.location.pathname);
           console.log('Updated authToken from callback:', { account_id: authObject.account_id });
         }
       } catch (e) {
@@ -47,7 +53,7 @@ export default function Console() {
     handleNearAILoginCallback();
   }, []);
 
-  // Generate NEAR AI auth token for authenticated users
+  // Generate NEAR AI auth token
   useEffect(() => {
     async function generateAuthToken() {
       if (!wallet || !signedAccountId) return;
@@ -100,40 +106,36 @@ export default function Console() {
     generateAuthToken();
   }, [signedAccountId, wallet]);
 
-  // Check user status (token ownership and group membership)
+  // Check token ownership, group membership, and contract ownership
   useEffect(() => {
-    const checkUserStatus = async () => {
+    const checkStatus = async () => {
       if (!signedAccountId || !wallet) return;
-      setIsCheckingToken(true);
       try {
+        // Check token and group membership
         const response = await fetch('/api/auth/check-for-account', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accountId: signedAccountId }),
         });
-        const data = await response.json();
-        if (data.exists) {
-          setOwnsToken(!!data.tokenId);
-          setTokenId(data.tokenId || '');
-          setShowLoginPrompt(!data.isGroupMember);
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: [{ text: { value: `Welcome! Account ${signedAccountId} ${data.tokenId ? `owns token ${data.tokenId}` : 'has no token'}${data.isGroupMember ? ' and is a member of theosis group.' : '.'}` } }],
-          }]);
-        } else {
-          setError('User not found in database. Please log out and log in again.');
+        if (!response.ok) {
+          throw new Error(`Failed to check account: ${await response.text()}`);
         }
-      } catch (error) {
-        console.error('Error checking user status:', error);
-        setError('Failed to verify user status: ' + error.message);
-      } finally {
-        setIsCheckingToken(false);
+        const { tokenId, isGroupMember } = await response.json();
+        setOwnsToken(!!tokenId);
+        setTokenId(tokenId || '');
+        setIsGroupMember(isGroupMember);
+
+        // Check if user is contract owner
+        setIsContractOwner(CONTRACT_OWNERS.includes(signedAccountId));
+      } catch (e) {
+        console.error('Error checking status:', e);
+        setError('Failed to check wallet status: ' + e.message);
       }
     };
-    checkUserStatus();
+    checkStatus();
   }, [signedAccountId, wallet]);
 
-  // Create thread (authenticated or anonymous)
+  // Create thread
   useEffect(() => {
     async function createThread() {
       const isAuthenticated = !!authToken && !!signedAccountId;
@@ -220,11 +222,21 @@ export default function Console() {
   // Send user message
   const sendMessage = async () => {
     if (!userInput.trim()) return;
+    if (Date.now() - lastSent < 2000) {
+      setError('Please wait a moment before sending another message.');
+      return;
+    }
+    setLastSent(Date.now());
     setIsLoading(true);
     setError(null);
 
     const restrictedCommands = [
-      'verify wallet', 'transfer token', 'register group', 'upload file', 'list files', 'retrieve file',
+      'verify wallet',
+      'transfer token',
+      'register group',
+      'upload file',
+      'list files',
+      'retrieve file',
     ];
     if (!signedAccountId && restrictedCommands.some(cmd => userInput.toLowerCase().includes(cmd))) {
       setError('Please connect a wallet to use this command.');
@@ -233,19 +245,46 @@ export default function Console() {
       return;
     }
 
-    try {
-      if (userInput.toLowerCase().includes('login with email')) {
-        await loginWithProvider('email_passwordless', {
-          loginHint: prompt('Enter your email address:'),
-        });
-        setMessages([
-          ...messages,
-          { role: 'assistant', content: [{ text: { value: 'Email login initiated. Account created or restored.' } }] },
-        ]);
-        setUserInput('');
-        setShowLoginPrompt(false);
+    // Restrict upload file to contract owners
+    if (userInput.toLowerCase().includes('upload file') && !isContractOwner) {
+      setError('Only platform owners can upload files.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate transfer token command
+    if (userInput.toLowerCase().startsWith('transfer token')) {
+      if (!ownsToken) {
+        setError('You must own a token to transfer it.');
+        setIsLoading(false);
         return;
       }
+      const parts = userInput.split(' ');
+      if (parts.length < 4 || parts[2] !== 'to') {
+        setError("Invalid command. Use: 'transfer token <token_id> to <receiver_id>'");
+        setIsLoading(false);
+        return;
+      }
+      const receiverId = parts[3];
+      try {
+        const isValidAccount = await wallet.viewMethod({
+          contractId: CONTRACT,
+          methodName: 'owns_token',
+          args: { account_id: receiverId },
+        });
+        if (isValidAccount) {
+          setError('Receiver already owns a token.');
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {
+        setError(`Failed to validate receiver: ${e.message}`);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    try {
       if (userInput.toLowerCase().includes('logout')) {
         await logout();
         setMessages([
@@ -257,12 +296,7 @@ export default function Console() {
         setAuthToken(null);
         setThreadId(null);
         setShowLoginPrompt(false);
-        return;
-      }
-      if (userInput.toLowerCase().includes('create wallet')) {
-        setError('Please create a wallet using Google, email, or NEAR Wallet via the login interface.');
-        setShowLoginPrompt(true);
-        setIsLoading(false);
+        setIsContractOwner(false);
         return;
       }
       if (!threadId) throw new Error('No thread available. Please wait for thread creation.');
@@ -305,13 +339,17 @@ export default function Console() {
     }
   };
 
-  // Drag and drop file upload (restricted to authenticated users)
+  // Drag and drop file upload (restricted to contract owners)
   const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragActive(false);
     if (!signedAccountId) {
       setError('Please connect a wallet to upload files.');
       setShowLoginPrompt(true);
+      return;
+    }
+    if (!isContractOwner) {
+      setError('Only 1000fans owners can upload files.');
       return;
     }
     const droppedFiles = Array.from(e.dataTransfer.files);
@@ -359,23 +397,49 @@ export default function Console() {
     }
   };
 
+  // Format messages for display
+  const formatMessage = (msg) => {
+    const content = msg.content[0].text.value;
+    if (content.startsWith('File: ')) {
+      const [fileLine, metadataLine] = content.split(', Metadata: ');
+      return (
+        <div>
+          <strong>File:</strong> {fileLine.replace('File: ', '')}<br />
+          <strong>Metadata:</strong> {metadataLine || 'None'}
+        </div>
+      );
+    }
+    if (content.includes('Download from thread')) {
+      const fileId = content.match(/retrieved_(.+)\.mp3/)[1];
+      return (
+        <div>
+          {content} <a href={`${NEAR_AI_BASE_URL}/v1/threads/${threadId}/files/retrieved_${fileId}.mp3`} download>Download</a>
+        </div>
+      );
+    }
+    return content;
+  };
+
   // Welcoming text
   const welcomeText = `Hi! 👋 Welcome to 1000fans!
 1000fans is a platform for producers to share their music and videos exclusively with their fans.
-It is built with blockchain & AI for a seamless control of your enhanced privacy.`;
+It is built with blockchain & AI for a seamless control of your enhanced privacy.
+Upon login, you received a fan token and joined the theosis group for exclusive content access.`;
 
   return (
     <main className={styles.consoleMain}>
       <div className={styles.consoleStatus}>
+        {error && <p className={styles.consoleError}>{error}</p>}
         {!signedAccountId ? (
           <p>Login to chat with the AI and access exclusive content.</p>
         ) : (
           <>
             <p>Connected as: {signedAccountId}</p>
             <p>Token Status: {ownsToken ? `Owns Token ID: ${tokenId}` : 'No token owned'}</p>
+            <p>Group Membership: {isGroupMember ? 'Member of theosis group' : 'Not a group member'}</p>
+            {isContractOwner && <p>Role: 1000fans Owner (file upload enabled)</p>}
           </>
         )}
-        {/*{error && <p className={styles.consoleError}>{error}</p>}*/}
       </div>
       <div className={styles.consoleChatContainer}>
         <div className={styles.consoleChatMessages}>
@@ -423,17 +487,17 @@ It is built with blockchain & AI for a seamless control of your enhanced privacy
           </button>
         </div>
       </div>
-      {/* Uncomment the following block to enable drag and drop file upload */}
-      {/*
-      <div
-        className={styles.consoleDragDrop}
-        onDragEnter={(e) => { e.preventDefault(); setIsDragActive(true); }}
-        onDragLeave={(e) => { e.preventDefault(); setIsDragActive(false); }}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleDrop}
-      >
-        {isDragActive ? 'Drop files here' : 'Drag and drop .mp3/.mp4 files here (authenticated users only)'}
-      </div>*/}
+      {isContractOwner && (
+        <div
+          className={`${styles.consoleDragDrop} ${isDragActive ? styles.consoleDragActive : ''}`}
+          onDragEnter={(e) => { e.preventDefault(); setIsDragActive(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setIsDragActive(false); }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+        >
+          {isDragActive ? 'Drop files here' : 'Drag and drop .mp3/.mp4 files here (authenticated users only)'}
+        </div>
+      )}
     </main>
   );
 }

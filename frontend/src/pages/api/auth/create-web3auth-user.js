@@ -2,6 +2,7 @@
 import { MongoClient } from "mongodb";
 import { connect, KeyPair, keyStores, utils } from "near-api-js";
 import Stripe from 'stripe';
+import { wrapKey } from '../../../utils/crypto';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 const COMPANY_WALLET = '0x9a1761ca62c0f3fe06D508Ba335aD0eBdA690b45';
@@ -23,9 +24,6 @@ export default async function handler(req, res) {
   }
   if (!publicKey.startsWith('ed25519:') || publicKey.length !== 52) {
     return res.status(400).json({ message: `Invalid public key format: ${publicKey} (must be ed25519:<44-char-base58>)` });
-  }
-  if (amount && (isNaN(amount) || amount < 5 || amount > 20)) {
-    return res.status(400).json({ message: "Amount must be between 5 and 20 USD" });
   }
 
   let client;
@@ -50,6 +48,32 @@ export default async function handler(req, res) {
     const existingAccount = await usersCollection.findOne({ $or: [{ accountId }, { publicKey }, { email }] });
     if (existingAccount) {
       return res.status(400).json({ message: `Account already exists for ${existingAccount.email || existingAccount.accountId}` });
+    }
+
+    // Verify public key on blockchain
+    try {
+      console.log(`Verifying public key for ${accountId}`);
+      const near = await connect({
+        networkId: "mainnet",
+        keyStore: new keyStores.InMemoryKeyStore(),
+        nodeUrl: "https://rpc.mainnet.near.org",
+        walletUrl: "https://wallet.mainnet.near.org",
+        helperUrl: "https://helper.mainnet.near.org",
+        explorerUrl: "https://explorer.mainnet.near.org",
+      });
+      const accessKeyResponse = await near.connection.provider.query({
+        request_type: "view_access_key_list",
+        finality: "final",
+        account_id: accountId
+      });
+      const accessKeys = accessKeyResponse.keys || [];
+      if (!accessKeys.some(key => key.public_key === publicKey)) {
+        throw new Error(`Provided public key ${publicKey} not found for ${accountId}`);
+      }
+      console.log(`Public key verified: ${publicKey}`);
+    } catch (error) {
+      console.error(`Public key verification failed: ${error.message}`);
+      return res.status(400).json({ message: `Invalid public key: ${error.message}` });
     }
 
     // Verify onramp session status and destination address
@@ -179,13 +203,13 @@ export default async function handler(req, res) {
       expires_at: null,
       starts_at: null,
       updated_at: null,
-      extra: JSON.stringify({ group_id: "theosis" }),
+      extra: JSON.stringify({ group_id: "theosis", publicKey }),
       reference: null,
       reference_hash: null,
     };
     const groupId = "theosis";
     const contractId = "theosis.1000fans.near";
-    const mintDeposit = utils.format.parseNearAmount("0.039"); // 0.007 for mint + 0.007 for nft_mint_callback + 0.025 for add_group_member
+    const mintDeposit = utils.format.parseNearAmount("0.06"); // 0.007 for mint + 0.007 for nft_mint_callback + 0.025 for add_group_member
     let tokenId;
     try {
       const mintResult = await relayerAccount.functionCall({
@@ -201,16 +225,14 @@ export default async function handler(req, res) {
       });
       console.log("Mint result:", JSON.stringify(mintResult, null, 2));
 
-      // Extract token ID from transaction logs
-      if (mintResult.status && mintResult.status.SuccessValue) {
+      // Extract token ID
+      if (mintResult.status?.SuccessValue) {
         try {
           const decodedValue = Buffer.from(mintResult.status.SuccessValue, 'base64').toString();
           console.log('Decoded mint result:', decodedValue);
           const token = JSON.parse(decodedValue);
           tokenId = token.token_id;
-          if (!tokenId) {
-            throw new Error('Token ID missing in mint result');
-          }
+          if (!tokenId) throw new Error('Token ID missing in mint result');
         } catch (parseError) {
           console.error('Failed to parse mint result:', parseError);
           // Fallback: Check transaction logs for token_id
@@ -220,13 +242,10 @@ export default async function handler(req, res) {
             const match = tokenLog.match(/"token_id":"([^"]+)"/);
             tokenId = match ? match[1] : null;
           }
-          if (!tokenId) {
-            throw new Error(`Failed to parse mint result: ${parseError.message}`);
-          }
+          if (!tokenId) throw new Error(`Failed to parse mint result: ${parseError.message}`);
         }
       } else {
-        console.error('Mint transaction failed:', JSON.stringify(mintResult, null, 2));
-        throw new Error("Mint transaction failed or no SuccessValue");
+        throw new Error("Mint transaction failed");
       }
       console.log(`Minted token: ${tokenId} for ${accountId}`);
     } catch (error) {
@@ -249,6 +268,27 @@ export default async function handler(req, res) {
       throw new Error(`Failed to mint token: ${error.message}`);
     }
 
+    // Fetch and wrap group key
+    let wrappedKey = null;
+    try {
+      console.log("Fetching group key for theosis...");
+      const groupKey = await relayerAccount.viewFunction(
+        "theosis.devbot.near",
+        "get_group_key",
+        { group_id: "theosis", user_id: accountId }
+      );
+      console.log("Group key fetched:", groupKey);
+      wrappedKey = wrapKey(groupKey, publicKey);
+      if (!wrappedKey) {
+        console.warn("Key wrapping failed, proceeding without wrapped key");
+      } else {
+        console.log("Group key wrapped successfully");
+      }
+    } catch (error) {
+      console.warn("Failed to fetch or wrap group key:", error.message);
+      // Continue without wrapped key to avoid blocking onboarding
+    }
+
     // Store in MongoDB
     console.log("Storing user in MongoDB...");
     try {
@@ -259,6 +299,7 @@ export default async function handler(req, res) {
         tokenId,
         payment: sessionId ? Number(amount) : null,
         onrampSessionId: sessionId || null,
+        wrappedKey,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -266,6 +307,7 @@ export default async function handler(req, res) {
       console.log(`User created: ${accountId}, MongoDB ID: ${result.insertedId}`);
     } catch (error) {
       // Delete account if MongoDB insert fails
+      console.error('MongoDB insert error:', { message: error.message, stack: error.stack });
       if (createdAccountId) {
         try {
           await relayerAccount.functionCall({
@@ -283,7 +325,7 @@ export default async function handler(req, res) {
       throw new Error(`Failed to store user in MongoDB: ${error.message}`);
     }
 
-    return res.status(200).json({ success: true, accountId, tokenId });
+    return res.status(200).json({ success: true, accountId, tokenId, publicKey, wrappedKey  });
   } catch (error) {
     console.error('Error in create-web3auth-user:', {
       message: error.message,
